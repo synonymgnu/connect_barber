@@ -17,15 +17,15 @@ model User {
 }
 
 model Barbershop {
-  id         String              @id @default(uuid())
-  name       String
-  address    String
-  phone      String[]
+  id          String              @id @default(uuid())
+  name        String
+  address     String
+  phone       String[]
   description String
-  imageUrl   String
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-  services   BarbershopService[]
+  imageUrl    String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  services    BarbershopService[]
 }
 
 model BarbershopService {

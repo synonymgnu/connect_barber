@@ -8,6 +8,7 @@ import { Badge } from "./_components/ui/badge";
 import { Avatar, AvatarImage } from "./_components/ui/avatar";
 import { db } from "./_lib/prisma";
 import BarbershopItem from "./_components/barbershop-item";
+import { Barbershop } from "./generated/prisma";
 
 
 const Home =  async () => {
@@ -63,7 +64,7 @@ const Home =  async () => {
 
       <h2 className="mb-3 uppercase text-gray-400 font-bold text-xs mt-6">Recomendados</h2>
       <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
-          {barbershops.map((barbershop) => (
+          {barbershops.map((barbershop: Barbershop) => (
       <BarbershopItem key={barbershop.id} barbershop={barbershop} />
     ))}
       </div>
