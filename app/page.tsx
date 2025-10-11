@@ -10,6 +10,7 @@ import { Barbershop } from "./generated/prisma"
 import { quickSearchOptions } from "./_constants/search"
 import BookingItem from "./_components/booking-item"
 import ButtonIcon from "./_components/button-icon"
+
 const Home = async () => {
   const barbershops = await db.barbershop.findMany({})
   const popularBarbershops = await db.barbershop.findMany({
@@ -118,6 +119,7 @@ const Home = async () => {
       <ButtonIcon />
       </div>
       </div>
+
       
     </div>
   )
