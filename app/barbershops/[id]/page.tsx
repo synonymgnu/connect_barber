@@ -16,7 +16,8 @@ interface BarbershopPageProps {
     }
 }
 
-const BarbershopPage = async ({ params }) => {
+const BarbershopPage = async ({ params }: BarbershopPageProps) => {
+
     //chamar o banco de dados
     const barbershop = await db.barbershop.findUnique({
         where: {
