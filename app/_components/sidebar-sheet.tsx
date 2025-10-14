@@ -6,10 +6,10 @@ import { Avatar, AvatarImage } from "./ui/avatar"
 import { Button } from "./ui/button"
 import Image from "next/image"
 
-const SidebarButton = () => {
+const SidebarSheet = () => {
     return ( <Sheet>
           <SheetTrigger asChild>
-            <Button size="icon" variant="outline">
+            <Button className="md:hidden" size="icon" variant="outline">
           <MenuIcon />
         </Button>
           </SheetTrigger>
@@ -69,4 +69,4 @@ const SidebarButton = () => {
         </Sheet> );
 }
  
-export default SidebarButton;
+export default SidebarSheet;

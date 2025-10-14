@@ -2,10 +2,10 @@ import { Card, CardContent } from "./ui/card";
 
 const Footer = () => {
     return ( <footer>
-                <Card>
+                <Card className="md:mt-24">
                   <CardContent className="px-5 py-6">
                     <p className="text-sm text-gray-400">
-                      © 2025 Copyright <span className="font-bold">CNC Barber</span>
+                      © 2025 Copyright <span className="font-bold">Connect Barber</span>
                     </p>
                   </CardContent>
                 </Card>

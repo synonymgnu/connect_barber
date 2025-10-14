@@ -11,6 +11,7 @@ import { quickSearchOptions } from "./_constants/search"
 import BookingItem from "./_components/booking-item"
 import ButtonIcon from "./_components/button-icon"
 
+
 const Home = async () => {
   const barbershops = await db.barbershop.findMany({})
   const popularBarbershops = await db.barbershop.findMany({
@@ -26,13 +27,12 @@ const Home = async () => {
     },
     distinct: ["id"], // garante que não duplica
   })
-  
 
   return (
     <div>
       {/* header */}
       <Header />
-      <div className="p-5 lg:py-16 lg:px-32">
+      <div className="p-5 lg:pt-16 lg:px-32">
         <div className="flex flex-col lg:flex-row lg:items-start lg:gap-32">
         {/* LADO ESQUERDO */}
         <div className="lg:w-2/4">
@@ -119,8 +119,8 @@ const Home = async () => {
       <ButtonIcon />
       </div>
       </div>
-
       
+
     </div>
   )
 }

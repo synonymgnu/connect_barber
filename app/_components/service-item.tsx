@@ -19,7 +19,7 @@ const ServiceItem = ({service}: ServiceItemProps) => {
                 className="object-cover rounded-lg "/>
             </div>
             {/* DIREITA */}
-            <div className="space-y-2">
+            <div className="space-y-2 w-screen">
                 <h3 className="font-semibold text-sm">{service.name}</h3>
                 <p className="text-sm text-gray-400">{service.description}</p>
                 {/* PREÇO E BOTÃO  */}
@@ -30,7 +30,7 @@ const ServiceItem = ({service}: ServiceItemProps) => {
                         currency: "BRL"
                      }).format(Number(service.price))}
                      </p>
-
+                     
                      <Button variant="secondary" size="sm">
                         Reservar
                         </Button>

@@ -20,14 +20,26 @@ const PhoneItem = ({ phone}: PhoneItemProps) => {
                     <p className="text-sm">{phone}</p>
                 </div>
                 {/*DIREITA*/}
-                <Button 
-                    variant = "outline" 
-                    size="sm"
-                    onClick={() => handleCopyPhoneClick(phone)}
+                {/* MOBILE */}
+                <Button
+                variant="outline"
+                size="sm"
+                className="md:hidden"
+                onClick={() => navigator.clipboard.writeText(phone)}
                 >
-                    Copiar
+                Copiar
                 </Button>
-            </div>
+
+                {/* DESKTOP */}
+                <Button
+                variant="secondary"
+                size="sm"
+                className="hidden md:flex"
+                onClick={() => navigator.clipboard.writeText(phone)}
+                >
+                Copiar
+                </Button>
+                </div>
 )}
  
 export default PhoneItem;
