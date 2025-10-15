@@ -9,7 +9,7 @@ import PhoneItem from "@/app/_components/phone-item";
 import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet";
 import SidebarSheet from "@/app/_components/sidebar-sheet";
 import Header from "@/app/_components/header";
-import { Card } from "@/app/_components/ui/card";
+import { Card, CardContent } from "@/app/_components/ui/card";
 import { Avatar, AvatarImage } from "@/app/_components/ui/avatar";
 
 
@@ -71,10 +71,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             <Sheet>
                        <SheetTrigger asChild>
                         <Button
+                       
                         size="icon"
                         variant="outline"
                         className="absolute right-4 top-4 md:hidden"
                         >
+                        
                         <SidebarSheet />
                         </Button>
                        </SheetTrigger>
@@ -195,7 +197,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             <p>08:00 - 17:00</p>
             </div>
             <div className="flex justify-between">
-            <p  className="text-zinc-500">Domingo</p>
+            <p>Domingo</p>
             <p>Fechado</p>
             </div>
               
