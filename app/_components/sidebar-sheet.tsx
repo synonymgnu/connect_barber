@@ -2,7 +2,6 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { quickSearchOptions } from "../_constants/search"
 import Link from "next/link"
 import { CalendarIcon, HomeIcon, LogInIcon, LogOutIcon, MenuIcon } from "lucide-react"
-import { Avatar, AvatarImage } from "./ui/avatar"
 import { Button } from "./ui/button"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
