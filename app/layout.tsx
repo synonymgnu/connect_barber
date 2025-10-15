@@ -4,6 +4,7 @@ import "./globals.css"
 import { Toaster } from 'sonner';
 import { Card, CardContent } from "./_components/ui/card";
 import Footer from "./_components/footer";
+import AuthProvider from "./_providers/auth";
 
 
 
@@ -33,11 +34,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <AuthProvider>
         {children}
-
         <Toaster />
-
         <Footer />
+        </AuthProvider>
       </body>
     </html>
   )

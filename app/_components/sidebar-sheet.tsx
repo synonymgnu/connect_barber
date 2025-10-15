@@ -1,3 +1,5 @@
+"use client"
+
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
 import { quickSearchOptions } from "../_constants/search"
 import Link from "next/link"
@@ -5,9 +7,15 @@ import { CalendarIcon, HomeIcon, LogInIcon, LogOutIcon, MenuIcon } from "lucide-
 import { Button } from "./ui/button"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
+import { signIn } from "next-auth/react"
 
 
 const SidebarSheet = () => {
+    const handLeLoginWithGoogleClick = () => signIn("google")
+      
+
+
+
     return ( <Sheet>
           <SheetTrigger asChild>
             <Button className="md:hidden" size="icon" variant="outline">
@@ -34,7 +42,7 @@ const SidebarSheet = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <Button variant="outline" className="gap-1 font-bold">
+          <Button variant="outline" className="gap-1 font-bold" onClick={handLeLoginWithGoogleClick}>
             <Image 
              alt="Fazer login com o Google"
              src="/google.svg" 
