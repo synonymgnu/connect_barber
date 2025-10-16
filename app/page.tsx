@@ -10,6 +10,7 @@ import { Barbershop } from "./generated/prisma"
 import { quickSearchOptions } from "./_constants/search"
 import BookingItem from "./_components/booking-item"
 import ButtonIcon from "./_components/button-icon"
+import Search from "./_components/search"
 
 
 const Home = async () => {
@@ -41,11 +42,8 @@ const Home = async () => {
         <p className="text-sm">Segunda-feira, 29 de setembro.</p>
 
         {/* BUSCA */}
-        <div className="mt-6 flex items-center gap-2">
-          <Input placeholder="Faça sua busca..." />
-          <Button>
-            <SearchIcon></SearchIcon>
-          </Button>
+        <div className="mt-6">
+          <Search />
         </div>
 
         {/* BUSCA RÁPIDA */}
