@@ -6,12 +6,15 @@ import { MenuIcon, SearchIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
 import SidebarSheet from "./sidebar-sheet"
 import { Input } from "./ui/input"
+import Link from "next/link"
 
 const Header = () => {
   return (
     <Card>
       <CardContent className="flex items-center justify-between p-5 lg:px-32 lg:py-9">
+        <Link href="/">
         <Image alt="CNC Barber" src="/logo2.png" height={18} width={120} />
+        </Link>
         
         
 
