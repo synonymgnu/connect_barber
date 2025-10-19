@@ -7,14 +7,13 @@ import { CalendarIcon, HomeIcon, LogInIcon, LogOutIcon, MenuIcon } from "lucide-
 import { Button } from "./ui/button"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
-import { signIn, signOut, useSession } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarImage } from "./ui/avatar"
 import SignInDialog from "./sign-in-dialog"
 
 
 const SidebarSheet = () => {
   const {data} = useSession()
-    const handLeLoginWithGoogleClick = () => signIn("google")
     const handLelogoutCLick = () =>signOut()
       
 
