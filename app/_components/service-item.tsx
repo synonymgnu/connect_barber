@@ -13,6 +13,8 @@ import { createBooking } from "../_actions/create-booking";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { getBookings } from "../_actions/get-bookings";
+import { Dialog, DialogContent } from "./ui/dialog";
+import SignInDialog from "./sign-in-dialog";
 
 interface ServiceItemProps {
     service : BarbershopService
@@ -62,6 +64,7 @@ const getTimeList = (bookings: Booking[]) => {
 }
 
 const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
+    const [SignInDialogIsOpen, setSignInDialogIsOpen] = useState(false)
     const {data} = useSession()
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined)
     const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined)
@@ -77,6 +80,13 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
         }
         fetch()
     }, [selectedDay, service.id])
+
+    const handleBookingClick = () => {
+        if (data?.user) {
+            return setBookingSheetIsOpen(true)
+        }
+        return setSignInDialogIsOpen(true)
+    }
 
     const handleBookingSheetOpenChange = () => {
         setSelectedDay(undefined)
@@ -120,6 +130,7 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
     }
 
     return (
+        <>
         <Card>
         <CardContent className="flex items-center gap-3 p-3">
             {/* IMAGE */}
@@ -147,7 +158,7 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
                         <Button 
                         variant="secondary" 
                         size="sm" 
-                        onClick={() => setBookingSheetIsOpen(true)}
+                        onClick={handleBookingClick}
                         >
                         Reservar
                         </Button>
@@ -258,6 +269,14 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
 
         </CardContent>
         </Card>
+
+
+        <Dialog open={SignInDialogIsOpen} onOpenChange={(open) => setSignInDialogIsOpen(open)}>
+            <DialogContent className="w-[90%]">
+                <SignInDialog />
+            </DialogContent>
+        </Dialog>
+        </>
         
     )
 }
