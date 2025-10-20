@@ -8,7 +8,7 @@ interface PhoneItemProps {
     phone: string
 }
 
-const PhoneItem = ({ phone}: PhoneItemProps) => {
+const PhoneItem = ({ phone }: PhoneItemProps) => {
     const handleCopyPhoneClick = (phone: string) => {
         navigator.clipboard.writeText(phone)
         toast.success("Telefone copiado com sucesso!")
@@ -25,7 +25,7 @@ const PhoneItem = ({ phone}: PhoneItemProps) => {
                 variant="outline"
                 size="sm"
                 className="md:hidden"
-                onClick={() => navigator.clipboard.writeText(phone)}
+                onClick={() => handleCopyPhoneClick(phone)}
                 >
                 Copiar
                 </Button>
@@ -35,7 +35,7 @@ const PhoneItem = ({ phone}: PhoneItemProps) => {
                 variant="secondary"
                 size="sm"
                 className="hidden md:flex"
-                onClick={() => navigator.clipboard.writeText(phone)}
+                onClick={() => handleCopyPhoneClick(phone)}
                 >
                 Copiar
                 </Button>
