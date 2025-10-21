@@ -1,5 +1,5 @@
 import { db } from "@/app/_lib/prisma";
-import { ChevronLeftIcon, MapPinIcon, MenuIcon, SearchIcon, StarIcon } from "lucide-react";
+import { ChevronLeftIcon, MapPinIcon, StarIcon } from "lucide-react";
 import Image from 'next/image';
 import { Button } from '../../_components/ui/button';
 import Link from "next/link"
@@ -9,7 +9,7 @@ import PhoneItem from "@/app/_components/phone-item";
 import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet";
 import SidebarSheet from "@/app/_components/sidebar-sheet";
 import Header from "@/app/_components/header";
-import { Card, CardContent } from "@/app/_components/ui/card";
+import { Card } from "@/app/_components/ui/card";
 import { Avatar, AvatarImage } from "@/app/_components/ui/avatar";
 
 
