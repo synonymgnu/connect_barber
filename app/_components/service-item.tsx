@@ -193,10 +193,10 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
                     
                         <SheetContent className="px-0">
                             <SheetHeader>
-                                <SheetTitle>Fazer Reserva</SheetTitle>
+                                <SheetTitle className="px-5">Fazer Reserva</SheetTitle>
                             </SheetHeader>
 
-                            <div className="py-5 border-b border-solid">
+                            <div className="flex flex-col items-center  py-5 border-b border-solid">
                                 <Calendar 
                                 mode="single" 
                                 locale={ptBR}
@@ -253,7 +253,7 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
                             )}
                         <SheetFooter className="mt-5 px-5">
                             <SheetClose asChild>
-                            <Button onClick={handleCreateBooking} disabled={!selectedDay || !selectedTime}>Confirmar</Button>
+                            <Button className="w-full" onClick={handleCreateBooking} disabled={!selectedDay || !selectedTime}>Confirmar</Button>
                             </SheetClose>
                         </SheetFooter>
                         </SheetContent>
