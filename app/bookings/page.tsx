@@ -17,7 +17,9 @@ const Bookings = async () => {
     const concludedBookings = await getConcludedBookings()
 
     return ( <>
-        <Header />
+        
+        <Header isHidden="md:flex"/>
+        
         <div className=" space-y-3 p-5">
             <h1 className="font-bold text-xl">Agendamentos</h1>
             {confirmedBookings.length == 0 && concludedBookings.length == 0 && (

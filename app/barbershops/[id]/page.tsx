@@ -41,7 +41,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
     return <div>
         <div className="hidden md:block">
-        <Header  />
+        <Header isHidden="md:flex"/>
         </div>
 
 {/* CONTAINER GERAL */}

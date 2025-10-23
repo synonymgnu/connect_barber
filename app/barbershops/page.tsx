@@ -39,9 +39,11 @@ const BarbershopsPage = async ({searchParams}: BarbershopPageProps) => {
 
    
     return <div>
-        <Header />
+        <Header isHidden="md:flex"/>
         <div className="my-6 px-5">
-        <Search />
+        <div className="md:hidden">
+            <Search />
+        </div>
         </div>
         <div className="px-5">
         <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">Resultados para &quot;{searchParams?.title || searchParams?.service}&quot;</h2>

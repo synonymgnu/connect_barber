@@ -1,4 +1,4 @@
-import Header from "./_components/header"
+
 import { Button } from "./_components/ui/button"
 import Image from "next/image"
 import { db } from "./_lib/prisma"
@@ -14,6 +14,7 @@ import { authOptions } from "./_lib/auth"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getConfirmedBookings } from "./_data/get-confirmed-bookings"
+import Header from "./_components/header"
 
 
 const Home = async () => {
