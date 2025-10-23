@@ -39,7 +39,7 @@ const Home = async () => {
     <div>
       {/* header */}
       <Header />
-      <div className="p-5 lg:pt-16 lg:px-32">
+      <div className="px-5 pt-5 lg:pt-16 lg:px-32">
         <div className="flex flex-col lg:flex-row lg:items-start lg:gap-32">
         {/* LADO ESQUERDO */}
         <div className="lg:w-2/4">
