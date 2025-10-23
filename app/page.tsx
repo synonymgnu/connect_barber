@@ -42,7 +42,7 @@ const Home = async () => {
       <div className="px-5 pt-5 lg:pt-16 lg:px-32">
         <div className="flex flex-col lg:flex-row lg:items-start lg:gap-32">
         {/* LADO ESQUERDO */}
-        <div className="lg:w-2/4">
+        <div className="lg:w-2/4 max-h-screen overflow-y-auto">
         {/* TEXTO */}
         <h2 className="text-xl font-bold lg:text-2xl">Olá, {session?.user ? session.user.name : "bem vindo"}!</h2>
        <p> 
@@ -109,7 +109,7 @@ const Home = async () => {
        </div>
 
        {/* LADO DIREITO */}
-       <div className="lg:w-2/4 mt-8 lg:mt-0">
+       <div className="lg:w-2/4 mt-8 lg:mt-0 flex-grow">
         <div className="relative">
         <h2 className="mb-3 text-xs font-bold uppercase text-gray-400">
           Recomendados
