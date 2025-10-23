@@ -122,6 +122,7 @@ const ServiceItem = ({service , barbershop}: ServiceItemProps) => {
 
     const handleDateSelect = (date: Date | undefined) => {
         setSelectedDay(date)
+        setSelectedTime(undefined)
     }
 
     const handleTimeSelect = (time: string) => {

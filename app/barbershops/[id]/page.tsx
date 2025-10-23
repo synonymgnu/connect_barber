@@ -75,9 +75,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                         size="icon"
                         variant="outline"
                         className="absolute right-4 top-4 md:hidden"
+                        asChild
                         >
+                        <div>
+                            <SidebarSheet />
+                        </div>
                         
-                        <SidebarSheet />
                         </Button>
                        </SheetTrigger>
 
@@ -148,7 +151,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 <AvatarImage 
 			    alt={barbershop.name}
             	src={barbershop?.imageUrl} 
-            	fill />
+            	 />
                 </Avatar>
                 <div>
                 <h3 className="text-white font-semibold text-base">{barbershop.name}</h3>
