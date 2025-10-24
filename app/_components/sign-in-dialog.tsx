@@ -1,6 +1,6 @@
 import { signIn } from "next-auth/react";
 import { Button } from "./ui/button";
-import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import { DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import Image from "next/image";
 
 const SignInDialog = () => {
@@ -10,7 +10,7 @@ const SignInDialog = () => {
         
     <>
     
-    <DialogHeader>
+    <DialogHeader className="md:items-center">
             <DialogTitle>Faça login na plataforma</DialogTitle>
             <DialogDescription>
              Conecte-se usando sua conta do Google.

@@ -38,12 +38,29 @@ const Header = ({ isHidden }: HeaderProps) => {
         </div>
 
         <div className="hidden md:flex gap-6">
-          <Link href="/bookings">
+          {data?.user ? (
+            <Link href="/bookings">
             <Button variant="ghost" className="hidden md:flex items-center gap-2">
               <Image src="/Calendar.svg" width={16} height={16} alt="Calendário" />
               <p>Agendamentos</p>
             </Button>
           </Link>
+          ) : (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                <Button variant="ghost" className="hidden md:flex items-center gap-2">
+                <Image src="/Calendar.svg" width={16} height={16} alt="Calendário" />
+                <p>Agendamentos</p>
+                </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90%]">
+                  <SignInDialog />
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+          
 
           {data?.user ? (
             <div className="flex items-center gap-2">
