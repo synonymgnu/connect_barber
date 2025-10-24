@@ -45,9 +45,9 @@ const BarbershopsPage = async ({searchParams}: BarbershopPageProps) => {
             <Search />
         </div>
         </div>
-        <div className="px-5">
-        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">Resultados para &quot;{searchParams?.title || searchParams?.service}&quot;</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="px-5 md:px-32">
+        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400 md:mt-10 md:mb-5 md:text-xl md:font-bold  md:text-white md:normal-case">Resultados para &quot;{searchParams?.title || searchParams?.service}&quot;</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid md:grid-cols-4 md:gap-4">
             {barbershops.map(barbershop => <BarbershopItem key={barbershop.id} barbershop={barbershop} />)}
         </div>
         </div>

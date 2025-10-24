@@ -113,7 +113,7 @@ const BookingItem = ({booking}: BookingItemProps) => {
         </div>
       </div>
       <SheetFooter className="mt-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full">
           <SheetClose asChild>
           <Button variant="outline" className="w-full">Voltar</Button>
           </SheetClose>
