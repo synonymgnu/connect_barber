@@ -9,7 +9,6 @@ import { Card, CardContent } from "../_components/ui/card";
 import Image from "next/image";
 import { Avatar, AvatarImage } from "../_components/ui/avatar";
 import { Badge } from "../_components/ui/badge";
-import BookingSummary from "../_components/booking-summary";
 import PhoneItem from "../_components/phone-item";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../_components/ui/dialog";
 import { Button } from "../_components/ui/button";
@@ -84,12 +83,8 @@ const Bookings = async () => {
                 </p>
 
                 <div className="space-y-3 mt-5">
-                <PhoneItem>
-                <p>(11) 99999-9999</p>
-                </PhoneItem>
-                <PhoneItem>
-                <p>(11) 99999-9999</p>
-                </PhoneItem>
+                <PhoneItem phone="(11) 99999-9999" />
+                <PhoneItem phone="(11) 99999-9999" />
                 </div>
 
                 <div className="mt-6">
