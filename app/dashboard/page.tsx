@@ -6,32 +6,37 @@ import AppointmentStatsSection from "../_components/dashboard/appointment-stats-
 
 const DashboardPage = () => {
     return (
-        <div className="space-y-6">
+        <div className="min-h-screen bg-background">
             <Header />
-            <div className="flex items-center justify-center">
-                <h1 className="text-3xl font-bold">Dashboard</h1>
-            </div>
-            <main>
-                <section className="w-[80%] mx-auto">
-                <Card>
-                    <CardHeader>
-                        <h2 className="text-2xl font-semibold mb-4">Appointments Overview</h2>
-                    </CardHeader>
-                    <CardContent>
-                        <AppointmentsMetrics />
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-8">
-                            <div className="lg:col-span-8">
-                                <AppointmentStatsSection />
+
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+                <div className="flex items-center justify-center">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Dashboard</h1>
+                </div>
+
+                    <Card className="w-full">
+                        <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
+                                Appointments Overview
+                            </h2>
+                        </CardHeader>
+                        <CardContent className="px-4 sm:px-6 space-y-6">
+                            <AppointmentsMetrics />
+
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+                                <div className="lg:col-span-8">
+                                    <AppointmentStatsSection />
+                                </div>
+                                <div className="lg:col-span-4">
+                                    <RecentStatsSection />
+                                </div>
                             </div>
-                            <div className="lg:col-span-4">
-                                <RecentStatsSection />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
+                        </CardContent>
+                    </Card>
+
             </main>
-        </div>
+        </div>         
     )
 }
 
