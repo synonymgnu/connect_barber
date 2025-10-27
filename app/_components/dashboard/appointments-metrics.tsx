@@ -52,7 +52,7 @@ export function AppointmentsMetrics() {
     ];
 
     return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {metrics.map((metric, index) => (
         <AppointmentMetricCard key={index} metric={metric} />
       ))}
@@ -69,9 +69,9 @@ function AppointmentMetricCard({ metric }: AppointmentMetricCardProps) {
     const trendColor = metric.trend === "up" ? "text-green-500" : "text-red-500";
    
     return ( 
-    <Card className="relative overflow-hidden hover:bg-slate-700">
+    <Card className="relative overflow-hidden hover:bg-[#0c0c0c]">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium truncate lg:text-lg">{metric.title}</CardTitle>
+            <CardTitle className="text-xs sm:text-sm lg:text-base font-medium truncate">{metric.title}</CardTitle>
             <div className="text-muted-foreground">
                 {metric.icon}
             </div>
