@@ -22,8 +22,8 @@ export default function ButtonIcon({
         onClick={onClick}
         variant="default"
         size="icon"
-        className={`shadow-lg size-[55px] rounded-full bg-neutral-800 hover:bg-neutral-700 absolute top-1/2 -translate-y-1/2 z-10 ${
-          isLeft ? "left-[-40px]" : "right-[-40px]"
+        className={`shadow-lg size-[45px] rounded-full bg-neutral-800 hover:bg-neutral-700 absolute top-1/2 -translate-y-1/2 z-10 ${
+          isLeft ? "left-0 -translate-x-1/2" : "right-0 translate-x-1/2"
         } ${className}`}
       >
         {isLeft ? <ChevronLeftIcon /> : <ChevronRightIcon />}

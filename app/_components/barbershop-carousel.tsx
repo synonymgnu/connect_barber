@@ -45,7 +45,7 @@ export default function BarbershopCarousel({ title, barbershops }: Props) {
   };
 
   return (
-    <div className="relative mt-6">
+    <div className="relative">
       <h2 className="mb-3 text-xs font-bold uppercase text-gray-400">
         {title}
       </h2>

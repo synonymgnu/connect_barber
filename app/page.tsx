@@ -1,11 +1,8 @@
 import { Button } from "./_components/ui/button"
 import Image from "next/image"
 import { db } from "./_lib/prisma"
-import BarbershopItem from "./_components/barbershop-item"
-import { Barbershop } from "./generated/prisma"
 import { quickSearchOptions } from "./_constants/search"
 import BookingItem from "./_components/booking-item"
-import ButtonIcon from "./_components/button-icon"
 import Search from "./_components/search"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
@@ -118,11 +115,11 @@ const Home = async () => {
         </div>
         </div>
 
-        <div className="relative">
+        <div className="relative mt-6">
             <BarbershopCarousel title="Populares" barbershops={popularBarbershops} />
         </div>
 
-        <div className="relative hidden lg:block">
+        <div className="relative mt-10 hidden lg:block">
             <BarbershopCarousel title="Mais Visitados" barbershops={mostVisitedBarbershops} />
         </div>
         </div>
