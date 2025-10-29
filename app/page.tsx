@@ -1,4 +1,3 @@
-
 import { Button } from "./_components/ui/button"
 import Image from "next/image"
 import { db } from "./_lib/prisma"
@@ -15,6 +14,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getConfirmedBookings } from "./_data/get-confirmed-bookings"
 import Header from "./_components/header"
+import BarbershopCarousel from "./_components/barbershop-carousel";
 
 
 const Home = async () => {
@@ -34,6 +34,8 @@ const Home = async () => {
     distinct: ["id"], // garante que não duplica
   })
   const confirmedBookings = await getConfirmedBookings()
+
+  
 
   return (
     <div>
@@ -108,48 +110,22 @@ const Home = async () => {
         )}
        </div>
 
-       {/* LADO DIREITO */}
-       <div className="lg:w-2/4 mt-8 lg:mt-0 flex-grow">
-        <div className="relative">
-        <h2 className="mb-3 text-xs font-bold uppercase text-gray-400">
-          Recomendados
-        </h2>
-        <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
-          {barbershops.map((barbershop: Barbershop) => (
-            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-          ))}
+        {/* LADO DIREITO */}
+        <div className="lg:w-2/4 mt-8 lg:mt-0 flex-grow">
+          <div className="relative">
+            <BarbershopCarousel title="Recomendados" barbershops={barbershops} />
+          </div>
         </div>
-        <ButtonIcon />
-       </div>
-       </div>
-       </div>
-        <div className="relative">
-        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-          Populares
-        </h2>
-        <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
-          {popularBarbershops.map((barbershop: Barbershop) => (
-            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-          ))}
         </div>
-        <ButtonIcon />
-        </div>
-        <div className="relative">
-        <h2 className="hidden md:block mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-          Mais Visitados
-        </h2>
-        <div className="hidden md:block">
-        <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
-          {mostVisitedBarbershops.map((barbershop: Barbershop) => (
-            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-          ))}
-        </div>
-      </div>
-      <ButtonIcon />
-      </div>
-      </div>
-      
 
+        <div className="relative">
+            <BarbershopCarousel title="Populares" barbershops={popularBarbershops} />
+        </div>
+
+        <div className="relative hidden lg:block">
+            <BarbershopCarousel title="Mais Visitados" barbershops={mostVisitedBarbershops} />
+        </div>
+        </div>
     </div>
   )
 }

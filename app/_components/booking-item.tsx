@@ -17,7 +17,7 @@ import { useState } from "react"
 import BookingSummary from "./booking-summary"
 
 
-interface BookingItemProps {
+export interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
     include: {
       service: {
