@@ -32,6 +32,15 @@ const Bookings = async () => {
 
   const concludedBookings = await getConcludedBookings()
 
+  const totalBookings = confirmedBookings.length + concludedBookings.length
+  const remainingSlots = Math.max(0, 10 - confirmedBookings.length)
+
+  const limitedConfirmed = confirmedBookings.slice(0, 10)
+  const limitedConcluded =
+    confirmedBookings.length >= 10
+      ? [] // já atingiu o limite com confirmados
+      : concludedBookings.slice(0, remainingSlots)
+
   return (
     <>
       <Header isHidden="md:flex" />
@@ -42,13 +51,13 @@ const Bookings = async () => {
         )}
         <div className="md:flex md:gap-10">
           <div className="flex-1 space-y-3">
-            {confirmedBookings.length > 0 && (
+            {limitedConfirmed.length > 0 && (
               <>
                 <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
                   Confirmados
                 </h2>
 
-                {confirmedBookings.map((booking) => (
+                {limitedConfirmed.map((booking) => (
                   <BookingItem
                     key={booking.id}
                     booking={JSON.parse(JSON.stringify(booking))}
@@ -56,18 +65,24 @@ const Bookings = async () => {
                 ))}
               </>
             )}
-            {concludedBookings.length > 0 && (
+            {limitedConcluded.length > 0 && (
               <>
                 <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
                   Finalizados
                 </h2>
-                {concludedBookings.map((booking) => (
+                {limitedConcluded.map((booking) => (
                   <BookingItem
                     key={booking.id}
                     booking={JSON.parse(JSON.stringify(booking))}
                   />
                 ))}
               </>
+            )}
+
+            {totalBookings > 10 && (
+              <p className="text-gray-400 text-xs mt-2">
+                Exibindo apenas os 10 agendamentos mais recentes.
+              </p>
             )}
           </div>
           <Card className="hidden md:block mt-16 self-start w-[380px]">
