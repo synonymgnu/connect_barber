@@ -2,7 +2,7 @@ import { signIn } from 'next-auth/react'
 import { Button } from './ui/button'
 import { DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 interface SignInDialogProps {
   callbackUrl?: string
@@ -10,10 +10,12 @@ interface SignInDialogProps {
 
 const SignInDialog = ({ callbackUrl }: SignInDialogProps) => {
   const pathname = usePathname() // pega a página atual
+  const searchParams = useSearchParams()
 
   const handLeLoginWithGoogleClick = async () => {
+    const currentUrl = `${pathname}?${searchParams.toString()}`
     await signIn('google', {
-      callbackUrl: callbackUrl ?? pathname,
+      callbackUrl: callbackUrl ?? currentUrl,
     })
   }
 
