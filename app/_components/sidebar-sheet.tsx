@@ -59,7 +59,7 @@ const SidebarSheet = () => {
                     <LogInIcon />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[90%]">
+                <DialogContent className="w-[90%] rounded-lg">
                   <SignInDialog />
                 </DialogContent>
               </Dialog>
@@ -92,8 +92,8 @@ const SidebarSheet = () => {
                     Agendamentos
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[90%]">
-                  <SignInDialog />
+                <DialogContent className="w-[90%] rounded-lg">
+                  <SignInDialog callbackUrl="/bookings" />
                 </DialogContent>
               </Dialog>
             </>

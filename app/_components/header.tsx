@@ -89,8 +89,8 @@ const Header = ({ isHidden }: HeaderProps) => {
                     <p>Agendamentos</p>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[90%]">
-                  <SignInDialog />
+                <DialogContent className="w-[30%]">
+                  <SignInDialog callbackUrl="/bookings" />
                 </DialogContent>
               </Dialog>
             </>
@@ -177,7 +177,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                     <p className="font-bold">Perfil</p>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[90%]">
+                <DialogContent className="w-[30%]">
                   <SignInDialog />
                 </DialogContent>
               </Dialog>
