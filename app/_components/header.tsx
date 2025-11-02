@@ -140,9 +140,9 @@ const Header = ({ isHidden }: HeaderProps) => {
                   <DropdownMenuGroup>
                     {quickSearchOptions.map((service) => (
                       <DropdownMenuItem key={service.title}>
-                        <div className="py-2 flex flex-col gap-2 border-b border-solid">
+                        <div className="flex flex-col border-b border-solid w-full">
                           <Button
-                            className="justify-start gap-2"
+                            className="justify-start"
                             variant="ghost"
                             asChild
                           >
