@@ -18,9 +18,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { isPast, isToday, set } from 'date-fns'
 import { createBooking } from '../_actions/create-booking'
 import { useSession } from 'next-auth/react'
-import { toast } from 'sonner'
 import { getBookings } from '../_actions/get-bookings'
-import { Dialog, DialogContent } from './ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog'
 import SignInDialog from './sign-in-dialog'
 import BookingSummary from './booking-summary'
 import { useRouter } from 'next/navigation'
@@ -84,12 +90,14 @@ const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
 const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const { data } = useSession()
   const router = useRouter()
+
   const [SignInDialogIsOpen, setSignInDialogIsOpen] = useState(false)
+  const [SuccessDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
+  const [ErrorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
     undefined
   )
-
   const [dayBookings, setDayBookings] = useState<Booking[]>([])
   const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
 
@@ -144,15 +152,10 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
         date: selectedDate,
       })
       handleBookingSheetOpenChange()
-      toast.success('Reserva criada com sucesso!', {
-        action: {
-          label: 'Ver agendamentos',
-          onClick: () => router.push('/bookings'),
-        },
-      })
+      setSuccessDialogIsOpen(true)
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao criar reserva!')
+      setErrorDialogIsOpen(true)
     }
   }
 
@@ -296,6 +299,64 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
       >
         <DialogContent className="w-[90%] lg:w-[30%] rounded-lg">
           <SignInDialog />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de sucesso */}
+      <Dialog open={SuccessDialogIsOpen} onOpenChange={setSuccessDialogIsOpen}>
+        <DialogContent className="w-[90%] lg:w-[30%] rounded-lg text-center">
+          <DialogHeader className="items-center">
+            <Image alt="Check" src="/Vector.png" height={60} width={60} />
+            <DialogTitle className="text-lg font-bold text-center">
+              Reserva Efetuada!
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Sua reserva foi agendada com sucesso.
+          </DialogDescription>
+          <DialogFooter className="flex flex-col gap-2">
+            <Button
+              className="w-full"
+              onClick={() => {
+                setSuccessDialogIsOpen(false)
+                router.push('/bookings')
+              }}
+            >
+              Ver agendamentos
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setSuccessDialogIsOpen(false)}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de erro */}
+      <Dialog open={ErrorDialogIsOpen} onOpenChange={setErrorDialogIsOpen}>
+        <DialogContent className="w-[90%] lg:w-[30%] text-center rounded-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-red-600 text-center">
+              Erro ao criar reserva!
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Ocorreu um erro ao tentar registrar sua reserva. Tente novamente em
+            alguns instantes.
+          </DialogDescription>
+
+          <DialogFooter className="flex flex-col gap-2 mt-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setErrorDialogIsOpen(false)}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
