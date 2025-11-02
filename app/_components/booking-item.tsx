@@ -229,16 +229,18 @@ const BookingItem = ({ booking }: BookingItemProps) => {
       {/* Dialog de erro */}
       <Dialog open={errorDialogIsOpen} onOpenChange={setErrorDialogIsOpen}>
         <DialogContent className="w-[90%] lg:w-[30%] text-center rounded-lg">
-          <DialogHeader>
+          <DialogHeader className="items-center">
+            <Image alt="Erro" src="/Error.png" height={60} width={60} />
             <DialogTitle className="text-lg font-bold text-red-600">
               Erro ao cancelar reserva!
             </DialogTitle>
           </DialogHeader>
-          <p className="text-gray-500 mt-2">
+          <DialogDescription>
             Ocorreu um erro ao tentar cancelar sua reserva. Tente novamente em
             alguns instantes.
-          </p>
-          <DialogFooter className="flex flex-col gap-2 mt-4">
+          </DialogDescription>
+
+          <DialogFooter className="flex flex-col gap-2">
             <Button
               variant="outline"
               className="w-full"

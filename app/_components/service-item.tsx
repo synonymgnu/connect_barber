@@ -338,7 +338,8 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
       {/* Dialog de erro */}
       <Dialog open={ErrorDialogIsOpen} onOpenChange={setErrorDialogIsOpen}>
         <DialogContent className="w-[90%] lg:w-[30%] text-center rounded-lg">
-          <DialogHeader>
+          <DialogHeader className="items-center">
+            <Image alt="Erro" src="/Error.png" height={60} width={60} />
             <DialogTitle className="text-lg font-bold text-red-600 text-center">
               Erro ao criar reserva!
             </DialogTitle>
@@ -348,7 +349,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
             alguns instantes.
           </DialogDescription>
 
-          <DialogFooter className="flex flex-col gap-2 mt-4">
+          <DialogFooter className="flex flex-col gap-2">
             <Button
               variant="outline"
               className="w-full"
