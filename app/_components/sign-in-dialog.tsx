@@ -9,7 +9,7 @@ interface SignInDialogProps {
 }
 
 const SignInDialog = ({ callbackUrl }: SignInDialogProps) => {
-  const pathname = usePathname() // pega a página atual
+  const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const handLeLoginWithGoogleClick = async () => {

@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
+import { useRef, useState } from 'react'
 
 interface HeaderProps {
   isHidden?: string
@@ -32,6 +33,19 @@ interface HeaderProps {
 
 const Header = ({ isHidden }: HeaderProps) => {
   const { data } = useSession()
+  const [open, setOpen] = useState(false)
+  const hoverTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  const handleMouseEnter = () => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current)
+    setOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    hoverTimeout.current = setTimeout(() => {
+      setOpen(false)
+    }, 200)
+  }
 
   return (
     <Card>
@@ -97,12 +111,19 @@ const Header = ({ isHidden }: HeaderProps) => {
           )}
 
           {data?.user ? (
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
+            <div
+              className="flex items-center gap-2 relative"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <DropdownMenu open={open} onOpenChange={setOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Avatar className="w-9 h-9">
-                    <AvatarImage src={data?.user?.image ?? ''} />
-                  </Avatar>
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <Avatar className="w-9 h-9">
+                      <AvatarImage src={data?.user?.image ?? ''} />
+                    </Avatar>
+                    <p className="whitespace-nowrap">{data.user.name}</p>
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="mt-5" align="start">
                   <DropdownMenuLabel>
@@ -161,7 +182,6 @@ const Header = ({ isHidden }: HeaderProps) => {
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="whitespace-nowrap">{data.user.name}</p>
             </div>
           ) : (
             <>
