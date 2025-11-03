@@ -2,7 +2,6 @@
 
 import { signOut } from 'next-auth/react'
 
-import { usePathname, useRouter } from 'next/navigation'
 import {
   DialogClose,
   DialogDescription,
@@ -13,15 +12,10 @@ import {
 import { Button } from './ui/button'
 
 const SignOutDialog = () => {
-  const router = useRouter()
-  const pathname = usePathname()
-
   const handLelogoutCLick = async () => {
-    await signOut({ redirect: false })
-
-    if (pathname === '/bookings') {
-      router.push('/')
-    }
+    await signOut({
+      callbackUrl: '/',
+    })
   }
 
   return (
