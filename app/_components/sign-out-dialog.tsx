@@ -10,12 +10,20 @@ import {
   DialogTitle,
 } from './ui/dialog'
 import { Button } from './ui/button'
+import { usePathname, useRouter } from 'next/navigation'
 
 const SignOutDialog = () => {
+  const router = useRouter()
+  const pathname = usePathname()
+
   const handLelogoutCLick = async () => {
-    await signOut({
-      callbackUrl: '/',
-    })
+    await signOut({ redirect: false })
+
+    if (pathname === '/bookings') {
+      router.push('/')
+    } else {
+      router.refresh()
+    }
   }
 
   return (
