@@ -55,7 +55,7 @@ const Bookings = async () => {
           <div className="flex-1 space-y-3">
             {confirmedBookings.length === 0 &&
             concludedBookings.length === 0 ? (
-              <p className="text-gray-400">Você não tem agendamentos.</p>
+              ''
             ) : (
               <BookingsClient
                 confirmedBookings={confirmedBookings}
