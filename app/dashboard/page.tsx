@@ -3,6 +3,7 @@ import AppointmentsMetrics from "../_components/dashboard/appointments-metrics"
 import { Card, CardContent, CardHeader } from "../_components/ui/card"
 import RecentStatsSection from "../_components/dashboard/recent-stats-section"
 import AppointmentStatsSection from "../_components/dashboard/appointment-stats-section"
+import AppointmentActivitySection from "../_components/dashboard/appointment-activity-section"
 
 const DashboardPage = () => {
     return (
@@ -32,6 +33,8 @@ const DashboardPage = () => {
                                     <RecentStatsSection />
                                 </div>
                             </div>
+
+                            <AppointmentActivitySection />
                         </CardContent>
                     </Card>
 
