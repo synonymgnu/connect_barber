@@ -13,7 +13,7 @@ import { useSession } from 'next-auth/react'
 import Search from './search'
 
 import { quickSearchOptions } from '../_constants/search'
-import { LogOutIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp, LogOutIcon } from 'lucide-react'
 import SignOutDialog from './sign-out-dialog'
 import {
   DropdownMenu,
@@ -34,18 +34,6 @@ interface HeaderProps {
 const Header = ({ isHidden }: HeaderProps) => {
   const { data } = useSession()
   const [open, setOpen] = useState(false)
-  const hoverTimeout = useRef<NodeJS.Timeout | null>(null)
-
-  const handleMouseEnter = () => {
-    if (hoverTimeout.current) clearTimeout(hoverTimeout.current)
-    setOpen(true)
-  }
-
-  const handleMouseLeave = () => {
-    hoverTimeout.current = setTimeout(() => {
-      setOpen(false)
-    }, 200)
-  }
 
   return (
     <Card>
@@ -111,11 +99,7 @@ const Header = ({ isHidden }: HeaderProps) => {
           )}
 
           {data?.user ? (
-            <div
-              className="flex items-center gap-2 relative"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
+            <div className="flex items-center gap-2 relative">
               <DropdownMenu open={open} onOpenChange={setOpen}>
                 <DropdownMenuTrigger asChild>
                   <div className="flex items-center gap-2 cursor-pointer">
@@ -123,6 +107,11 @@ const Header = ({ isHidden }: HeaderProps) => {
                       <AvatarImage src={data?.user?.image ?? ''} />
                     </Avatar>
                     <p className="whitespace-nowrap">{data.user.name}</p>
+                    {open ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground transition-transform duration-200" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200" />
+                    )}
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="mt-5" align="start">
