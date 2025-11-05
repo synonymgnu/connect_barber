@@ -70,9 +70,40 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     <>
       <Card
         className="min-w-[90%] cursor-pointer"
-        onClick={() => {
-          if (window.innerWidth < 1024 || window.location.pathname === '/') {
-            setIsSheetOpen(true)
+        onMouseDown={(e) => {
+          e.currentTarget.dataset.downX = e.clientX.toString()
+          e.currentTarget.dataset.downY = e.clientY.toString()
+        }}
+        onMouseUp={(e) => {
+          const startX = parseFloat(e.currentTarget.dataset.downX || '0')
+          const startY = parseFloat(e.currentTarget.dataset.downY || '0')
+          const diffX = Math.abs(e.clientX - startX)
+          const diffY = Math.abs(e.clientY - startY)
+          const moveThreshold = 10 // tolerância em pixels
+
+          if (diffX < moveThreshold && diffY < moveThreshold) {
+            if (window.innerWidth < 1024 || window.location.pathname === '/') {
+              setIsSheetOpen(true)
+            }
+          }
+        }}
+        onTouchStart={(e) => {
+          const touch = e.touches[0]
+          e.currentTarget.dataset.touchX = touch.clientX.toString()
+          e.currentTarget.dataset.touchY = touch.clientY.toString()
+        }}
+        onTouchEnd={(e) => {
+          const touch = e.changedTouches[0]
+          const startX = parseFloat(e.currentTarget.dataset.touchX || '0')
+          const startY = parseFloat(e.currentTarget.dataset.touchY || '0')
+          const diffX = Math.abs(touch.clientX - startX)
+          const diffY = Math.abs(touch.clientY - startY)
+          const moveThreshold = 10
+
+          if (diffX < moveThreshold && diffY < moveThreshold) {
+            if (window.innerWidth < 1024 || window.location.pathname === '/') {
+              setIsSheetOpen(true)
+            }
           }
         }}
       >
