@@ -244,7 +244,35 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                   </div>
 
                   {selectedDay && (
-                    <div className="flex gap-3 border-b border-solid overflow-x-auto p-5 [&::-webkit-scrollbar]:hidden">
+                    <div
+                      className="flex gap-3 border-b border-solid overflow-x-auto p-5 [&::-webkit-scrollbar]:hidden select-none"
+                      onMouseDown={(e) => {
+                        const container = e.currentTarget
+                        let startX = e.pageX - container.offsetLeft
+                        let scrollLeft = container.scrollLeft
+                        let isDragging = true
+
+                        const handleMouseMove = (event: MouseEvent) => {
+                          if (!isDragging) return
+                          event.preventDefault()
+                          const x = event.pageX - container.offsetLeft
+                          const walk = (x - startX) * 1.2
+                          container.scrollLeft = scrollLeft - walk
+                        }
+
+                        const handleMouseUp = () => {
+                          isDragging = false
+                          window.removeEventListener(
+                            'mousemove',
+                            handleMouseMove
+                          )
+                          window.removeEventListener('mouseup', handleMouseUp)
+                        }
+
+                        window.addEventListener('mousemove', handleMouseMove)
+                        window.addEventListener('mouseup', handleMouseUp)
+                      }}
+                    >
                       {timeList.length > 0 ? (
                         timeList.map((time) => (
                           <Button
@@ -253,7 +281,10 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                               selectedTime == time ? 'default' : 'outline'
                             }
                             className="rounded-full"
-                            onClick={() => handleTimeSelect(time)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleTimeSelect(time)
+                            }}
                           >
                             {time}
                           </Button>
