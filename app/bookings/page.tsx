@@ -2,26 +2,8 @@ import { getServerSession } from 'next-auth'
 import Header from '../_components/header'
 import { authOptions } from '../_lib/auth'
 import { notFound } from 'next/navigation'
-import BookingItem from '../_components/booking-item'
 import { getConfirmedBookings } from '../_data/get-confirmed-bookings'
 import { getConcludedBookings } from '../_data/get-concluded-bookings'
-import { Card, CardContent } from '../_components/ui/card'
-import Image from 'next/image'
-import { Avatar, AvatarImage } from '../_components/ui/avatar'
-import { Badge } from '../_components/ui/badge'
-import PhoneItem from '../_components/phone-item'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../_components/ui/dialog'
-import { Button } from '../_components/ui/button'
-import BookingInfo from '../_components/booking-info'
 import BookingsClient from '../_components/bookings-client'
 
 const Bookings = async () => {

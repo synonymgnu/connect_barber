@@ -30,6 +30,7 @@ import {
 import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
+import RatingDialog from './rating-dialog'
 
 export interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -199,7 +200,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                     Voltar
                   </Button>
                 </SheetClose>
-                {isConfirmed && (
+
+                {isConfirmed ? (
                   <Dialog>
                     <DialogTrigger className="w-full">
                       <Button variant="destructive" className="w-full">
@@ -234,6 +236,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+                ) : (
+                  <RatingDialog bookingId={booking.id} />
                 )}
               </div>
             </SheetFooter>

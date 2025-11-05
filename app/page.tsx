@@ -2,7 +2,6 @@ import { Button } from './_components/ui/button'
 import Image from 'next/image'
 import { db } from './_lib/prisma'
 import { quickSearchOptions } from './_constants/search'
-import BookingItem from './_components/booking-item'
 import Search from './_components/search'
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
@@ -16,7 +15,30 @@ import BookingList from './_components/booking-list'
 
 const Home = async () => {
   const session = await getServerSession(authOptions)
-  const barbershops = await db.barbershop.findMany({})
+  const barbershopsData = await db.barbershop.findMany({
+    include: {
+      ratings: {
+        select: {
+          value: true,
+        },
+      },
+    },
+  })
+
+  // calcula a média
+  const barbershops = barbershopsData.map((barbershop) => {
+    const avg =
+      barbershop.ratings.length > 0
+        ? barbershop.ratings.reduce((acc, r) => acc + r.value, 0) /
+          barbershop.ratings.length
+        : 0
+
+    return {
+      ...barbershop,
+      averageRating: Number.isFinite(avg) ? Number(avg.toFixed(1)) : 0,
+    }
+  })
+
   const popularBarbershops = await db.barbershop.findMany({
     orderBy: {
       name: 'desc',
