@@ -19,7 +19,6 @@ interface BarbershopPageProps {
 }
 
 const BarbershopPage = async ({ params }: BarbershopPageProps) => {
-  //chamar o banco de dados
   const barbershop = await db.barbershop.findUnique({
     where: {
       id: params.id,
@@ -102,28 +101,47 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
               </div>
             </div>
             {/* BLOCO DIREITA (AVALIAÇÃO) */}
+
             <Card className="hidden md:block border-0">
               <div className="hidden md:flex flex-col items-center px-5 py-2.5">
-                <div className="flex items-center gap-2">
-                  <StarIcon className="text-primary fill-primary" size={20} />
-                  <p className="text-sm md:text-xl font-medium">
-                    {averageRating.toFixed(1)}
+                {totalRatings > 0 ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <StarIcon
+                        className="text-primary fill-primary"
+                        size={20}
+                      />
+                      <p className="text-sm md:text-xl font-medium">
+                        {averageRating.toFixed(1)}
+                      </p>
+                    </div>
+                    <p className="text-xs mt-2">
+                      {totalRatings}{' '}
+                      {totalRatings === 1 ? 'avaliação' : 'avaliações'}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-400 text-center">
+                    Esta barbearia ainda não possui avaliações.
                   </p>
-                </div>
-                <p className="text-xs mt-2">
-                  {totalRatings}{' '}
-                  {totalRatings === 1 ? 'avaliação' : 'avaliações'}
-                </p>
+                )}
               </div>
             </Card>
+
             {/* AVALIAÇÃO MOBILE */}
-            <div className="flex items-center gap-2 md:hidden">
-              <StarIcon className="text-primary fill-primary" size={18} />
-              <p className="text-sm">
-                {averageRating.toFixed(1)} ({totalRatings}{' '}
-                {totalRatings === 1 ? 'Avaliação' : 'Avaliações'})
+            {totalRatings > 0 ? (
+              <div className="flex items-center gap-2 md:hidden">
+                <StarIcon className="text-primary fill-primary" size={18} />
+                <p className="text-sm">
+                  {averageRating.toFixed(1)} ({totalRatings}{' '}
+                  {totalRatings === 1 ? 'Avaliação' : 'Avaliações'})
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 md:hidden">
+                Esta barbearia ainda não possui avaliações.
               </p>
-            </div>
+            )}
           </div>
 
           {/*DESCRIÇÃO - SOMENTE MOBILE*/}

@@ -27,18 +27,17 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
             className="rounded-2xl object-cover"
             src={barbershop.imageUrl}
           />
-
-          <Badge
-            className="absolute left-2 top-2 space-x-1"
-            variant="secondary"
-          >
-            <StarIcon size={12} className="fill-primary text-primary" />
-            <p className="text-xs font-semibold">
-              {barbershop.averageRating
-                ? barbershop.averageRating.toFixed(1)
-                : '0.0'}
-            </p>
-          </Badge>
+          {barbershop.averageRating > 0 && (
+            <Badge
+              className="absolute left-2 top-2 space-x-1"
+              variant="secondary"
+            >
+              <StarIcon size={12} className="fill-primary text-primary" />
+              <p className="text-xs font-semibold">
+                {barbershop.averageRating.toFixed(1)}
+              </p>
+            </Badge>
+          )}
         </div>
 
         {/* TEXTO */}

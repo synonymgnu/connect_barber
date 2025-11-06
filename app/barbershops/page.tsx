@@ -1,57 +1,85 @@
-import BarbershopItem from "../_components/barbershop-item";
-import Header from "../_components/header";
-import Search from "../_components/search";
-import { db } from "../_lib/prisma";
+import BarbershopItem from '../_components/barbershop-item'
+import Header from '../_components/header'
+import Search from '../_components/search'
+import { db } from '../_lib/prisma'
 
 interface BarbershopPageProps {
-    searchParams: {
-        title?: string
-        service?: string
-    }
+  searchParams: {
+    title?: string
+    service?: string
+  }
 }
 
-const BarbershopsPage = async ({searchParams}: BarbershopPageProps) => {
-    const barbershops = await db.barbershop.findMany({
-        where: {
-            OR: [
-                searchParams?.title ? {
-                    
-                        name: {
-                            contains: searchParams?.title,
-                            mode: "insensitive",
-                        },
-                }: {},
-                    searchParams.service ? {
-                        
-                            services: {
-                                some: {
-                                    name: {
-                                        contains: searchParams?.service,
-                                        mode: "insensitive",
-                                    },
-                                },
-                            },
-                      }
-                      : {},
-            ],
+const BarbershopsPage = async ({ searchParams }: BarbershopPageProps) => {
+  const barbershopsData = await db.barbershop.findMany({
+    where: {
+      OR: [
+        searchParams?.title
+          ? {
+              name: {
+                contains: searchParams?.title,
+                mode: 'insensitive',
+              },
+            }
+          : {},
+        searchParams.service
+          ? {
+              services: {
+                some: {
+                  name: {
+                    contains: searchParams?.service,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            }
+          : {},
+      ],
+    },
+    include: {
+      ratings: {
+        select: {
+          value: true,
         },
-    })
+      },
+    },
+  })
 
-   
-    return <div>
-        <Header isHidden="md:flex"/>
-        <div className="my-6 px-5">
+  // Calcula média das avaliações
+  const barbershops = barbershopsData.map((barbershop) => {
+    const avg =
+      barbershop.ratings.length > 0
+        ? barbershop.ratings.reduce((acc, r) => acc + r.value, 0) /
+          barbershop.ratings.length
+        : 0
+
+    return {
+      ...barbershop,
+      averageRating: Number.isFinite(avg) ? Number(avg.toFixed(1)) : 0,
+    }
+  })
+
+  return (
+    <div>
+      <Header isHidden="md:flex" />
+      <div className="my-6 px-5">
         <div className="md:hidden">
-            <Search />
+          <Search />
         </div>
-        </div>
-        <div className="px-5 md:px-32">
-        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400 md:mt-10 md:mb-5 md:text-xl md:font-bold  md:text-white md:normal-case">Resultados para &quot;{searchParams?.title || searchParams?.service}&quot;</h2>
+      </div>
+      <div className="px-5 md:px-32">
+        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400 md:mt-10 md:mb-5 md:text-xl md:font-bold  md:text-white md:normal-case">
+          Resultados para &quot;{searchParams?.title || searchParams?.service}
+          &quot;
+        </h2>
         <div className="grid grid-cols-2 gap-4 md:grid md:grid-cols-4 md:gap-4">
-            {barbershops.map(barbershop => <BarbershopItem key={barbershop.id} barbershop={barbershop} />)}
+          {barbershops.map((barbershop) => (
+            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+          ))}
         </div>
-        </div>
+      </div>
     </div>
+  )
 }
- 
-export default BarbershopsPage;
+
+export default BarbershopsPage

@@ -13,24 +13,14 @@ import Header from './_components/header'
 import BarbershopCarousel from './_components/barbershop-carousel'
 import BookingList from './_components/booking-list'
 
-const Home = async () => {
-  const session = await getServerSession(authOptions)
-  const barbershopsData = await db.barbershop.findMany({
-    include: {
-      ratings: {
-        select: {
-          value: true,
-        },
-      },
-    },
-  })
-
-  // calcula a média
-  const barbershops = barbershopsData.map((barbershop) => {
+function attachAverageRating(barbershops: any[]) {
+  return barbershops.map((barbershop) => {
     const avg =
       barbershop.ratings.length > 0
-        ? barbershop.ratings.reduce((acc, r) => acc + r.value, 0) /
-          barbershop.ratings.length
+        ? barbershop.ratings.reduce(
+            (acc: number, r: { value: number }) => acc + r.value,
+            0
+          ) / barbershop.ratings.length
         : 0
 
     return {
@@ -38,20 +28,30 @@ const Home = async () => {
       averageRating: Number.isFinite(avg) ? Number(avg.toFixed(1)) : 0,
     }
   })
+}
 
-  const popularBarbershops = await db.barbershop.findMany({
-    orderBy: {
-      name: 'desc',
-    },
-    distinct: ['id'], // garante que não duplica
-  })
+const Home = async () => {
+  const session = await getServerSession(authOptions)
 
-  const mostVisitedBarbershops = await db.barbershop.findMany({
-    orderBy: {
-      name: 'asc',
-    },
-    distinct: ['id'], // garante que não duplica
+  const barbershopsData = await db.barbershop.findMany({
+    include: { ratings: { select: { value: true } } },
   })
+  const barbershops = attachAverageRating(barbershopsData)
+
+  const popularBarbershopsData = await db.barbershop.findMany({
+    orderBy: { name: 'desc' },
+    distinct: ['id'],
+    include: { ratings: { select: { value: true } } },
+  })
+  const popularBarbershops = attachAverageRating(popularBarbershopsData)
+
+  const mostVisitedBarbershopsData = await db.barbershop.findMany({
+    orderBy: { name: 'asc' },
+    distinct: ['id'],
+    include: { ratings: { select: { value: true } } },
+  })
+  const mostVisitedBarbershops = attachAverageRating(mostVisitedBarbershopsData)
+
   const confirmedBookings = await getConfirmedBookings()
 
   return (
