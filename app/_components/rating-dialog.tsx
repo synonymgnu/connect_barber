@@ -58,7 +58,7 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
         <DialogTrigger asChild>
           <Button className="w-full">Avaliar</Button>
         </DialogTrigger>
-        <DialogContent className="w-[90%] rounded-lg items-center">
+        <DialogContent className="w-[90%] lg:w-[30%] rounded-lg items-center">
           <DialogHeader>
             <DialogTitle>Avalie sua experiência</DialogTitle>
             <DialogDescription>

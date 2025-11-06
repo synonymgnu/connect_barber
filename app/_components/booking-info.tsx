@@ -21,6 +21,7 @@ import { isFuture } from 'date-fns'
 import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
+import RatingDialog from './rating-dialog'
 
 interface BookingInfoProps extends BookingItemProps {
   onBookingCanceled?: () => void
@@ -96,7 +97,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             />
           </div>
         </div>
-        {isConfirmed && (
+        {isConfirmed ? (
           <Dialog>
             <DialogTrigger className="w-full">
               <Button variant="destructive" className="w-full">
@@ -129,6 +130,8 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        ) : (
+          <RatingDialog bookingId={booking.id} />
         )}
         {/* Dialog de sucesso */}
         <Dialog
