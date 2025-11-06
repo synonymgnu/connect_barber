@@ -25,6 +25,7 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
   const [comment, setComment] = useState('')
   const [open, setOpen] = useState(false)
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
+  const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit() {
@@ -33,6 +34,9 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
       await createRating(bookingId, rating, comment)
       setOpen(false)
       setSuccessDialogIsOpen(true)
+    } catch (error) {
+      console.error('Erro ao enviar avaliação:', error)
+      setErrorDialogIsOpen(true)
     } finally {
       setIsSubmitting(false)
     }
@@ -112,6 +116,32 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
             <Button
               className="w-full"
               onClick={() => setSuccessDialogIsOpen(false)}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de erro */}
+      <Dialog open={errorDialogIsOpen} onOpenChange={setErrorDialogIsOpen}>
+        <DialogContent className="w-[90%] lg:w-[30%] text-center rounded-lg">
+          <DialogHeader className="items-center">
+            <Image alt="Erro" src="/Error.png" height={60} width={60} />
+            <DialogTitle className="text-lg font-bold text-red-600">
+              Erro ao enviar avaliação!
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Ocorreu um erro ao tentar enviar sua avaliação. Tente novamente em
+            alguns instantes.
+          </DialogDescription>
+
+          <DialogFooter className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setErrorDialogIsOpen(false)}
             >
               Fechar
             </Button>

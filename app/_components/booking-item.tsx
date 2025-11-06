@@ -60,7 +60,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
       setIsSheetOpen(false)
       setSuccessDialogIsOpen(true)
     } catch (error) {
-      console.error(error)
+      console.error('Erro ao cancelar reserva:', error)
       setErrorDialogIsOpen(true)
     }
   }
