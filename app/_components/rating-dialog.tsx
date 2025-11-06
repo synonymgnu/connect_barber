@@ -22,7 +22,7 @@ interface RatingDialogProps {
 
 export default function RatingDialog({ bookingId }: RatingDialogProps) {
   const [rating, setRating] = useState(0)
-  const [comment, setComment] = useState('')
+
   const [open, setOpen] = useState(false)
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
   const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
@@ -31,7 +31,7 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
   async function handleSubmit() {
     try {
       setIsSubmitting(true)
-      await createRating(bookingId, rating, comment)
+      await createRating(bookingId, rating, '')
       setOpen(false)
       setSuccessDialogIsOpen(true)
     } catch (error) {
@@ -39,6 +39,21 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
       setErrorDialogIsOpen(true)
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleDialogChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) {
+      setRating(0)
+    }
+  }
+
+  const handleStarClick = (star: number) => {
+    if (star === rating) {
+      setRating(0)
+    } else {
+      setRating(star)
     }
   }
 
@@ -54,37 +69,37 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogTrigger asChild>
           <Button className="w-full">Avaliar</Button>
         </DialogTrigger>
         <DialogContent className="w-[90%] lg:w-[30%] rounded-lg items-center">
-          <DialogHeader>
+          <DialogHeader className="items-center">
             <DialogTitle>Avalie sua experiência</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-center">
               Toque nas estrelas para avaliar sua esperiência na Barberaria
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex gap-2 mt-3 justify-center">
+          <div className="flex gap-2 my-5 justify-center">
             {[1, 2, 3, 4, 5].map((star) => (
               <Button
+                size="icon"
                 key={star}
-                onClick={() => setRating(star)}
-                className={`text-2xl ${star <= rating ? 'text-primary ' : 'text-gray-400'}`}
+                onClick={() => handleStarClick(star)}
+                className="transition-transform hover:scale-110"
                 variant="ghost"
               >
-                <StarIcon className="" />
+                <StarIcon
+                  className={`${
+                    star <= rating
+                      ? 'fill-primary text-primary'
+                      : 'fill-transparent text-gray-400'
+                  } transition-all duration-200`}
+                />
               </Button>
             ))}
           </div>
-
-          <textarea
-            className="w-full mt-3 rounded-md border bg-transparent p-2 text-sm"
-            placeholder="Deixe um comentário (opcional)"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
 
           <DialogFooter className="flex flex-row gap-3">
             <DialogClose asChild>
@@ -92,7 +107,11 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
                 Fechar
               </Button>
             </DialogClose>
-            <Button className="w-full" onClick={handleSubmit}>
+            <Button
+              className="w-full"
+              onClick={handleSubmit}
+              disabled={rating === 0}
+            >
               {isSubmitting ? 'Enviando...' : 'Enviar avaliação'}
             </Button>
           </DialogFooter>
