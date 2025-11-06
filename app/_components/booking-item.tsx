@@ -237,7 +237,10 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                     </DialogContent>
                   </Dialog>
                 ) : (
-                  <RatingDialog bookingId={booking.id} />
+                  <RatingDialog
+                    bookingId={booking.id}
+                    barbershopName={booking.service.barbershop.name}
+                  />
                 )}
               </div>
             </SheetFooter>

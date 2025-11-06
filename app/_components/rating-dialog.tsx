@@ -18,9 +18,13 @@ import Image from 'next/image'
 
 interface RatingDialogProps {
   bookingId: string
+  barbershopName: string
 }
 
-export default function RatingDialog({ bookingId }: RatingDialogProps) {
+export default function RatingDialog({
+  bookingId,
+  barbershopName,
+}: RatingDialogProps) {
   const [rating, setRating] = useState(0)
 
   const [open, setOpen] = useState(false)
@@ -77,7 +81,10 @@ export default function RatingDialog({ bookingId }: RatingDialogProps) {
           <DialogHeader className="items-center">
             <DialogTitle>Avalie sua experiência</DialogTitle>
             <DialogDescription className="text-center">
-              Toque nas estrelas para avaliar sua esperiência na Barberaria
+              Toque nas estrelas para avaliar sua esperiência na {''}
+              <span className="font-semibold text-primary">
+                {barbershopName}
+              </span>
             </DialogDescription>
           </DialogHeader>
 

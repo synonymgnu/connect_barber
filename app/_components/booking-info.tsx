@@ -131,7 +131,10 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             </DialogContent>
           </Dialog>
         ) : (
-          <RatingDialog bookingId={booking.id} />
+          <RatingDialog
+            bookingId={booking.id}
+            barbershopName={booking.service.barbershop.name}
+          />
         )}
         {/* Dialog de sucesso */}
         <Dialog
