@@ -21,6 +21,7 @@ import { isFuture } from 'date-fns'
 import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
+import RatingDialog from './rating-dialog'
 
 interface BookingInfoProps extends BookingItemProps {
   onBookingCanceled?: () => void
@@ -46,7 +47,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
   }
 
   return (
-    <Card className="hidden lg:block mt-14 self-start w-[380px]">
+    <Card className="hidden lg:block mt-[51px] self-start w-[380px]">
       <CardContent>
         <div className="relative flex h-[180px] w-full items-end mt-6">
           <Image
@@ -96,7 +97,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             />
           </div>
         </div>
-        {isConfirmed && (
+        {isConfirmed ? (
           <Dialog>
             <DialogTrigger className="w-full">
               <Button variant="destructive" className="w-full">
@@ -129,6 +130,11 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        ) : (
+          <RatingDialog
+            bookingId={booking.id}
+            barbershopName={booking.service.barbershop.name}
+          />
         )}
         {/* Dialog de sucesso */}
         <Dialog

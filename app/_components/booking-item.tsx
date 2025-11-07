@@ -30,6 +30,7 @@ import {
 import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
+import RatingDialog from './rating-dialog'
 
 export interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -59,7 +60,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
       setIsSheetOpen(false)
       setSuccessDialogIsOpen(true)
     } catch (error) {
-      console.error(error)
+      console.error('Erro ao cancelar reserva:', error)
       setErrorDialogIsOpen(true)
     }
   }
@@ -107,9 +108,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           }
         }}
       >
-        <CardContent className="flex justify-between p-0">
+        <CardContent className="flex justify-between p-0 items-stretch">
           {/* ESQUERDA */}
-          <div className="flex flex-col gap-2 py-5 pl-5 items-start text-left">
+          <div className="flex flex-col gap-2 py-5 pl-5 items-start text-left flex-1">
             <Badge
               className="w-fit"
               variant={isConfirmed ? 'default' : 'secondary'}
@@ -126,7 +127,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </div>
           </div>
           {/* DIREITA */}
-          <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">
+          <div className=" flex-none w-28 flex flex-col items-center justify-center border-l-2 border-solid px-5">
             <p className="text-sm capitalize">
               {format(booking.date, 'MMMM', { locale: ptBR })}
             </p>
@@ -199,7 +200,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                     Voltar
                   </Button>
                 </SheetClose>
-                {isConfirmed && (
+
+                {isConfirmed ? (
                   <Dialog>
                     <DialogTrigger className="w-full">
                       <Button variant="destructive" className="w-full">
@@ -234,6 +236,11 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+                ) : (
+                  <RatingDialog
+                    bookingId={booking.id}
+                    barbershopName={booking.service.barbershop.name}
+                  />
                 )}
               </div>
             </SheetFooter>

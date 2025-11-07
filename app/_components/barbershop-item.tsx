@@ -1,14 +1,18 @@
-import { Card, CardContent } from "./ui/card"
-import Image from "next/image"
-import { Button } from "./ui/button"
-import { Badge } from "./ui/badge"
-import { StarIcon } from "lucide-react"
-import { Barbershop } from "../generated/prisma"
-import Link from "next/link"
-
+import { Card, CardContent } from './ui/card'
+import Image from 'next/image'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { StarIcon } from 'lucide-react'
+import Link from 'next/link'
 
 interface BarbershopItemProps {
-  barbershop: Barbershop
+  barbershop: {
+    id: string
+    name: string
+    address: string
+    imageUrl: string
+    averageRating: number
+  }
 }
 
 const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
@@ -23,14 +27,17 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
             className="rounded-2xl object-cover"
             src={barbershop.imageUrl}
           />
-
-          <Badge
-            className="absolute left-2 top-2 space-x-1"
-            variant="secondary"
-          >
-            <StarIcon size={12} className="fill-primary text-primary" />
-            <p className="text-xs font-semibold">5,0</p>
-          </Badge>
+          {barbershop.averageRating > 0 && (
+            <Badge
+              className="absolute left-2 top-2 space-x-1"
+              variant="secondary"
+            >
+              <StarIcon size={12} className="fill-primary text-primary" />
+              <p className="text-xs font-semibold">
+                {barbershop.averageRating.toFixed(1)}
+              </p>
+            </Badge>
+          )}
         </div>
 
         {/* TEXTO */}

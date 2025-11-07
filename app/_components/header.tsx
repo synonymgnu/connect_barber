@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 interface HeaderProps {
   isHidden?: string
