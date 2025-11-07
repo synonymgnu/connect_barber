@@ -35,8 +35,8 @@ const MobileAppointmentCard = ({...props }) => {
                 </div>
             </div>
             <div className="flex items-center gap-2">
-                {props.getStatusBadge(props.appointment.status)}
-                {/* DropdownMenu para Mobile */}
+                
+                
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white h-8 w-8">
@@ -58,8 +58,10 @@ const MobileAppointmentCard = ({...props }) => {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+
             </div>
         </div>
+        
         {/* Detalhes do Serviço */}
         <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -88,6 +90,11 @@ const MobileAppointmentCard = ({...props }) => {
             <div className="pt-2 border-t border-[#1f1f1f]">
                 <span className="text-slate-400 text-sm">Barbeiro: </span>
                 <span className="text-white text-sm">{props.appointment.employee}</span>
+            </div>
+            <div className="relative">
+                <div className="absolute right-0 bottom-1">
+                    {props.getStatusBadge(props.appointment.status)}
+                </div>
             </div>
         </div>
     </div>
