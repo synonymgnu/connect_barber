@@ -47,7 +47,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
   }
 
   return (
-    <Card className="hidden lg:block mt-14 self-start w-[380px]">
+    <Card className="hidden lg:block mt-[51px] self-start w-[380px]">
       <CardContent>
         <div className="relative flex h-[180px] w-full items-end mt-6">
           <Image

@@ -48,16 +48,16 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       </div>
 
       {/* CONTAINER GERAL */}
-      <div className="md:flex md:gap-8 md:ml-32 md:mr-32 md:mt-10 md:min-w-[758px]">
+      <div className="lg:flex lg:gap-8 lg:ml-32 lg:mr-32 lg:mt-10 lg:min-w-[758px]">
         {/* COLUNA ESQUERDA */}
-        <div className="md:w-3/4">
+        <div className="lg:w-3/4">
           {/* IMAGEM */}
-          <div className="relative h-[250px] w-full md:h-[487px] overflow-hidden">
+          <div className="relative h-[250px] w-full lg:h-[487px] overflow-hidden">
             <Image
               alt={barbershop.name}
               src={barbershop?.imageUrl}
               fill
-              className="object-cover md:rounded-sm"
+              className="object-cover md:rounded-lg"
             />
 
             <Button
@@ -87,15 +87,15 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </Sheet>
           </div>
           {/* NOME, ENDEREÇO E AVALIAÇÃO */}
-          <div className="p-5 border-b  md:flex md:items-center md:justify-between md:p-0 md:mt-5 md:border-b-0">
+          <div className="p-5 border-b  lg:flex lg:items-center lg:justify-between lg:p-0 lg:mt-5 lg:border-b-0">
             {/* BLOCO ESQUERDA */}
             <div>
-              <h1 className="text-xl font-bold mb-3 md:text-3xl">
+              <h1 className="text-xl font-bold mb-3 lg:text-3xl">
                 {barbershop.name}
               </h1>
-              <div className=" mb-2 flex items-center gap-2 md:mb-0">
+              <div className=" mb-2 flex items-center gap-2 lg:mb-0">
                 <MapPinIcon className="text-primary" size={18} />
-                <p className="text-sm md:text-base text-zinc-300">
+                <p className="text-sm lg:text-base text-zinc-300">
                   {barbershop.address}
                 </p>
               </div>
@@ -111,7 +111,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                         className="text-primary fill-primary"
                         size={20}
                       />
-                      <p className="text-sm md:text-xl font-medium">
+                      <p className="text-sm lg:text-xl font-medium">
                         {averageRating.toFixed(1)}
                       </p>
                     </div>
@@ -152,11 +152,11 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             <p className="text-sn text-justify">{barbershop?.description}</p>
           </div>
           {/* SERVIÇOS*/}
-          <div className="p-5 space-y-3 border-b border-solid md:p-0 md:mt-10">
-            <h2 className="font-bold uppercase text-gray-400 text-xs mb-3 md:text-sm">
+          <div className="p-5 space-y-3  lg:p-0 lg:mt-10">
+            <h2 className="font-bold uppercase text-gray-400 text-xs mb-3 lg:text-sm">
               Serviços
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4 md:gap-x-5 md:gap-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4 lg:gap-x-5 lg:gap-y-3">
               {barbershop.services.map((service) => (
                 <ServiceItem
                   key={service.id}
@@ -168,7 +168,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
           </div>
         </div>
         {/* COLUNA DIREITA (DESKTOP) */}
-        <Card className="hidden md:block md:w-1/4 border-0 self-start">
+        <Card className="hidden md:block lg:w-[350px] border-0 self-start">
           <div className="p-5 space-y-5">
             {/* SOBRE NÓS - SOMENTE DESKTOP */}
             <div>
@@ -243,12 +243,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </div>
 
             <div className="flex items-center justify-between">
-              <p className="text-xs">Em parceria com</p>
+              <p className="text-sm">Em parceria com</p>
               <Image
                 alt="CNC Barber"
                 src="/logo1.png"
-                height={10}
-                width={100}
+                height={22}
+                width={130}
               />
             </div>
           </div>
