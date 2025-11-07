@@ -108,9 +108,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           }
         }}
       >
-        <CardContent className="flex justify-between p-0">
+        <CardContent className="flex justify-between p-0 items-stretch">
           {/* ESQUERDA */}
-          <div className="flex flex-col gap-2 py-5 pl-5 items-start text-left">
+          <div className="flex flex-col gap-2 py-5 pl-5 items-start text-left flex-1">
             <Badge
               className="w-fit"
               variant={isConfirmed ? 'default' : 'secondary'}
@@ -127,7 +127,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </div>
           </div>
           {/* DIREITA */}
-          <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">
+          <div className=" flex-none w-28 flex flex-col items-center justify-center border-l-2 border-solid px-5">
             <p className="text-sm capitalize">
               {format(booking.date, 'MMMM', { locale: ptBR })}
             </p>
