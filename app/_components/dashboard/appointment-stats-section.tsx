@@ -1,10 +1,9 @@
 "use client"
 
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, Brush } from "recharts"; // Adicionando Brush
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, Brush } from "recharts";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useEffect, useMemo, useState } from "react";
-import { Download } from "lucide-react";
 
 interface AppointmentStatsData {
   time: string;
@@ -26,13 +25,16 @@ interface AppointmentStatsSectionProps {
   className?: string;
 }
 
-// Função para buscar dados do banco
-async function fetchAppointmentStats(timeRange: '1D' | '1W' | '1M' | '1Y'): Promise<AppointmentStats> {
-  const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
-  if (!response.ok) {
-    throw new Error('Erro ao buscar estatísticas');
-  }
-  return response.json();
+async function fetchAppointmentStats(timeRange: '1D' | '1W' | '1M' | '1Y') {
+    try {
+        const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
+        if (!response.ok) throw new Error('Erro ao buscar estatísticas');
+        return response.json();
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+
+        return generateMockData(timeRange);
+    }
 }
 
 // Função para simular dados enquanto não tem a API
@@ -248,25 +250,7 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 {period}
               </Button>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs text-slate-400 border-slate-700 hover:bg-slate-800/50 hover:text-white lg:hidden flex"
-            >
-              <Download className="h-3 w-3 mr-1" />
-              Exportar
-            </Button>
           </div>
-
-          {/* Botão Exportar */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 text-xs text-slate-400 border-slate-700 hover:bg-slate-800/50 hover:text-white hidden lg:flex"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            Exportar
-          </Button>
         </div>
       </CardHeader>
 
@@ -276,13 +260,12 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 0 }} // Aumentando bottom para espaço do Brush
+              margin={{ top: 10, right: 41, left: 41, bottom: 0 }}
               barGap={0}
               barCategoryGap="15%"
               stackOffset="sign"
             >
-              <CartesianGrid 
-                strokeDasharray="3 3" 
+              <CartesianGrid
                 stroke="#2a2a2a" 
                 horizontal={true}
                 vertical={false}
@@ -292,16 +275,16 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 dataKey="time"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 10 }} // Tamanho da fonte dos ticks pode ser ajustado
+                tick={{ fill: '#9ca3af', fontSize: 8 }}
               />
               
               <YAxis 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                tick={{ fill: '#9ca3af', fontSize: 8 }}
                 domain={['dataMin - 20', 'dataMax + 20']}
                 tickFormatter={(value) => Math.abs(value).toString()}
-                width={40}
+                width={20}
               />
               
               <Tooltip content={<CustomTooltip />} />
@@ -313,7 +296,7 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 fill="#0f0f0f"
                 travellerWidth={8}
                 startIndex={0}
-                endIndex={chartData.length - 1}
+                endIndex={Math.min(4, chartData.length - 1)}
               />
               
               <Bar 
@@ -321,7 +304,7 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 fill="#f97316"
                 radius={[12, 12, 12, 12]}
                 stackId="stack"
-                maxBarSize={20}
+                maxBarSize={14}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`online-${index}`} fill="#f97316" />
@@ -333,7 +316,7 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 fill="#8b5cf6"
                 radius={[12, 12, 12, 12]}
                 stackId="stack"
-                maxBarSize={20}
+                maxBarSize={14}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`offline-${index}`} fill="#8b5cf6" />
