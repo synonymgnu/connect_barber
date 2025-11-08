@@ -14,7 +14,7 @@ interface AppointmentFilterControlsProps {
   setFilterValue: (date: Date | null) => void;
   setCurrentPage: (page: number) => void;
   selectedAppointmentIds: Set<string>;
-  currentAppointmentsLength: number; // Passar o comprimento da lista atual é mais eficiente do que a lista inteira
+  currentAppointmentsLength: number;
   toggleSelectAll: () => void;
   onClearFilters: () => void; // Função para limpar filtros de data
 }
@@ -53,7 +53,7 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
   return (
     <div className="px-6 py-4 border-b border-[#1f1f1f] flex flex-col gap-4">
       {/* Carrossel de Filtros e Controles */}
-      <div className="flex overflow-x-auto pb-2 hide-scrollbar gap-4">
+      <div className="flex overflow-x-auto pb-2 gap-4 [&::-webkit-scrollbar]:hidden">
         {/* Filtros de Status */}
         <div className="flex flex-nowrap gap-2">
           <Button
@@ -112,7 +112,6 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
         </div>
       </div>
 
-      {/* Outros controles */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-row items-center gap-2 lg:hidden">
           <Checkbox

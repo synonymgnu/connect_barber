@@ -7,36 +7,38 @@ import AppointmentActivitySection from "../_components/dashboard/appointment-act
 
 const DashboardPage = () => {
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background overflow-x-hidden">
             <Header />
 
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            <main className="mx-auto max-w-fit px-4 sm:px-6 lg:px-8 py-6 space-y-6 overflow-x-hidden">
 
                 <div className="flex items-center justify-center">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Dashboard</h1>
                 </div>
 
-                    <Card className="w-full">
-                        <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
-                                Appointments Overview
-                            </h2>
-                        </CardHeader>
-                        <CardContent className="px-4 sm:px-6 space-y-6">
-                            <AppointmentsMetrics />
 
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-                                <div className="lg:col-span-8">
-                                    <AppointmentStatsSection />
-                                </div>
-                                <div className="lg:col-span-4">
-                                    <RecentStatsSection />
-                                </div>
+                <Card className="w-full">
+                    <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
+                            Appointments Overview
+                        </h2>
+                    </CardHeader>
+                    <CardContent className="px-4 sm:px-6 space-y-6 overflow-x-auto">
+                        
+                        <AppointmentsMetrics />
+
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+                            <div className="lg:col-span-8">
+                                <AppointmentStatsSection />
                             </div>
-
-                            <AppointmentActivitySection />
-                        </CardContent>
-                    </Card>
+                            <div className="lg:col-span-4">
+                                <RecentStatsSection />
+                            </div>
+                        </div>
+                        <AppointmentActivitySection />
+                    </CardContent>
+                </Card>
 
             </main>
         </div>         

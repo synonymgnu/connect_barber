@@ -714,8 +714,8 @@ const AppointmentActivitySection = () => {
                     ) : (
                         <div>
                             {currentAppointments.map((appointment) => (
-                                <MobileAppointmentCard 
-                                    key={appointment.id} 
+                                <MobileAppointmentCard
+                                    key={appointment.id}
                                     appointment={appointment}
                                     toggleSelectOne={toggleSelectOne}
                                     getStatusBadge={getStatusBadge}
