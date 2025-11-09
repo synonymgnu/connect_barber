@@ -1,11 +1,11 @@
-import SidebarAdmin from '@/app/_components/dashboard/sidebar-admin'
+import HeaderAdmin from '@/app/_components/dashboard/header-admin'
 import { Button } from '@/app/_components/ui/button'
 import { Card, CardContent } from '@/app/_components/ui/card'
 
 const ServicesPage = () => {
   return (
-    <div className="flex h-screen">
-      <SidebarAdmin />
+    <div className="lg:flex lg:h-screen">
+      <HeaderAdmin />
       <main className="flex-1 overflow-y-auto m-10 ">
         <div className="flex gap-7">
           <h1 className="font-bold text-2xl">Serviços</h1>

@@ -5,7 +5,7 @@ import CalendarView from '../../_components/calendar/CalendarView'
 import EventDetailsPanel from '../../_components/calendar/EventDetailsPanel'
 import CalendarStyles from '../../_components/calendar/calendar-styles'
 import { getEventColorByStatus } from './utils'
-import SidebarAdmin from '@/app/_components/dashboard/sidebar-admin'
+import HeaderAdmin from '@/app/_components/dashboard/header-admin'
 
 const initialEvents = [
   {
@@ -40,8 +40,8 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <SidebarAdmin />
+    <div className="lg:flex lg:h-screen overflow-hidden">
+      <HeaderAdmin />
 
       <div className="flex flex-col flex-1 min-h-0">
         <main className="p-4 sm:p-6 flex-1 overflow-y-auto">
