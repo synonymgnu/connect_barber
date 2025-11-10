@@ -16,9 +16,25 @@ export const authOptions: AuthOptions = {
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id
+        session.user.role = user.role
+        session.user.image = user.image
       }
 
       return session
+    },
+  },
+
+  secret: process.env.NEXTAUTH_SECRET,
+
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV !== 'production',
+      },
     },
   },
 }

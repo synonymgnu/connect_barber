@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import NextAuth, { DefaultSession } from 'next-auth'
+import { UserRole } from '@prisma/client'
 
 declare module 'next-auth' {
   interface Session extends DefaultSession {
@@ -8,7 +9,8 @@ declare module 'next-auth' {
       name?: string | null
       email?: string | null
       image?: string | null
-    }
+      role: UserRole
+    } & DefaultSession['user']
   }
 
   interface User {
@@ -16,5 +18,6 @@ declare module 'next-auth' {
     name?: string | null
     email?: string | null
     image?: string | null
+    role: UserRole
   }
 }
