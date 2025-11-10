@@ -1,11 +1,11 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Header from '@/app/_components/header';
-import CalendarView from '../../_components/calendar/CalendarView';
-import EventDetailsPanel from '../../_components/calendar/EventDetailsPanel';
-import CalendarStyles from '../../_components/calendar/calendar-styles';
-import { getEventColorByStatus } from './utils';
+import { useState } from 'react'
+import CalendarView from '../../_components/calendar/CalendarView'
+import EventDetailsPanel from '../../_components/calendar/EventDetailsPanel'
+import CalendarStyles from '../../_components/calendar/calendar-styles'
+import { getEventColorByStatus } from './utils'
+import HeaderAdmin from '@/app/_components/dashboard/header-admin'
 
 const initialEvents = [
   {
@@ -34,18 +34,19 @@ const initialEvents = [
       status: 'confirmado',
     },
   },
-];
+]
 
 export default function CalendarPage() {
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
 
   return (
-    <>
-      <CalendarStyles />
-      <div className="min-h-screen bg-black text-white">
-        <Header />
-        <main className="p-4 sm:p-6">
+    <div className="lg:flex lg:h-screen overflow-hidden">
+      <HeaderAdmin />
+
+      <div className="flex flex-col flex-1 min-h-0">
+        <main className="p-4 sm:p-6 flex-1 overflow-y-auto">
           <h1 className="text-2xl font-bold mb-6 text-[#8161FF]">Agenda</h1>
+          <CalendarStyles />
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1 bg-[#151515] rounded-xl border border-[#2A2A2A] overflow-hidden">
               <CalendarView
@@ -60,6 +61,6 @@ export default function CalendarPage() {
           </div>
         </main>
       </div>
-    </>
-  );
+    </div>
+  )
 }

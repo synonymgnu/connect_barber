@@ -2,7 +2,7 @@
 const nextConfig = {
   images: {
     unoptimized: true, // Desativa a otimização
-    domains: ["utfs.io"], // libera o domínio
+    domains: ['utfs.io'], // libera o domínio
   },
 }
 
