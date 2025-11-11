@@ -10,6 +10,10 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
