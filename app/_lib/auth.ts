@@ -18,6 +18,13 @@ export const authOptions: AuthOptions = {
         session.user.id = user.id
         session.user.role = user.role
         session.user.image = user.image
+        
+        if (user.role === 'BARBER') {
+          const barber = await db.barber.findUnique({
+            where: { userId: user.id }
+          })
+          session.user.barberId = barber?.id || null
+        }
       }
 
       return session
