@@ -119,8 +119,38 @@ model Barber {
   
   bookings     Booking[]
   
+  workSchedule BarberWorkSchedule[]
+  absences     BarberAbsence[]
+  
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model BarberWorkSchedule {
+  id         String   @id @default(uuid())
+  barberId   String
+  barber     Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  dayOfWeek  Int      // 0-6 (Domingo-Sábado)
+  startTime  String   // formato "HH:MM"
+  endTime    String   // formato "HH:MM"
+  isActive   Boolean  @default(true)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([barberId, dayOfWeek])
+}
+
+model BarberAbsence {
+  id        String   @id @default(uuid())
+  barberId  String
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  date      DateTime
+  reason    String?
+  isAllDay  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Booking {
