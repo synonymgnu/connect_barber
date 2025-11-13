@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { format, addDays } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
@@ -38,7 +37,7 @@ export default function BarberSchedulePage() {
   const [period, setPeriod] = useState<"day" | "week" | "month">("day")
   const [bookings, setBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState({ total: 0, completed: 0, cancelled: 0, revenue: 0, avgRating: 0 })
-  const [reviews, setReviews] = useState<{ id: string, value: number, comment: string, clientName: string }[]>([])
+  const [reviews, setReviews] = useState<{ id: string, value: number, clientName: string, serviceName: string, date: string }[]>([])
   const [selectedDate, setSelectedDate] = useState(new Date())
 
   const fetchBookings = useCallback(async () => {
@@ -230,7 +229,6 @@ export default function BarberSchedulePage() {
           </CardContent>
         </Card>
 
-        {/* Notificações */}
         <NotificationToast />
       </div>
     </div>
