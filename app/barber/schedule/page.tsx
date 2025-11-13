@@ -22,6 +22,7 @@ import { AbsenceManager } from "@/app/_components/absence-manager"
 import { NotificationToast } from "@/app/_components/notification-toast"
 
 import "./fullcalendar-theme.css"
+import AuthCheck from "@/app/_components/auth-check"
 
 interface Booking {
   id: string
@@ -57,14 +58,12 @@ export default function BarberSchedulePage() {
     if (res.ok) setReviews(await res.json())
   }, [])
 
-  // Buscar dados
   useEffect(() => {
     fetchBookings()
     fetchStats()
     fetchReviews()
   }, [fetchBookings, fetchStats, fetchReviews])
 
-  // Notificações
   useEffect(() => {
     const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || "")
     ws.onmessage = (event) => {
@@ -89,7 +88,7 @@ export default function BarberSchedulePage() {
     className: `bg-status-${b.status.toLowerCase()}`
   })), [bookings])
 
-  // View inicial do calendário com base no período
+  // View inicial do calendário
   const initialView = useMemo(() => {
      if (period === "day") return "timeGridDay";
      if (period === "week") return "timeGridWeek";
@@ -97,140 +96,142 @@ export default function BarberSchedulePage() {
   }, [period]);
 
   return (
-    <div className="min-h-screen text-white p-3 sm:p-4 md:p-6">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div className="text-center sm:text-left">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
-              Dashboard do Barbeiro
-            </h1>
-            <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Gerencie sua agenda e desempenho profissional</p>
-          </div>
-          <div className="flex gap-1 sm:gap-2 bg-[#1A1A1A] p-1 rounded-lg border border-[#333] w-fit mx-auto sm:mx-0">
-            <Button
-              variant={period === "day" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setPeriod("day")}
-              className={`
-                ${period === "day" 
-                  ? "bg-[#8161FF] hover:bg-[#6a4dff] text-white shadow-lg" 
-                  : "text-gray-300 hover:text-white hover:bg-[#333]"
-                } transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-3
-              `}
-            >
-              Hoje
-            </Button>
-            <Button
-              variant={period === "week" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setPeriod("week")}
-              className={`
-                ${period === "week" 
-                  ? "bg-[#8161FF] hover:bg-[#6a4dff] text-white shadow-lg" 
-                  : "text-gray-300 hover:text-white hover:bg-[#333]"
-                } transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-3
-              `}
-            >
-              Semana
-            </Button>
-            <Button
-              variant={period === "month" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setPeriod("month")}
-              className={`
-                ${period === "month" 
-                  ? "bg-[#8161FF] hover:bg-[#6a4dff] text-white shadow-lg" 
-                  : "text-gray-300 hover:text-white hover:bg-[#333]"
-                } transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-3
-              `}
-            >
-              Mês
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <StatsCards stats={stats} className="mb-6 sm:mb-8" />
-
-        <Card className="bg-[#1A1A1A] border-[#333] shadow-2xl">
-          <CardContent className="p-3 sm:p-4 md:p-6">
-            <Tabs defaultValue="calendar" className="space-y-4 sm:space-y-6">
-              
-              <TabsList
-                className="flex bg-[#151515] border border-[#333] p-1 rounded-lg gap-1 overflow-x-auto scrollbar-hide min-h-[2.5rem] justify-start"
+    <AuthCheck requiredRole="BARBER">
+      <div className="min-h-screen text-white p-3 sm:p-4 md:p-6">
+        <div className="container mx-auto max-w-7xl">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
+                Dashboard do Barbeiro
+              </h1>
+              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Gerencie sua agenda e desempenho profissional</p>
+            </div>
+            <div className="flex gap-1 sm:gap-2 bg-[#1A1A1A] p-1 rounded-lg border border-[#333] w-fit mx-auto sm:mx-0">
+              <Button
+                variant={period === "day" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setPeriod("day")}
+                className={`
+                  ${period === "day" 
+                    ? "bg-[#8161FF] hover:bg-[#6a4dff] text-white shadow-lg" 
+                    : "text-gray-300 hover:text-white hover:bg-[#333]"
+                  } transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-3
+                `}
               >
-                {[
-                  { value: "calendar", label: "Calendário", icon: "📅", shortLabel: "Calend." },
-                  { value: "bookings", label: "Agendamentos", icon: "📋", shortLabel: "Agend." },
-                  { value: "profile", label: "Perfil", icon: "👤", shortLabel: "Perfil" },
-                  { value: "reviews", label: "Avaliações", icon: "⭐", shortLabel: "Aval." },
-                  { value: "schedule", label: "Horários", icon: "⏰", shortLabel: "Horários" },
-                ].map((tab) => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="
-                      data-[state=active]:bg-[#8161FF] data-[state=active]:text-white data-[state=active]:shadow-lg
-                      data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-[#333]
-                      transition-all duration-200 font-semibold text-xs sm:text-sm py-1 sm:py-2 px-2 sm:px-3
-                      flex items-center gap-1 sm:gap-2 justify-center whitespace-nowrap flex-shrink-0 min-w-[70px] sm:min-w-[100px]
-                    "
-                  >
-                    <span className="text-xs sm:text-sm">{tab.icon}</span>
-                    <span className="hidden xs:inline">{tab.label}</span>
-                    <span className="xs:hidden">{tab.shortLabel}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+                Hoje
+              </Button>
+              <Button
+                variant={period === "week" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setPeriod("week")}
+                className={`
+                  ${period === "week" 
+                    ? "bg-[#8161FF] hover:bg-[#6a4dff] text-white shadow-lg" 
+                    : "text-gray-300 hover:text-white hover:bg-[#333]"
+                  } transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-3
+                `}
+              >
+                Semana
+              </Button>
+              <Button
+                variant={period === "month" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setPeriod("month")}
+                className={`
+                  ${period === "month" 
+                    ? "bg-[#8161FF] hover:bg-[#6a4dff] text-white shadow-lg" 
+                    : "text-gray-300 hover:text-white hover:bg-[#333]"
+                  } transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-3
+                `}
+              >
+                Mês
+              </Button>
+            </div>
+          </div>
 
-              <TabsContent value="calendar" className="space-y-3 sm:space-y-4">
-                <Card className="bg-[#0F0F0F] border-2 border-[#333] shadow-xl">
-                  <CardContent className="p-0">
-                    <FullCalendar
-                      plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                      initialView={initialView}
-                      headerToolbar={{
-                        left: "prev,next today",
-                        center: "title",
-                        right: "dayGridMonth,timeGridWeek,timeGridDay"
-                      }}
-                      events={calendarEvents}
-                      locale={ptLocale}
-                      height="auto"
-                      dateClick={(info) => setSelectedDate(info.date)}
-                      eventClick={(info) => toast.info("Detalhes do Agendamento", { description: info.event.title })}
-                      themeSystem="standard"
-                      dayMaxEvents={true}
-                      slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-                      contentHeight="auto"
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
+          {/* Stats Cards */}
+          <StatsCards stats={stats} className="mb-6 sm:mb-8" />
 
-              <TabsContent value="bookings" className="space-y-4">
-                <BookingsTable bookings={bookings} onRefresh={fetchBookings} />
-              </TabsContent>
+          <Card className="bg-[#1A1A1A] border-[#333] shadow-2xl">
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <Tabs defaultValue="calendar" className="space-y-4 sm:space-y-6">
+                
+                <TabsList
+                  className="flex bg-[#151515] border border-[#333] p-1 rounded-lg gap-1 overflow-x-auto scrollbar-hide min-h-[2.5rem] justify-start"
+                >
+                  {[
+                    { value: "calendar", label: "Calendário", icon: "📅", shortLabel: "Calend." },
+                    { value: "bookings", label: "Agendamentos", icon: "📋", shortLabel: "Agend." },
+                    { value: "profile", label: "Perfil", icon: "👤", shortLabel: "Perfil" },
+                    { value: "reviews", label: "Avaliações", icon: "⭐", shortLabel: "Aval." },
+                    { value: "schedule", label: "Horários", icon: "⏰", shortLabel: "Horários" },
+                  ].map((tab) => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className="
+                        data-[state=active]:bg-[#8161FF] data-[state=active]:text-white data-[state=active]:shadow-lg
+                        data-[state=inactive]:text-gray-400 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-[#333]
+                        transition-all duration-200 font-semibold text-xs sm:text-sm py-1 sm:py-2 px-2 sm:px-3
+                        flex items-center gap-1 sm:gap-2 justify-center whitespace-nowrap flex-shrink-0 min-w-[70px] sm:min-w-[100px]
+                      "
+                    >
+                      <span className="text-xs sm:text-sm">{tab.icon}</span>
+                      <span className="hidden xs:inline">{tab.label}</span>
+                      <span className="xs:hidden">{tab.shortLabel}</span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-              <TabsContent value="profile" className="space-y-4">
-                <ProfileCard />
-              </TabsContent>
+                <TabsContent value="calendar" className="space-y-3 sm:space-y-4">
+                  <Card className="bg-[#0F0F0F] border-2 border-[#333] shadow-xl">
+                    <CardContent className="p-0">
+                      <FullCalendar
+                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                        initialView={initialView}
+                        headerToolbar={{
+                          left: "prev,next today",
+                          center: "title",
+                          right: "dayGridMonth,timeGridWeek,timeGridDay"
+                        }}
+                        events={calendarEvents}
+                        locale={ptLocale}
+                        height="auto"
+                        dateClick={(info) => setSelectedDate(info.date)}
+                        eventClick={(info) => toast.info("Detalhes do Agendamento", { description: info.event.title })}
+                        themeSystem="standard"
+                        dayMaxEvents={true}
+                        slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+                        contentHeight="auto"
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-              <TabsContent value="reviews" className="space-y-4">
-                <ReviewsChart reviews={reviews} />
-              </TabsContent>
+                <TabsContent value="bookings" className="space-y-4">
+                  <BookingsTable bookings={bookings} onRefresh={fetchBookings} />
+                </TabsContent>
 
-              <TabsContent value="schedule" className="space-y-4">
-                <WorkSchedule />
-                <AbsenceManager />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                <TabsContent value="profile" className="space-y-4">
+                  <ProfileCard />
+                </TabsContent>
 
-        <NotificationToast />
+                <TabsContent value="reviews" className="space-y-4">
+                  <ReviewsChart reviews={reviews} />
+                </TabsContent>
+
+                <TabsContent value="schedule" className="space-y-4">
+                  <WorkSchedule />
+                  <AbsenceManager />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          <NotificationToast />
+        </div>
       </div>
-    </div>
+    </AuthCheck>
   )
 }

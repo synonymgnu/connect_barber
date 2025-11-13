@@ -1,25 +1,117 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
 
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  
+  if (!session) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+  }
 
+  if (session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 })
+  }
 
-// [ GET ] -> Lista barbeiros da barbearia
-export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const { name, email, phone, imageUrl, speciality, bio, instagram } = await req.json()
 
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    console.log("Dados recebidos:", { name, email, phone })
+
+    if (!name || !email) {
+      return NextResponse.json(
+        { error: "Nome e email são obrigatórios" }, 
+        { status: 400 }
+      )
     }
 
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    const existingUser = await db.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Já existe um usuário com este email" }, 
+        { status: 400 }
+      )
     }
 
-    const barbershop = await db.barbershop.findUnique({
-      where: { ownerId: session.user.id },
+    const barbershop = await db.barbershop.findFirst({
+      where: { ownerId: session.user.id }
+    })
+
+    if (!barbershop) {
+      return NextResponse.json(
+        { error: "Admin não possui uma barbearia cadastrada" }, 
+        { status: 400 }
+      )
+    }
+
+    console.log("Barbearia encontrada:", barbershop.id)
+
+    const user = await db.user.create({
+      data: {
+        name,
+        email,
+        role: "BARBER",
+        image: imageUrl,
+        emailVerified: new Date(),
+      }
+    })
+
+    console.log("Usuário criado:", user.id)
+
+    const barber = await db.barber.create({
+      data: {
+        name,
+        email,
+        phone: phone || null,
+        imageUrl: imageUrl || null,
+        speciality: speciality || null,
+        bio: bio || null,
+        instagram: instagram || null,
+        userId: user.id,
+        barbershopId: barbershop.id
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true
+          }
+        }
+      }
+    })
+
+    console.log("Barbeiro criado com sucesso:", barber.id)
+
+    return NextResponse.json(barber)
+
+  } catch (error) {
+    console.error("Erro ao criar barbeiro:", error)
+    return NextResponse.json(
+      { error: "Erro interno do servidor" }, 
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  
+  if (!session) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+  }
+
+  if (session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 })
+  }
+
+  try {
+    const barbershop = await db.barbershop.findFirst({
+      where: { ownerId: session.user.id }
     })
 
     if (!barbershop) {
@@ -28,85 +120,25 @@ export async function GET() {
 
     const barbers = await db.barber.findMany({
       where: { barbershopId: barbershop.id },
-      include: { user: true },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            image: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     })
 
     return NextResponse.json(barbers)
 
   } catch (error) {
-    console.error(error)
+    console.error("Erro ao buscar barbeiros:", error)
     return NextResponse.json(
-      { error: "Erro ao buscar barbeiros" },
-      { status: 500 }
-    )
-  }
-}
-
-// POST - Cria novo barbeiro
-export async function POST(req: NextRequest) {
-  
-  try {
-
-    const session = await getServerSession(authOptions)
-
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
-    }
-
-    const body = await req.json()
-
-    // Verifica se o email já existe
-    const existingUser = await db.user.findUnique({
-      where: { email: body.email },
-    })
-
-    let user
-
-    if (existingUser) {
-      // Se usuário existe, atualiza role para BARBER
-      user = await db.user.update({
-        where: { id: existingUser.id },
-        data: { role: "BARBER" },
-      })
-    } else {
-      // Cria novo usuário
-      user = await db.user.create({
-        data: {
-          email: body.email,
-          name: body.name,
-          role: "BARBER",
-        },
-      })
-    }
-
-    // Obtém a barbearia do admin
-    const barbershop = await db.barbershop.findUnique({
-      where: { ownerId: session.user.id },
-    })
-
-    if (!barbershop) {
-      return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 })
-    }
-
-    // Cria barbeiro
-    const barber = await db.barber.create({
-      data: {
-        name: body.name,
-        email: body.email,
-        phone: body.phone,
-        imageUrl: body.imageUrl,
-        userId: user.id,
-        barbershopId: barbershop.id,
-      },
-    })
-
-    return NextResponse.json(barber, { status: 201 })
-
-  } catch (error) {
-    console.error(error)
-    
-    return NextResponse.json(
-      { error: "Erro ao criar barbeiro" },
+      { error: "Erro interno do servidor" }, 
       { status: 500 }
     )
   }

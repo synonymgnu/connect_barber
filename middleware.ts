@@ -6,23 +6,45 @@ export default withAuth(
     const token = req.nextauth.token
     const pathname = req.nextUrl.pathname
 
-    // Proteger rotas do barbeiro
     if (pathname.startsWith('/barber')) {
       if (token?.role !== 'BARBER') {
         return NextResponse.redirect(new URL('/', req.url))
       }
     }
 
-    // Proteger rotas do dashboard admin
     if (pathname.startsWith('/dashboard')) {
       if (token?.role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/', req.url))
       }
     }
+
+    return NextResponse.next()
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl
+        
+        // Rotas públicas
+        const publicPaths = [
+          '/',
+          '/api/auth',
+          '/auth',
+          '/signin',
+          '/api/barbershops',
+          '/barbershops'
+        ]
+        
+        const isPublicPath = publicPaths.some(path => 
+          pathname === path || pathname.startsWith(`${path}/`)
+        )
+
+        if (isPublicPath) {
+          return true
+        }
+
+        return !!token
+      },
     },
   }
 )

@@ -23,3 +23,10 @@ declare module 'next-auth' {
     barberId?: string | null
   }
 }
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role: UserRole
+    barberId?: string | null
+  }
+}
