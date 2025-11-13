@@ -6,20 +6,17 @@ export default withAuth(
     const token = req.nextauth.token
     const pathname = req.nextUrl.pathname
 
-    // Bloqueia se não for ADMIN ou BARBER
-    if (pathname.startsWith('/dashboard')) {
-      if (token?.role !== 'ADMIN' && token?.role !== 'BARBER') {
+    // Proteger rotas do barbeiro
+    if (pathname.startsWith('/barber')) {
+      if (token?.role !== 'BARBER') {
         return NextResponse.redirect(new URL('/', req.url))
       }
     }
 
-    // Bloqueia se não for ADMIN
-    if (
-      pathname.startsWith('/dashboard/settings') ||
-      pathname.startsWith('/dashboard/barbers')
-    ) {
+    // Proteger rotas do dashboard admin
+    if (pathname.startsWith('/dashboard')) {
       if (token?.role !== 'ADMIN') {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+        return NextResponse.redirect(new URL('/', req.url))
       }
     }
   },
@@ -31,8 +28,8 @@ export default withAuth(
 )
 
 export const config = {
-   matcher: [
-    '/bookings/:path*',
-    '/admin/:path*',
+  matcher: [
+    '/barber/:path*',
+    '/dashboard/:path*',
   ],
 }
