@@ -30,11 +30,13 @@ export default async function ServicesPage() {
                   />
                 </div>
                 {/* DIREITA */}
-                <div className="space-y-2 w-screen">
-                  <h3 className="font-semibold text-sm lg:text-base">
+                <div className="space-y-2 w-screen flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm lg:text-base truncate">
                     {service.name}
                   </h3>
-                  <p className="text-sm text-gray-400">{service.description}</p>
+                  <p className="text-sm text-gray-400 line-clamp-2 break-words">
+                    {service.description}
+                  </p>
                   {/* PREÇO E BOTÃO  */}
                   <div className="flex items-center justify-between mt-2">
                     <p className="font-bold text-sm text-primary lg:text-base">
