@@ -6,6 +6,7 @@ import EventDetailsPanel from '../../_components/calendar/EventDetailsPanel'
 import CalendarStyles from '../../_components/calendar/calendar-styles'
 import { getEventColorByStatus } from './utils'
 import HeaderAdmin from '@/app/_components/dashboard/header-admin'
+import { AdminSidebar } from '@/app/_components/dashboard/admin-sidebar'
 
 const initialEvents = [
   {
@@ -40,11 +41,9 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
 
   return (
-    <div className="lg:flex lg:h-screen overflow-hidden">
-      <HeaderAdmin />
-
+    <>
       <div className="flex flex-col flex-1 min-h-0">
-        <main className="p-4 sm:p-6 flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto">
           <h1 className="text-2xl font-bold mb-6 text-[#8161FF]">Agenda</h1>
           <CalendarStyles />
           <div className="flex flex-col lg:flex-row gap-6">
@@ -61,6 +60,6 @@ export default function CalendarPage() {
           </div>
         </main>
       </div>
-    </div>
+    </>
   )
 }

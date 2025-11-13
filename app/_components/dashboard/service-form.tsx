@@ -44,7 +44,10 @@ export function ServiceForm({ onSubmit, initialData }: any) {
   ]
 
   const isDisabled =
-    !formData.name.trim() || !formData.price || Number(formData.price) <= 0
+    !formData.name.trim() ||
+    !formData.price ||
+    Number(formData.price) <= 0 ||
+    !formData.imageUrl
 
   return (
     <form
@@ -77,7 +80,11 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.description}
           onChange={handleChange}
           placeholder="(opcional)"
+          maxLength={100}
         />
+        <p className="text-xs text-muted-foreground text-right mt-1">
+          {formData.description.length}/100
+        </p>
       </div>
 
       <div>

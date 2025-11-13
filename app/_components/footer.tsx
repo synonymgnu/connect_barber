@@ -8,9 +8,11 @@ const Footer = () => {
 
   const isDashboard = pathname.startsWith('/dashboard')
 
+  if (isDashboard) return null
+
   return (
     <footer>
-      <Card className={`${isDashboard ? '' : 'mt-5 lg:mt-24'}`}>
+      <Card className="mt-5 lg:mt-24">
         <CardContent className="px-5 py-6">
           <p className="text-sm text-gray-400">
             © 2025 Copyright <span className="font-bold">Connect Barber</span>

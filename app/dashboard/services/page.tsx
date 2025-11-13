@@ -1,18 +1,17 @@
 import { getServices } from '@/app/_actions/get-services'
 import { EditServiceDialog } from '@/app/_components/dashboard/edit-service-dialog'
-import HeaderAdmin from '@/app/_components/dashboard/header-admin'
 import { DeleteServiceButton } from '@/app/_components/dashboard/delete-service-button'
 import { Card, CardContent } from '@/app/_components/ui/card'
 import Image from 'next/image'
 import { CreateServiceDialog } from '@/app/_components/dashboard/create-service-dialog'
+import { AdminSidebar } from '@/app/_components/dashboard/admin-sidebar'
 
 export default async function ServicesPage() {
   const services = await getServices()
 
   return (
-    <div className="lg:flex lg:h-screen">
-      <HeaderAdmin />
-      <main className="flex-1 overflow-y-auto p-5 lg:p-10">
+    <>
+      <main className="overflow-y-auto">
         <div className="flex gap-7 justify-between">
           <h1 className="font-bold text-xl lg:text-2xl">Serviços</h1>
           <CreateServiceDialog />
@@ -31,11 +30,13 @@ export default async function ServicesPage() {
                   />
                 </div>
                 {/* DIREITA */}
-                <div className="space-y-2 w-screen">
-                  <h3 className="font-semibold text-sm lg:text-base">
+                <div className="space-y-2 w-screen flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm lg:text-base truncate">
                     {service.name}
                   </h3>
-                  <p className="text-sm text-gray-400">{service.description}</p>
+                  <p className="text-sm text-gray-400 line-clamp-2 break-words">
+                    {service.description}
+                  </p>
                   {/* PREÇO E BOTÃO  */}
                   <div className="flex items-center justify-between mt-2">
                     <p className="font-bold text-sm text-primary lg:text-base">
@@ -55,6 +56,6 @@ export default async function ServicesPage() {
           ))}
         </div>
       </main>
-    </div>
+    </>
   )
 }
