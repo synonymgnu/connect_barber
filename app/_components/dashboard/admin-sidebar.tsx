@@ -1,9 +1,18 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Scissors, Calendar, LogOut, LayoutDashboard, User } from 'lucide-react'
+import {
+  Scissors,
+  Calendar,
+  LogOut,
+  LayoutDashboard,
+  User,
+  ChevronUp,
+  Menu,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import {
   Sidebar,
@@ -19,12 +28,25 @@ import {
   useSidebar,
 } from '../ui/sidebar'
 import Image from 'next/image'
+import { Avatar, AvatarImage } from '../ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip'
 
 export function AdminSidebar() {
   const pathname = usePathname()
-  const { open } = useSidebar()
+  const sidebar = useSidebar() // 👈 pegando o objeto inteiro
+  const { open, setOpen } = useSidebar()
   const [hover, setHover] = useState(false)
-
   const expanded = open || hover
 
   const menuItems = [
@@ -41,7 +63,6 @@ export function AdminSidebar() {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      {/* ANIMAÇÃO DE EXPANSÃO */}
       <motion.div
         animate={{
           width: expanded ? 240 : 72,
@@ -49,63 +70,85 @@ export function AdminSidebar() {
         transition={{ duration: 0.25, ease: 'easeInOut' }}
         className="overflow-hidden h-full flex flex-col"
       >
-        <SidebarHeader className="p-4 border-b">
-          <div className="flex items-center gap-2">
+        {/* BOTÃO DE FECHAR (mobile) */}
+        {open && (
+          <button
+            onClick={() => setOpen(false)}
+            className="absolute right-3 top-3 md:hidden p-1 rounded-md hover:bg-muted transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+        {/* HEADER */}
+        <SidebarHeader
+          className={`p-[9px]  transition-all duration-200 ${
+            expanded ? 'border-border' : 'border-transparent'
+          }`}
+        >
+          <button
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-2 overflow-hidden"
+          >
             <Image
               alt="Connect Barber"
               src="/logo3.png"
-              height={18}
-              width={18}
+              height={30}
+              width={30}
             />
-            <AnimatePresence>
-              {expanded && (
-                <motion.h1
-                  key="title"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="font-bold text-lg tracking-tight"
-                >
+            <motion.div
+              animate={{
+                opacity: open ? 1 : 0,
+                width: open ? 'auto' : 0,
+              }}
+              transition={{ duration: 0.15, ease: 'easeInOut' }}
+              className="whitespace-nowrap"
+            >
+              {open && (
+                <h1 className="font-bold text-lg tracking-tight">
                   Connect Barber
-                </motion.h1>
+                </h1>
               )}
-            </AnimatePresence>
-          </div>
+            </motion.div>
+          </button>
         </SidebarHeader>
 
-        {/* CONTEÚDO */}
+        {/* MENU */}
         <SidebarContent className="flex-1">
           <SidebarGroup>
-            <AnimatePresence>
-              {expanded && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                ></motion.div>
-              )}
-            </AnimatePresence>
-
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => {
                   const Icon = item.icon
                   const active = pathname === item.href
+
                   return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={active}>
-                        <Link
-                          href={item.href}
-                          className="flex items-center gap-3 px-3 py-2 rounded-md transition hover:bg-muted"
-                        >
-                          <Icon className="w-5 h-5" />
-                          {expanded && (
-                            <span className="font-medium text-sm">
-                              {item.label}
-                            </span>
-                          )}
-                        </Link>
-                      </SidebarMenuButton>
+                    <SidebarMenuItem key={item.href} className="relative group">
+                      <Tooltip open={!open ? undefined : false}>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild isActive={active}>
+                            <Link
+                              href={item.href}
+                              className="flex items-center gap-3 px-3 py-2 rounded-md transition hover:bg-muted relative"
+                            >
+                              <Icon className="w-5 h-5" />
+                              {expanded && (
+                                <span className="font-medium text-sm">
+                                  {item.label}
+                                </span>
+                              )}
+                            </Link>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        {!open && (
+                          <TooltipContent
+                            side="right"
+                            align="center"
+                            sideOffset={10}
+                          >
+                            <p>{item.label}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
                     </SidebarMenuItem>
                   )
                 })}
@@ -114,16 +157,39 @@ export function AdminSidebar() {
           </SidebarGroup>
         </SidebarContent>
 
-        {/* RODAPÉ */}
-        <SidebarFooter className="border-t p-3">
+        {/* FOOTER */}
+        <SidebarFooter
+          className={`transition-all duration-200 ${
+            open ? 'border-t border-border' : 'border-none'
+          }`}
+        >
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <button className="flex items-center gap-3 text-red-500 w-full hover:bg-red-100 dark:hover:bg-red-900/20 rounded-md px-3 py-2 transition">
-                  <LogOut className="w-5 h-5" />
-                  {expanded && <span className="font-medium">Sair</span>}
-                </button>
-              </SidebarMenuButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton>
+                    <Avatar className="w-4 h-4">
+                      <AvatarImage src="/user-img.svg" />
+                    </Avatar>
+                    Username
+                    <ChevronUp className="ml-auto" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  side="top"
+                  className="w-[--radix-popper-anchor-width]"
+                >
+                  <DropdownMenuItem>
+                    <span>Account</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>Billing</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

@@ -42,10 +42,8 @@ export default function CalendarPage() {
 
   return (
     <>
-      <AdminSidebar />
-
       <div className="flex flex-col flex-1 min-h-0">
-        <main className="p-4 sm:p-6 flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto">
           <h1 className="text-2xl font-bold mb-6 text-[#8161FF]">Agenda</h1>
           <CalendarStyles />
           <div className="flex flex-col lg:flex-row gap-6">

@@ -11,7 +11,6 @@ export default async function ServicesPage() {
 
   return (
     <>
-      <AdminSidebar />
       <main className="overflow-y-auto">
         <div className="flex gap-7 justify-between">
           <h1 className="font-bold text-xl lg:text-2xl">Serviços</h1>
