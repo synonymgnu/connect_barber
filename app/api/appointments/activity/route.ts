@@ -22,6 +22,9 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || ''
     const statusFilter = searchParams.get('status') || 'all'
     const dateFilter = searchParams.get('dateFilter') || 'all'
+    
+    const selectedDateStr = searchParams.get('selectedDate')
+    const selectedDate = selectedDateStr ? new Date(selectedDateStr) : null
 
     const skip = (page - 1) * pageSize
 
@@ -31,7 +34,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Filtro de busca
     if (search) {
       whereClause.OR = [
         { user: { name: { contains: search, mode: 'insensitive' } } },
@@ -40,74 +42,81 @@ export async function GET(request: Request) {
       ]
     }
 
-    // Filtro de status
     if (statusFilter !== 'all') {
       whereClause.status = statusFilter.toUpperCase()
     }
 
     // Filtro de data
-    const today = new Date()
-    if (dateFilter === 'today') {
-      const startOfDay = new Date(today)
+    if (dateFilter === 'today' && selectedDate) {
+
+      const startOfDay = new Date(selectedDate)
       startOfDay.setHours(0, 0, 0, 0)
-      const endOfDay = new Date(today)
+      const endOfDay = new Date(selectedDate)
       endOfDay.setHours(23, 59, 59, 999)
       whereClause.date = { gte: startOfDay, lte: endOfDay }
-    } else if (dateFilter === 'week') {
-      const weekAgo = new Date(today)
-      weekAgo.setDate(today.getDate() - 7)
-      whereClause.date = { gte: weekAgo }
-    } else if (dateFilter === 'month') {
-      const monthAgo = new Date(today)
-      monthAgo.setMonth(today.getMonth() - 1)
-      whereClause.date = { gte: monthAgo }
+
+    } else if (dateFilter === 'week' && selectedDate) {
+
+      const startOfWeek = new Date(selectedDate)
+      startOfWeek.setHours(0, 0, 0, 0)
+      startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay())
+      const endOfWeek = new Date(startOfWeek)
+      endOfWeek.setDate(startOfWeek.getDate() + 6)
+      endOfWeek.setHours(23, 59, 59, 999)
+      whereClause.date = { gte: startOfWeek, lte: endOfWeek }
+
+    } else if (dateFilter === 'month' && selectedDate) {
+
+      const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
+      endOfMonth.setHours(23, 59, 59, 999)
+      whereClause.date = { gte: startOfMonth, lte: endOfMonth }
+
+    } else if (dateFilter === 'year' && selectedDate) {
+
+      const startOfYear = new Date(selectedDate.getFullYear(), 0, 1)
+      const endOfYear = new Date(selectedDate.getFullYear(), 11, 31)
+      endOfYear.setHours(23, 59, 59, 999)
+      whereClause.date = { gte: startOfYear, lte: endOfYear }
     }
 
-    // Buscar agendamentos
-    const [bookings, totalCount] = await Promise.all([
-      db.booking.findMany({
-        where: whereClause,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true
+    const bookings = await db.booking.findMany({
+      where: whereClause,
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        service: { select: { id: true, name: true, price: true } },
+        barber: { select: { id: true, name: true } }
+      },
+      orderBy: { date: 'desc' },
+      skip,
+      take: pageSize
+    })
+
+    const now = new Date()
+    const updatedBookings = await Promise.all(
+      bookings.map(async (booking) => {
+        if (booking.date < now && booking.status === 'CONFIRMED') {
+          return await db.booking.update({
+            where: { id: booking.id },
+            data: { status: 'COMPLETED' },
+            include: {
+              user: { select: { id: true, name: true, email: true, phone: true } },
+              service: { select: { id: true, name: true, price: true } },
+              barber: { select: { id: true, name: true } }
             }
-          },
-          service: {
-            select: {
-              name: true,
-              price: true
-            }
-          },
-          barber: {
-            select: {
-              name: true
-            }
-          }
-        },
-        orderBy: {
-          date: 'desc'
-        },
-        skip,
-        take: pageSize
-      }),
-      db.booking.count({
-        where: whereClause
+          })
+        }
+        return booking
       })
-    ])
+    )
 
-    const totalPages = Math.ceil(totalCount / pageSize)
-
-    // Formatar dados
-    const formattedBookings = bookings.map(booking => ({
+    const formattedBookings = updatedBookings.map(booking => ({
       id: booking.id,
       customerName: booking.user.name || 'Cliente',
       customerEmail: booking.user.email || '',
       customerPhone: booking.user.phone || '',
       type: booking.service.name,
+      serviceId: booking.service.id,
       date: new Date(booking.date).toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: 'short',
@@ -119,13 +128,16 @@ export async function GET(request: Request) {
       source: booking.source,
       status: booking.status.toLowerCase(),
       employee: booking.barber?.name || 'Não atribuído',
+      employeeId: booking.barber?.id || '',
       duration: booking.duration || 30,
       totalValue: Number(booking.service.price)
     }))
 
+    const totalCount = await db.booking.count({ where: whereClause })
+
     return NextResponse.json({
       data: formattedBookings,
-      totalPages,
+      totalPages: Math.ceil(totalCount / pageSize),
       totalCount,
       currentPage: page
     })

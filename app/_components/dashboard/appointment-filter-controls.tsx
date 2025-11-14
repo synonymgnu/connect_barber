@@ -66,9 +66,8 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
           ))}
         </div>
 
-        {/* Direita: Itens por página + Ações */}
+        {/* Itens por página */}
         <div className="flex items-center gap-4 w-full lg:w-auto">
-          {/* Controle de Itens por Página */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-400 whitespace-nowrap">Mostrar:</span>
             <Select
@@ -90,7 +89,6 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
             </Select>
           </div>
 
-          {/* Botão Ações - AO LADO DE MOSTRAR: */}
           {hasSelection && (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:bg-slate-800/50 hover:text-white">
