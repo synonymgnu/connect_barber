@@ -11,6 +11,7 @@ declare module 'next-auth' {
       image?: string | null
       role: UserRole
       barberId?: string | null
+      barbershopId?: string | null
     } & DefaultSession['user']
   }
 
@@ -21,6 +22,7 @@ declare module 'next-auth' {
     image?: string | null
     role: UserRole
     barberId?: string | null
+    barbershopId?: string | null
   }
 }
 
@@ -28,5 +30,6 @@ declare module 'next-auth/jwt' {
   interface JWT {
     role: UserRole
     barberId?: string | null
+    barbershopId?: string | null
   }
 }
