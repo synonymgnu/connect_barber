@@ -38,7 +38,7 @@ export function CreateServiceDialog() {
           <Button onClick={() => setOpen(true)}>Cadastrar novo</Button>
         </DialogTrigger>
 
-        <DialogContent className="w-[90%] rounded-lg">
+        <DialogContent className="w-[90%] h-[90%]rounded-lg">
           <DialogHeader>
             <DialogTitle>Cadastrar Serviço</DialogTitle>
           </DialogHeader>
