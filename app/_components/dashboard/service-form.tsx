@@ -80,10 +80,10 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.description}
           onChange={handleChange}
           placeholder="(opcional)"
-          maxLength={100}
+          maxLength={50}
         />
         <p className="text-xs text-muted-foreground text-right mt-1">
-          {formData.description.length}/100
+          {formData.description.length}/50
         </p>
       </div>
 
