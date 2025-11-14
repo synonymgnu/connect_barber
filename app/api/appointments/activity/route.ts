@@ -25,7 +25,6 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * pageSize
 
-    // Base query
     const whereClause: any = {
       service: {
         barbershopId: barbershopId
@@ -117,7 +116,7 @@ export async function GET(request: Request) {
         hour: '2-digit',
         minute: '2-digit'
       }),
-      location: 'Presencial',
+      source: booking.source,
       status: booking.status.toLowerCase(),
       employee: booking.barber?.name || 'Não atribuído',
       duration: booking.duration || 30,

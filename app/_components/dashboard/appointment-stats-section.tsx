@@ -25,96 +25,8 @@ interface AppointmentStatsSectionProps {
   className?: string;
 }
 
-async function fetchAppointmentStats(timeRange: '1D' | '1W' | '1M' | '1Y') {
-    try {
-        const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
-        if (!response.ok) throw new Error('Erro ao buscar estatísticas');
-        return response.json();
-    } catch (error) {
-        console.error('Error fetching stats:', error);
-
-        return generateMockData(timeRange);
-    }
-}
-
-// Função para simular dados enquanto não tem a API
-function generateMockData(timeRange: '1D' | '1W' | '1M' | '1Y'): AppointmentStats {
-  const baseData = {
-    '1D': {
-      totalAppointments: 150,
-      newCustomers: 45,
-      offlineCount: 85,
-      onlineCount: 65,
-      conversionRate: 68,
-      peakHour: "10:00 AM",
-      chartData: [
-        { time: "8:00 AM", offline: 45, online: 20 },
-        { time: "9:00 AM", offline: 60, online: 35 },
-        { time: "10:00 AM", offline: 80, online: 50 },
-        { time: "11:00 AM", offline: 70, online: 45 },
-        { time: "12:00 PM", offline: 50, online: 30 },
-        { time: "2:00 PM", offline: 40, online: 25 },
-        { time: "3:00 PM", offline: 55, online: 35 },
-        { time: "4:00 PM", offline: 35, online: 20 },
-        { time: "5:00 PM", offline: 25, online: 15 },
-        { time: "6:00 PM", offline: 30, online: 20 },
-        { time: "7:00 PM", offline: 20, online: 10 },
-      ]
-    },
-    '1W': {
-      totalAppointments: 890,
-      newCustomers: 210,
-      offlineCount: 520,
-      onlineCount: 370,
-      conversionRate: 72,
-      peakHour: "Sábado",
-      chartData: [
-        { time: "Seg", offline: 120, online: 80 },
-        { time: "Ter", offline: 150, online: 95 },
-        { time: "Qua", offline: 130, online: 85 },
-        { time: "Qui", offline: 140, online: 90 },
-        { time: "Sex", offline: 160, online: 110 },
-        { time: "Sáb", offline: 180, online: 130 },
-      ]
-    },
-    '1M': {
-      totalAppointments: 3500,
-      newCustomers: 850,
-      offlineCount: 2100,
-      onlineCount: 1400,
-      conversionRate: 75,
-      peakHour: "Semana 2",
-      chartData: [
-        { time: "Sem 1", offline: 450, online: 300 },
-        { time: "Sem 2", offline: 520, online: 350 },
-        { time: "Sem 3", offline: 480, online: 320 },
-        { time: "Sem 4", offline: 510, online: 340 },
-      ]
-    },
-    '1Y': {
-      totalAppointments: 42000,
-      newCustomers: 9800,
-      offlineCount: 25200,
-      onlineCount: 16800,
-      conversionRate: 78,
-      peakHour: "Maio",
-      chartData: [
-        { time: "Jan", offline: 1800, online: 1200 },
-        { time: "Fev", offline: 1900, online: 1300 },
-        { time: "Mar", offline: 2100, online: 1400 },
-        { time: "Abr", offline: 2000, online: 1350 },
-        { time: "Mai", offline: 2200, online: 1500 },
-        { time: "Jun", offline: 2300, online: 1600 },
-      ]
-    }
-  };
-
-  return baseData[timeRange];
-}
-
 export default function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
-
-  const [timeRange, setTimeRange] = useState<'1D' | '1W' | '1M' | '1Y'>('1D');
+  const [timeRange, setTimeRange] = useState<'1D' | '1W' | '1M' | '1Y'>('1W');
   const [stats, setStats] = useState<AppointmentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,8 +37,12 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
         setLoading(true);
         setError(null);
         
-        // TODO: Substituir quando a API pronta
-        const data = generateMockData(timeRange);
+        const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
+        if (!response.ok) {
+          throw new Error('Erro ao carregar estatísticas');
+        }
+        
+        const data = await response.json();
         setStats(data);
       } catch (error) {
         setError('Erro ao carregar estatísticas');
@@ -142,7 +58,6 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
   // gráfico divergente
   const chartData = useMemo(() => {
     if (!stats) return [];
-    
     return stats.chartData.map(item => ({
       time: item.time,
       offline: item.offline,
@@ -165,7 +80,6 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
     if (active && payload && payload.length) {
       const offlineValue = payload.find((p) => p.dataKey === 'offline')?.value || 0;
       const onlineValue = Math.abs(payload.find((p) => p.dataKey === 'online')?.value || 0);
-      
       return (
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 shadow-lg">
           <p className="text-white font-semibold text-sm">{label}</p>
@@ -191,9 +105,17 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
   if (loading) {
     return (
       <Card className={`w-full bg-[#0c0c0c] border-[#1f1f1f] ${className}`}>
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold text-white">
+            Estatísticas de Agendamentos
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-400">Carregando estatísticas...</div>
+            <div className="animate-pulse">
+              <div className="h-8 bg-slate-700 rounded w-48 mb-4"></div>
+              <div className="h-64 bg-slate-700 rounded"></div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -203,6 +125,11 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
   if (error || !stats) {
     return (
       <Card className={`w-full bg-[#0c0c0c] border-[#1f1f1f] ${className}`}>
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold text-white">
+            Estatísticas de Agendamentos
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-rose-400">{error || 'Erro ao carregar dados'}</div>
@@ -218,9 +145,7 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
         <CardTitle className="text-xl font-semibold text-white">
           Estatísticas de Agendamentos
         </CardTitle>
-        
         <div className="flex flex-col lg:flex-row flex-wrap items-center justify-center lg:justify-end gap-2 lg:gap-4 mt-2 lg:mt-0">
-
           {/* Legendas */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -232,7 +157,6 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
               <span className="text-sm text-slate-400">Online</span>
             </div>
           </div>
-
           {/* Filtros de tempo */}
           <div className="flex items-center gap-1">
             {(['1D', '1W', '1M', '1Y'] as const).map((period) => (
@@ -243,19 +167,19 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 onClick={() => setTimeRange(period)}
                 className={`h-8 px-3 text-xs ${
                   timeRange === period
-                    ? "text-white"
+                    ? "bg-[#8161FF] text-white border-[#8161FF]"
                     : "text-slate-400 border-slate-700 hover:bg-slate-800/50 hover:text-white"
                 }`}
               >
-                {period}
+                {period === '1D' ? 'Dia' : 
+                 period === '1W' ? 'Semana' : 
+                 period === '1M' ? 'Mês' : 'Ano'}
               </Button>
             ))}
           </div>
         </div>
       </CardHeader>
-
       <CardContent className="relative flex-1 pt-0">
-        
         <div className="h-72 mb-auto">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -270,25 +194,21 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 horizontal={true}
                 vertical={false}
               />
-              
               <XAxis 
                 dataKey="time"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 8 }}
+                tick={{ fill: '#9ca3af', fontSize: 10 }}
               />
-              
               <YAxis 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 8 }}
+                tick={{ fill: '#9ca3af', fontSize: 10 }}
                 domain={['dataMin - 20', 'dataMax + 20']}
                 tickFormatter={(value) => Math.abs(value).toString()}
-                width={20}
+                width={40}
               />
-              
               <Tooltip content={<CustomTooltip />} />
-              
               <Brush
                 dataKey="time"
                 height={20}
@@ -298,25 +218,23 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
                 startIndex={0}
                 endIndex={Math.min(4, chartData.length - 1)}
               />
-              
               <Bar 
                 dataKey="online" 
                 fill="#f97316"
                 radius={[12, 12, 12, 12]}
                 stackId="stack"
-                maxBarSize={14}
+                maxBarSize={20}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`online-${index}`} fill="#f97316" />
                 ))}
               </Bar>
-              
               <Bar 
                 dataKey="offline" 
                 fill="#8b5cf6"
                 radius={[12, 12, 12, 12]}
                 stackId="stack"
-                maxBarSize={14}
+                maxBarSize={20}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`offline-${index}`} fill="#8b5cf6" />
@@ -324,6 +242,30 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+        
+        {/* Resumo */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-[#1f1f1f]">
+          <div className="text-center">
+            <p className="text-slate-400 text-xs">Total</p>
+            <p className="text-white font-semibold text-lg">{stats.totalAppointments}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-slate-400 text-xs">Novos Clientes</p>
+            <p className="text-white font-semibold text-lg">{stats.newCustomers}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-slate-400 text-xs">Taxa Conversão</p>
+            <p className="text-white font-semibold text-lg">{stats.conversionRate}%</p>
+          </div>
+          <div className="text-center">
+            <p className="text-slate-400 text-xs">
+              Pico ({timeRange === '1D' ? 'Hora' : timeRange === '1W' ? 'Dia' : timeRange === '1M' ? 'Dia' : 'Mês'})
+            </p>
+            <p className="text-white font-semibold text-lg">
+              {stats.peakHour === 'N/A' ? '-' : stats.peakHour}
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,23 +1,7 @@
 import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { statusConfig, AppointmentStatus } from "@/app/_constants/appointment-types";
-
-interface AppointmentFilterControlsProps {
-  statusFilter: keyof typeof statusConfig | 'all';
-  setStatusFilter: (status: keyof typeof statusConfig | 'all') => void;
-  itemsPerPage: number;
-  setItemsPerPage: (num: number) => void;
-  filterType: "dia" | "semana" | "mês" | "ano" | "todos";
-  setFilterType: (type: "dia" | "semana" | "mês" | "ano" | "todos") => void;
-  filterValue: Date | null;
-  setFilterValue: (date: Date | null) => void;
-  setCurrentPage: (page: number) => void;
-  selectedAppointmentIds: Set<string>;
-  currentAppointmentsLength: number;
-  toggleSelectAll: () => void;
-  onClearFilters: () => void; // Função para limpar filtros de data
-}
+import { X } from "lucide-react";
 
 interface AppointmentFilterControlsProps {
   statusFilter: AppointmentStatus | 'all';
@@ -30,9 +14,9 @@ interface AppointmentFilterControlsProps {
   setFilterValue: (date: Date | null) => void;
   setCurrentPage: (page: number) => void;
   selectedAppointmentIds: Set<string>;
-  currentAppointmentsLength: number;
-  toggleSelectAll: () => void;
   onClearFilters: () => void;
+  hasSelection: boolean;
+  clearSelection: () => void;
 }
 
 const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
@@ -42,27 +26,23 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
   setItemsPerPage,
   filterType,
   setFilterType,
-  filterValue,
-  setFilterValue,
   setCurrentPage,
   selectedAppointmentIds,
-  currentAppointmentsLength,
-  toggleSelectAll,
   onClearFilters,
+  hasSelection,
+  clearSelection
 }) => {
   return (
-    <div className="px-6 py-4 border-b border-[#1f1f1f] flex flex-col gap-4">
-      {/* Carrossel de Filtros e Controles */}
-      <div className="flex overflow-x-auto pb-2 gap-4 [&::-webkit-scrollbar]:hidden">
-        {/* Filtros de Status */}
-        <div className="flex flex-nowrap gap-2">
+    <div className="px-6 py-4 border-b border-[#1f1f1f]">
+
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+        <div className="flex overflow-x-auto pb-2 gap-2 [&::-webkit-scrollbar]:hidden">
           <Button
             variant={statusFilter === 'all' ? "secondary" : "outline"}
             size="sm"
             onClick={() => {
               setStatusFilter('all');
               setFilterType("todos");
-              setFilterValue(null);
               setCurrentPage(1);
             }}
             className={statusFilter === 'all' ? "text-white" : "text-slate-400 border-slate-700 hover:bg-slate-800/50"}
@@ -77,7 +57,6 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
               onClick={() => {
                 setStatusFilter(key as AppointmentStatus);
                 setFilterType("todos");
-                setFilterValue(null);
                 setCurrentPage(1);
               }}
               className={`text-xs ${statusFilter === key ? "text-white" : "text-slate-400 border-slate-700 hover:bg-slate-800/50"}`}
@@ -87,56 +66,61 @@ const AppointmentFilterControls: React.FC<AppointmentFilterControlsProps> = ({
           ))}
         </div>
 
-        {/* Controle de Itens por Página */}
-        <div className="flex items-center gap-2 flex-nowrap">
-          <span className="text-sm text-slate-400 whitespace-nowrap">Mostrar:</span>
-          <Select
-            value={itemsPerPage.toString()}
-            onValueChange={(value) => {
-              setItemsPerPage(Number(value));
-              setFilterType("todos");
-              setFilterValue(null);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[70px] bg-[#0f0f0f] border-slate-700 text-slate-300">
-              <SelectValue placeholder="10" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#0f0f0f] border-slate-700 text-slate-300">
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Direita: Itens por página + Ações */}
+        <div className="flex items-center gap-4 w-full lg:w-auto">
+          {/* Controle de Itens por Página */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-400 whitespace-nowrap">Mostrar:</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px] bg-[#0f0f0f] border-slate-700 text-slate-300">
+                <SelectValue placeholder="10" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0f0f0f] border-slate-700 text-slate-300">
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Botão Ações - AO LADO DE MOSTRAR: */}
+          {hasSelection && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:bg-slate-800/50 hover:text-white">
+                Ações ({selectedAppointmentIds.size})
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={clearSelection}
+                className="text-slate-400 hover:text-white hover:bg-slate-800/50 h-8 w-8 p-0"
+                title="Limpar seleção"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-row items-center gap-2 lg:hidden">
-          <Checkbox
-            id="select-all-header"
-            checked={selectedAppointmentIds.size === currentAppointmentsLength && currentAppointmentsLength > 0}
-            onCheckedChange={toggleSelectAll}
-            className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white"
-          />
-          <span className="text-sm text-center text-slate-500">
-            Selecionar todos
-          </span>
-        </div>
-        {(filterType !== "todos" || filterValue) && (
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+
+        
+        {(filterType !== "todos" || statusFilter !== 'all') && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
             className="text-slate-400 hover:text-white hover:bg-slate-800/50 whitespace-nowrap"
           >
-            Limpar filtro
-          </Button>
-        )}
-        {selectedAppointmentIds.size > 0 && (
-          <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:bg-slate-800/50 hover:text-white ml-auto">
-            Ações ({selectedAppointmentIds.size})
+            Limpar filtros
           </Button>
         )}
       </div>
