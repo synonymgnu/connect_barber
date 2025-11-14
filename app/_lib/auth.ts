@@ -94,6 +94,9 @@ export const authOptions: AuthOptions = {
             include: {
               barber: {
                 select: { id: true }
+              },
+              ownedBarbershop: {
+                select: { id: true }
               }
             }
           })
@@ -105,6 +108,7 @@ export const authOptions: AuthOptions = {
             session.user.email = dbUser.email
             session.user.image = dbUser.image
             session.user.barberId = dbUser.barber?.id || null
+            session.user.barbershopId = dbUser.ownedBarbershop?.id || null
           }
         }
       }
@@ -115,6 +119,7 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.role = user.role
         token.barberId = (user as any).barberId
+        token.barbershopId = (user as any).barbershopId
       }
       return token
     }
