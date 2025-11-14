@@ -110,3 +110,32 @@
 .text-sidebar-foreground {
   color: hsl(var(--sidebar-foreground));
 }
+
+/* Container */
+.marquee-container {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Texto */
+.marquee-text {
+  display: inline-block;
+  transform: translateX(0);
+  animation: none;
+}
+
+/* Animação somente nos textos longos */
+.marquee-long {
+  animation: marquee 10s linear infinite;
+}
+
+/* Keyframes */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}

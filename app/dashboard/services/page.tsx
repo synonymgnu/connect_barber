@@ -4,7 +4,6 @@ import { DeleteServiceButton } from '@/app/_components/dashboard/delete-service-
 import { Card, CardContent } from '@/app/_components/ui/card'
 import Image from 'next/image'
 import { CreateServiceDialog } from '@/app/_components/dashboard/create-service-dialog'
-import { AdminSidebar } from '@/app/_components/dashboard/admin-sidebar'
 
 export default async function ServicesPage() {
   const services = await getServices()
@@ -31,9 +30,17 @@ export default async function ServicesPage() {
                 </div>
                 {/* DIREITA */}
                 <div className="space-y-2 w-screen flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm lg:text-base truncate">
-                    {service.name}
-                  </h3>
+                  <div className="marquee-container truncate">
+                    <span
+                      className={`marquee-text font-semibold text-sm lg:text-base ${
+                        service.name.length > 29 ? 'marquee-long' : ''
+                      }`}
+                      title={service.name}
+                    >
+                      {service.name}
+                    </span>
+                  </div>
+
                   <p className="text-sm text-gray-400 line-clamp-2 break-words">
                     {service.description}
                   </p>
