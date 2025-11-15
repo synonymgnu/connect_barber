@@ -23,9 +23,12 @@ export function ServiceForm({ onSubmit, initialData }: any) {
       const parts = formatted.split('.')
       if (parts.length > 2) formatted = parts[0] + '.' + parts.slice(1).join('')
 
-      // Impede valor negativo
-      if (parseFloat(formatted) < 0) return
+      const numeric = parseFloat(formatted)
 
+      if (numeric < 0) return
+
+      const MAX_PRICE = 9999
+      if (numeric > MAX_PRICE) return
       setFormData({ ...formData, price: formatted })
       return
     }
