@@ -2,14 +2,15 @@ import { Checkbox } from "../ui/checkbox";
 import { CalendarIcon, Clock, Edit, Eye, MoreHorizontal, Phone, Trash2, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
+import { AppointmentProps } from "./appointment-activity-section";
 
 interface MobileAppointmentCardProps {
-  appointment: any;
+  appointment: AppointmentProps;
   toggleSelectOne: (id: string) => void;
-  getStatusBadge: (status: string) => React.ReactNode;
+  getStatusBadge: (status: AppointmentProps['status']) => React.ReactNode;
+  getSourceDisplay: (source: AppointmentProps['source']) => React.ReactNode;
   handleAction: (action: string, id: string) => void;
   selectedAppointmentIds: Set<string>;
-  getSourceDisplay: (source: string) => React.ReactNode;
 }
 
 const MobileAppointmentCard = ({ 

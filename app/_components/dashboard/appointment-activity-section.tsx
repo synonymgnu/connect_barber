@@ -3,12 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { 
+import {
   Calendar as CalendarIcon, 
   ChevronDown,
   Search, 
   Loader2,
-  X
+  X,
+  Globe,
+  Store
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Checkbox } from "../ui/checkbox";
@@ -22,17 +24,22 @@ import MobileAppointmentCard from "./mobile-appointment-card";
 import DesktopAppointmentItem from "./desktop-appointment-item";
 import AppointmentFilterControls from "./appointment-filter-controls";
 import { Skeleton } from "../ui/skeleton";
+import { AppointmentModal } from "./appointment-modal";
+import DeleteConfirmationDialog from "./delete-confirmation-dialog";
 
-interface AppointmentProps {
+export interface AppointmentProps {
   id: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   type: string;
+  serviceId: string;
   date: string;
+  dateIso?: string;
   source: 'PRESENCIAL' | 'ONLINE';
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   employee: string;
+  employeeId: string;
   duration: number;
   totalValue: number;
 }
@@ -45,22 +52,35 @@ const statusConfig = {
 };
 
 const sourceConfig = {
-  PRESENCIAL: { label: 'Presencial', color: 'text-[#8161FF]' },
-  ONLINE: { label: 'Online', color: 'text-orange-500' }
+  PRESENCIAL: { label: 'Presencial', color: 'text-[#8161FF]', icon: Store },
+  ONLINE: { label: 'Online', color: 'text-orange-500', icon: Globe }
 }
 
 const AppointmentActivitySection = () => {
   const [appointments, setAppointments] = useState<AppointmentProps[]>([]);
   const [selectedAppointmentIds, setSelectedAppointmentIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"dia" | "semana" | "mês" | "ano" | "todos">("todos");
-  const [filterValue, setFilterValue] = useState<Date | null>(null);
   const [statusFilter, setStatusFilter] = useState<keyof typeof statusConfig | 'all'>('all');
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [dateFilter, setDateFilter] = useState<{ type: 'dia' | 'semana' | 'mes' | 'ano' | null; value: Date | null }>({
+    type: null,
+    value: null
+  })
+
+  // modal
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null)
+  const [barbershopServices, setBarbershopServices] = useState<any[]>([])
+  const [barbers, setBarbers] = useState<any[]>([])
+  const [modalMode, setModalMode] = useState<'view' | 'edit'>('view')
 
   const toggleSelectAll = () => {
     if (selectedAppointmentIds.size === appointments.length && appointments.length > 0) {
@@ -98,48 +118,102 @@ const AppointmentActivitySection = () => {
   const getSourceDisplay = (source: string) => {
     const config = sourceConfig[source as keyof typeof sourceConfig];
     if (!config) return null;
+    const Icon = config.icon;
     return (
       <div className={`flex items-center gap-2 ${config.color}`}>
+        <Icon className="h-3.5 w-3.5" />
         <span className="text-sm">{config.label}</span>
       </div>
     );
   };
 
+  // ações menu
   const handleAction = (action: string, id: string) => {
-    console.log(`Ação: ${action} para o agendamento:`, id);
-  };
+    const appointment = appointments.find(appt => appt.id === id)
+    
+    if (action === 'view' || action === 'edit') {
+      setSelectedAppointment(appointment)
+      setModalMode(action)
+      setModalOpen(true)
+    } else if (action === 'delete') {
+      setAppointmentToDelete(id)
+      setDeleteDialogOpen(true)
+    }
+  }
+
+  // salvar
+  const handleSaveAppointment = async (data: any) => {
+    try {
+      const response = await fetch(`/api/appointments/${data.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (response.ok) {
+        fetchAppointments()
+        setModalOpen(false)
+        clearSelection()
+      } else {
+        throw new Error('Erro ao salvar agendamento')
+      }
+    } catch (error) {
+      console.error('Error saving appointment:', error)
+      alert('Erro ao salvar agendamento')
+    }
+  }
+
+  // deletar
+  const handleDeleteAppointment = async (id: string) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        fetchAppointments()
+        clearSelection()
+        setDeleteDialogOpen(false)
+        setAppointmentToDelete(null)
+      } else {
+        throw new Error('Erro ao excluir agendamento')
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error)
+      alert('Erro ao excluir agendamento')
+    }
+  }
 
   const handleClearFilters = () => {
-    setFilterType("todos");
-    setFilterValue(null);
+    setDateFilter({ type: null, value: null });
     setStatusFilter('all');
     setSearchTerm("");
     setCurrentPage(1);
+    clearSelection();
   };
+
+  useEffect(() => {
+    clearSelection();
+  }, [currentPage, statusFilter, searchTerm, dateFilter]);
 
   const fetchAppointments = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
-      const params = new URLSearchParams();
-      params.append('page', currentPage.toString());
-      params.append('pageSize', itemsPerPage.toString());
+      const params = new URLSearchParams()
+      params.append('page', currentPage.toString())
+      params.append('pageSize', itemsPerPage.toString())
       
-      if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (searchTerm) params.append('search', searchTerm)
+      if (statusFilter !== 'all') params.append('status', statusFilter)
       
-      let dateFilter = 'all';
-      if (filterType !== 'todos' && filterValue) {
-        switch (filterType) {
-          case 'dia': dateFilter = 'today'; break;
-          case 'semana': dateFilter = 'week'; break;
-          case 'mês': dateFilter = 'month'; break;
-        }
+      if (dateFilter.type && dateFilter.value) {
+        params.append('dateFilterType', dateFilter.type)
+        params.append('dateFilterValue', dateFilter.value.toISOString())
       }
-      if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
 
-      const response = await fetch(`/api/appointments/activity?${params.toString()}`);
+      const response = await fetch(`/api/appointments/activity?${params.toString()}`)
       if (!response.ok) {
         throw new Error('Erro ao carregar agendamentos');
       }
@@ -147,17 +221,42 @@ const AppointmentActivitySection = () => {
       const data = await response.json();
       setAppointments(data.data || []);
       setTotalPages(data.totalPages || 1);
+      setTotalCount(data.totalCount || 0);
     } catch (err) {
       setError('Erro ao carregar agendamentos');
       console.error('Error fetching appointments:', err);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, statusFilter, filterType, filterValue]);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, dateFilter]);
+
+  const fetchBarbershopData = useCallback(async () => {
+    try {
+      const [servicesRes, barbersRes] = await Promise.all([
+        fetch(`/api/barbershop/services`),
+        fetch(`/api/barbershop/barbers`)
+      ])
+      
+      if (servicesRes.ok && barbersRes.ok) {
+        const services = await servicesRes.json()
+        const barbersData = await barbersRes.json()
+        setBarbershopServices(services)
+        setBarbers(barbersData)
+      }
+    } catch (error) {
+      console.error('Error fetching barbershop data:', error)
+    }
+  }, [])
 
   useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+    fetchAppointments()
+  }, [fetchAppointments])
+
+  useEffect(() => {
+    if (modalOpen) {
+      fetchBarbershopData();
+    }
+  }, [modalOpen, fetchBarbershopData]);
 
   const renderPaginationItems = () => {
     if (loading) {
@@ -237,199 +336,231 @@ const AppointmentActivitySection = () => {
   };
 
   return (
-    <Card className="w-full bg-[#0c0c0c] border-[#1f1f1f]">
-      <CardHeader className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between pb-2">
-        <CardTitle className="text-xl font-semibold text-white">Atividade de Agendamentos</CardTitle>
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-          {/* Busca */}
-          <div className="relative flex-1 min-w-[150px]">
-            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              type="text"
-              placeholder="Buscar agendamentos..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-8 bg-[#0f0f0f] border-slate-700 text-white placeholder:text-slate-500 focus:ring-1 focus:ring-blue-500 w-full"
-            />
-          </div>
-          <div className="mt-4 lg:mt-0 w-full lg:w-auto">
-            <div className="flex flex-col sm:flex-row gap-2 w-full">
-              <Select
-                value={filterType}
-                onValueChange={(val) => {
-                  setFilterType(val as typeof filterType);
+    <>
+      <Card className="w-full bg-[#0c0c0c] border-[#1f1f1f]">
+        <CardHeader className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between pb-2">
+          <CardTitle className="text-xl font-semibold text-white">Atividade de Agendamentos</CardTitle>
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            {/* Busca */}
+            <div className="relative flex-1 min-w-[150px]">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Buscar agendamentos..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-              >
-                <SelectTrigger className="w-full sm:w-[140px] bg-[#0f0f0f] border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white">
-                  <SelectValue placeholder="Filtrar por..." />
-                </SelectTrigger>
-                <SelectContent className="bg-[#0f0f0f] border-slate-700 text-slate-300">
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="dia">Dia</SelectItem>
-                  <SelectItem value="semana">Semana</SelectItem>
-                  <SelectItem value="mês">Mês</SelectItem>
-                  <SelectItem value="ano">Ano</SelectItem>
-                </SelectContent>
-              </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="bg-[#0f0f0f] border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white w-full min-w-[180px]"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                    {filterValue ? format(filterValue, "dd 'de' MMMM yyyy", { locale: ptBR }) : "Selecionar data"}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0f0f0f] border-slate-700">
-                  <Calendar
-                    mode="single"
-                    selected={filterValue ?? undefined}
-                    onSelect={(date) => {
-                      setFilterValue(date ?? null);
-                      setCurrentPage(1);
-                    }}
-                    locale={ptBR}
-                    className="bg-[#0f0f0f] text-white"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        {/* Filtros e Controles */}
-        <AppointmentFilterControls
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          itemsPerPage={itemsPerPage}
-          setItemsPerPage={setItemsPerPage}
-          filterType={filterType}
-          setFilterType={setFilterType}
-          filterValue={filterValue}
-          setFilterValue={setFilterValue}
-          setCurrentPage={setCurrentPage}
-          selectedAppointmentIds={selectedAppointmentIds}
-          onClearFilters={handleClearFilters}
-          hasSelection={selectedAppointmentIds.size > 0}
-          clearSelection={clearSelection}
-        />
-        
-        {/* Desktop */}
-        <div className="hidden lg:block">
-
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 text-sm text-slate-400 font-medium border-b border-[#1f1f1f]">
-            <div className="col-span-3 xl:col-span-2 flex items-center gap-3">
-              <Checkbox
-                id="select-all-header"
-                checked={appointments.length > 0 && selectedAppointmentIds.size === appointments.length}
-                onCheckedChange={toggleSelectAll}
-                className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white"
+                className="pl-8 bg-[#0f0f0f] border-slate-700 text-white placeholder:text-slate-500 focus:ring-1 focus:ring-blue-500 w-full"
               />
-              Cliente
             </div>
-            <div className="col-span-2">Serviço</div>
-            <div className="col-span-2 flex items-center gap-3">
-              <CalendarIcon className="h-3.5 w-3.5 text-slate-400" />
-              Data/Hora
+            <div className="mt-4 lg:mt-0 w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <Select
+                  value={dateFilter.type || 'todos'}
+                  onValueChange={(val) => {
+                    if (val === 'todos') {
+                      setDateFilter({ type: null, value: null })
+                    } else {
+                      setDateFilter({ 
+                        type: val as typeof dateFilter.type, 
+                        value: dateFilter.value
+                      })
+                    }
+                    setCurrentPage(1)
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-[140px] bg-[#0f0f0f] border-slate-700 text-slate-300">
+                    <SelectValue placeholder="Filtrar por..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0f0f0f] border-slate-700 text-slate-300">
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="dia">Dia</SelectItem>
+                    <SelectItem value="semana">Semana</SelectItem>
+                    <SelectItem value="mes">Mês</SelectItem>
+                    <SelectItem value="ano">Ano</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-[#0f0f0f] border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white w-full min-w-[180px]"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      {dateFilter.value ? format(dateFilter.value, "dd 'de' MMM yyyy", { locale: ptBR }) : "Selecionar data"}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-[#0f0f0f] border-slate-700">
+                    <Calendar
+                      mode="single"
+                      selected={dateFilter.value ?? undefined}
+                      onSelect={(date) => {
+                        setDateFilter(prev => ({ 
+                          type: date ? 'dia' : prev.type, 
+                          value: date ?? null 
+                        }))
+                        setCurrentPage(1)
+                      }}
+                      locale={ptBR}
+                      className="bg-[#0f0f0f] text-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-            <div className="col-span-2">Origem</div>
-            <div className="col-span-1 xl:col-span-2">Barbeiro</div>
-            <div className="col-span-1">Status</div>
-            <div className="col-span-1"></div>
           </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {/* Filtros e Controles */}
+          <AppointmentFilterControls
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            dateFilter={dateFilter}
+            setDateFilter={setDateFilter}
+            setCurrentPage={setCurrentPage}
+            selectedAppointmentIds={selectedAppointmentIds}
+            currentAppointmentsLength={appointments.length}
+            toggleSelectAll={toggleSelectAll}
+            onClearFilters={handleClearFilters}
+            hasSelection={selectedAppointmentIds.size > 0}
+            clearSelection={clearSelection}
+          />
           
-          {loading ? (
-            <div className="px-6 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-500 mx-auto" />
-            </div>
-          ) : appointments.length === 0 ? (
-            <div className="px-6 py-8 text-center">
-              <p className="text-slate-500">Nenhuma atividade recente encontrada.</p>
-              {searchTerm || statusFilter !== 'all' || filterValue ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4 text-slate-400 border-slate-700 hover:bg-slate-800/50"
-                  onClick={handleClearFilters}
-                >
-                  Limpar filtros
-                </Button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="divide-y divide-[#1f1f1f]">
-              {appointments.map((appointment) => (
-                <DesktopAppointmentItem
-                  key={appointment.id}
-                  appointment={appointment}
-                  toggleSelectOne={toggleSelectOne}
-                  getStatusBadge={getStatusBadge}
-                  getSourceDisplay={getSourceDisplay}
-                  handleAction={handleAction}
-                  selectedAppointmentIds={selectedAppointmentIds}
+          {/* Desktop */}
+          <div className="hidden lg:block">
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-sm text-slate-400 font-medium border-b border-[#1f1f1f]">
+              <div className="col-span-3 xl:col-span-2 flex items-center gap-3">
+                <Checkbox
+                  id="select-all-header"
+                  checked={appointments.length > 0 && selectedAppointmentIds.size === appointments.length}
+                  onCheckedChange={toggleSelectAll}
+                  className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white"
                 />
-              ))}
+                Cliente
+              </div>
+              <div className="col-span-2">Serviço</div>
+              <div className="col-span-2 flex items-center gap-3">
+                <CalendarIcon className="h-3.5 w-3.5 text-slate-400" />
+                Data/Hora
+              </div>
+              <div className="col-span-2">Origem</div>
+              <div className="col-span-1 xl:col-span-2">Barbeiro</div>
+              <div className="col-span-1">Status</div>
+              <div className="col-span-1"></div>
             </div>
-          )}
-        </div>
-
-        {/* Mobile */}
-        <div className="lg:hidden p-4">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
-            </div>
-          ) : appointments.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-slate-500">Nenhuma atividade recente encontrada.</p>
-              {searchTerm || statusFilter !== 'all' || filterValue ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4 text-slate-400 border-slate-700 hover:bg-slate-800/50"
-                  onClick={handleClearFilters}
-                >
-                  Limpar filtros
-                </Button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {appointments.map((appointment) => (
-                <MobileAppointmentCard
-                  key={appointment.id}
-                  appointment={appointment}
-                  toggleSelectOne={toggleSelectOne}
-                  getStatusBadge={getStatusBadge}
-                  getSourceDisplay={getSourceDisplay}
-                  handleAction={handleAction}
-                  selectedAppointmentIds={selectedAppointmentIds}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#1f1f1f] gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-400">
-              Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, appointments.length)} de {appointments.length} agendamentos
-            </span>
+            
+            {loading ? (
+              <div className="px-6 py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-500 mx-auto" />
+              </div>
+            ) : appointments.length === 0 ? (
+              <div className="px-6 py-8 text-center">
+                <p className="text-slate-500">Nenhuma atividade recente encontrada.</p>
+                {searchTerm || statusFilter !== 'all' || dateFilter.value ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4 text-slate-400 border-slate-700 hover:bg-slate-800/50"
+                    onClick={handleClearFilters}
+                  >
+                    Limpar filtros
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="divide-y divide-[#1f1f1f]">
+                {appointments.map((appointment) => (
+                  <DesktopAppointmentItem
+                    key={appointment.id}
+                    appointment={appointment}
+                    toggleSelectOne={toggleSelectOne}
+                    getStatusBadge={getStatusBadge}
+                    getSourceDisplay={getSourceDisplay}
+                    handleAction={handleAction}
+                    selectedAppointmentIds={selectedAppointmentIds}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-end">
-            {renderPaginationItems()}
+
+          {/* Mobile */}
+          <div className="lg:hidden p-4">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
+              </div>
+            ) : appointments.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-slate-500">Nenhuma atividade recente encontrada.</p>
+                {searchTerm || statusFilter !== 'all' || dateFilter.value ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4 text-slate-400 border-slate-700 hover:bg-slate-800/50"
+                    onClick={handleClearFilters}
+                  >
+                    Limpar filtros
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {appointments.map((appointment) => (
+                  <MobileAppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    toggleSelectOne={toggleSelectOne}
+                    getStatusBadge={getStatusBadge}
+                    getSourceDisplay={getSourceDisplay}
+                    handleAction={handleAction}
+                    selectedAppointmentIds={selectedAppointmentIds}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#1f1f1f] gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-400">
+                Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} - {Math.min(currentPage * itemsPerPage, totalCount)} de {totalCount} agendamentos
+              </span>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-end">
+              {renderPaginationItems()}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* visualização/edição */}
+      <AppointmentModal
+        appointment={selectedAppointment}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveAppointment}
+        onDelete={handleDeleteAppointment}
+        barbershopServices={barbershopServices}
+        barbers={barbers}
+        mode={modalMode}
+      />
+
+      {/* confirmação de exclusão */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => appointmentToDelete && handleDeleteAppointment(appointmentToDelete)}
+        title="Excluir Agendamento"
+        description="Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita."
+      />
+    </>
   )
 }
 

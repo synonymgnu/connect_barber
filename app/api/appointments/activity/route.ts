@@ -21,10 +21,9 @@ export async function GET(request: Request) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10')
     const search = searchParams.get('search') || ''
     const statusFilter = searchParams.get('status') || 'all'
-    const dateFilter = searchParams.get('dateFilter') || 'all'
     
-    const selectedDateStr = searchParams.get('selectedDate')
-    const selectedDate = selectedDateStr ? new Date(selectedDateStr) : null
+    const dateFilterType = searchParams.get('dateFilterType')
+    const dateFilterValue = searchParams.get('dateFilterValue')
 
     const skip = (page - 1) * pageSize
 
@@ -46,38 +45,36 @@ export async function GET(request: Request) {
       whereClause.status = statusFilter.toUpperCase()
     }
 
-    // Filtro de data
-    if (dateFilter === 'today' && selectedDate) {
+    if (dateFilterType && dateFilterValue) {
+      const selectedDate = new Date(dateFilterValue)
+      
+      if (dateFilterType === 'dia') {
+        const startOfDay = new Date(selectedDate)
+        startOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(selectedDate)
+        endOfDay.setHours(23, 59, 59, 999)
+        whereClause.date = { gte: startOfDay, lte: endOfDay }
+      } else if (dateFilterType === 'semana') {
+        const startOfWeek = new Date(selectedDate)
+        startOfWeek.setHours(0, 0, 0, 0)
+        startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay())
 
-      const startOfDay = new Date(selectedDate)
-      startOfDay.setHours(0, 0, 0, 0)
-      const endOfDay = new Date(selectedDate)
-      endOfDay.setHours(23, 59, 59, 999)
-      whereClause.date = { gte: startOfDay, lte: endOfDay }
-
-    } else if (dateFilter === 'week' && selectedDate) {
-
-      const startOfWeek = new Date(selectedDate)
-      startOfWeek.setHours(0, 0, 0, 0)
-      startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay())
-      const endOfWeek = new Date(startOfWeek)
-      endOfWeek.setDate(startOfWeek.getDate() + 6)
-      endOfWeek.setHours(23, 59, 59, 999)
-      whereClause.date = { gte: startOfWeek, lte: endOfWeek }
-
-    } else if (dateFilter === 'month' && selectedDate) {
-
-      const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
-      const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
-      endOfMonth.setHours(23, 59, 59, 999)
-      whereClause.date = { gte: startOfMonth, lte: endOfMonth }
-
-    } else if (dateFilter === 'year' && selectedDate) {
-
-      const startOfYear = new Date(selectedDate.getFullYear(), 0, 1)
-      const endOfYear = new Date(selectedDate.getFullYear(), 11, 31)
-      endOfYear.setHours(23, 59, 59, 999)
-      whereClause.date = { gte: startOfYear, lte: endOfYear }
+        const endOfWeek = new Date(startOfWeek)
+        endOfWeek.setDate(startOfWeek.getDate() + 6)
+        endOfWeek.setHours(23, 59, 59, 999)
+        
+        whereClause.date = { gte: startOfWeek, lte: endOfWeek }
+      } else if (dateFilterType === 'mes') {
+        const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+        const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
+        endOfMonth.setHours(23, 59, 59, 999)
+        whereClause.date = { gte: startOfMonth, lte: endOfMonth }
+      } else if (dateFilterType === 'ano') {
+        const startOfYear = new Date(selectedDate.getFullYear(), 0, 1)
+        const endOfYear = new Date(selectedDate.getFullYear(), 11, 31)
+        endOfYear.setHours(23, 59, 59, 999)
+        whereClause.date = { gte: startOfYear, lte: endOfYear }
+      }
     }
 
     const bookings = await db.booking.findMany({
@@ -125,6 +122,7 @@ export async function GET(request: Request) {
         hour: '2-digit',
         minute: '2-digit'
       }),
+      dateIso: booking.date.toISOString(),
       source: booking.source,
       status: booking.status.toLowerCase(),
       employee: booking.barber?.name || 'Não atribuído',

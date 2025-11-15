@@ -27,6 +27,7 @@ interface AppointmentModalProps {
   onDelete: (id: string) => void
   barbershopServices: any[]
   barbers: any[]
+  mode?: 'view' | 'edit'
 }
 
 const sourceConfig = {
@@ -41,28 +42,44 @@ export function AppointmentModal({
   onSave, 
   onDelete, 
   barbershopServices, 
-  barbers 
+  barbers,
+  mode = 'view'
 }: AppointmentModalProps) {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(mode === 'edit')
   const [hasChanges, setHasChanges] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [formData, setFormData] = useState({
-    date: appointment?.date ? new Date(appointment.date) : new Date(),
-    serviceId: appointment?.serviceId || '',
-    barberId: appointment?.employeeId || '',
-    status: appointment?.status?.toUpperCase() || 'CONFIRMED'
+    date: new Date(),
+    serviceId: '',
+    barberId: '',
+    status: 'CONFIRMED'
   })
 
   useEffect(() => {
-    if (appointment) {
+    if (open) {
+      setIsEditing(mode === 'edit')
+      setHasChanges(false)
+    }
+  }, [open, mode])
+
+  useEffect(() => {
+  const dateToParse = appointment?.dateIso || appointment?.date;
+  
+  if (dateToParse) {
+    const dateObj = typeof dateToParse === 'string' 
+      ? new Date(dateToParse) 
+      : dateToParse
+    
+    if (!isNaN(dateObj.getTime())) {
       setFormData({
-        date: new Date(appointment.date.replace(/(\d{2}) (\w{3}) (\d{4}) - (\d{2}):(\d{2})/, "$3-$2-$1 $4:$5:00")),
-        serviceId: appointment.serviceId,
-        barberId: appointment.employeeId,
-        status: appointment.status.toUpperCase()
+        date: dateObj,
+        serviceId: appointment.serviceId || '',
+        barberId: appointment.employeeId || '',
+        status: appointment.status?.toUpperCase() || 'CONFIRMED'
       })
     }
-  }, [appointment])
+  }
+}, [appointment])
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -70,7 +87,13 @@ export function AppointmentModal({
   }
 
   const handleSave = () => {
-    onSave({ ...formData, id: appointment.id })
+    const dataToSave = {
+      ...formData,
+      id: appointment.id,
+      date: formData.date?.toISOString() || new Date().toISOString()
+    }
+    
+    onSave(dataToSave)
     setIsEditing(false)
     setHasChanges(false)
   }
@@ -99,12 +122,20 @@ export function AppointmentModal({
   }
 
   const handleUndoChanges = () => {
-    setFormData({
-      date: new Date(appointment.date.replace(/(\d{2}) (\w{3}) (\d{4}) - (\d{2}):(\d{2})/, "$3-$2-$1 $4:$5:00")),
-      serviceId: appointment.serviceId,
-      barberId: appointment.employeeId,
-      status: appointment.status.toUpperCase()
-    })
+    if (appointment?.date) {
+      const dateObj = typeof appointment.date === 'string' 
+        ? new Date(appointment.date)
+        : appointment.date instanceof Date
+        ? appointment.date
+        : new Date(appointment.date)
+      
+      setFormData({
+        date: dateObj,
+        serviceId: appointment.serviceId || '',
+        barberId: appointment.employeeId || '',
+        status: appointment.status?.toUpperCase() || 'CONFIRMED'
+      })
+    }
     setHasChanges(false)
   }
 
@@ -147,7 +178,7 @@ export function AppointmentModal({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-
+            {/* Data e Hora */}
             <div className="space-y-2">
               <Label>Data e Hora</Label>
               <Popover>
@@ -158,7 +189,9 @@ export function AppointmentModal({
                     className="w-full justify-start text-left font-normal bg-[#0f0f0f] border-slate-700 text-white"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(formData.date, "PPP 'às' HH:mm", { locale: ptBR })}
+                    {formData.date && !isNaN(formData.date.getTime()) 
+                      ? format(formData.date, "PPP 'às' HH:mm", { locale: ptBR }) 
+                      : "Selecione uma data"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-[#0f0f0f] border-slate-700">
@@ -179,7 +212,7 @@ export function AppointmentModal({
                     type="number"
                     min="0"
                     max="23"
-                    value={format(formData.date, 'HH')}
+                    value={formData.date ? formData.date.getHours().toString().padStart(2, '0') : '00'}
                     onChange={(e) => {
                       const hours = parseInt(e.target.value) || 0
                       handleChange('date', setHours(formData.date, Math.min(23, Math.max(0, hours))))
@@ -191,7 +224,7 @@ export function AppointmentModal({
                     type="number"
                     min="0"
                     max="59"
-                    value={format(formData.date, 'mm')}
+                    value={formData.date ? formData.date.getMinutes().toString().padStart(2, '0') : '00'}
                     onChange={(e) => {
                       const minutes = parseInt(e.target.value) || 0
                       handleChange('date', setMinutes(formData.date, Math.min(59, Math.max(0, minutes))))
@@ -215,7 +248,7 @@ export function AppointmentModal({
                   <SelectValue placeholder="Selecione um serviço" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0f0f0f] border-slate-700">
-                  {barbershopServices.map((service: any) => (
+                  {barbershopServices?.map((service: any) => (
                     <SelectItem key={service.id} value={service.id}>
                       {service.name} - R$ {Number(service.price).toFixed(2)}
                     </SelectItem>
@@ -236,7 +269,7 @@ export function AppointmentModal({
                   <SelectValue placeholder="Selecione um barbeiro" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0f0f0f] border-slate-700">
-                  {barbers.map((barber: any) => (
+                  {barbers?.map((barber: any) => (
                     <SelectItem key={barber.id} value={barber.id}>
                       {barber.name}
                     </SelectItem>
@@ -245,6 +278,7 @@ export function AppointmentModal({
               </Select>
             </div>
 
+            {/* Status */}
             <div className="space-y-2">
               <Label>Status</Label>
               <Select 
