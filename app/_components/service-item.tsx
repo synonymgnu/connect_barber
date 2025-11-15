@@ -182,7 +182,16 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
           </div>
           {/* DIREITA */}
           <div className="space-y-2 w-screen flex-1 min-w-0">
-            <h3 className="font-semibold text-sm">{service.name}</h3>
+            <div className="marquee-container truncate">
+              <span
+                className={`marquee-text font-semibold text-sm lg:text-base ${
+                  service.name.length > 20 ? 'marquee-long' : ''
+                }`}
+                title={service.name}
+              >
+                {service.name}
+              </span>
+            </div>
             <p className="text-sm text-gray-400 line-clamp-2 break-words">
               {service.description}
             </p>
