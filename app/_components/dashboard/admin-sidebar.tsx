@@ -6,12 +6,11 @@ import Link from 'next/link'
 import {
   Scissors,
   Calendar,
-  LogOut,
   LayoutDashboard,
-  User,
   ChevronUp,
-  Menu,
   X,
+  Users,
+  Store,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -53,7 +52,8 @@ export function AdminSidebar() {
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Agenda', href: '/dashboard/calendar', icon: Calendar },
     { label: 'Serviços', href: '/dashboard/services', icon: Scissors },
-    { label: 'Perfil', href: '/dashboard/clients', icon: User },
+    { label: 'Equipe', href: '/dashboard/barbers', icon: Users },
+    { label: 'Barbearia', href: '/dashboard/settings', icon: Store },
   ]
 
   return (
