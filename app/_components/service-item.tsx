@@ -30,6 +30,7 @@ import {
 import SignInDialog from './sign-in-dialog'
 import BookingSummary from './booking-summary'
 import { useRouter } from 'next/navigation'
+import { Clock2 } from 'lucide-react'
 
 interface ServiceItemProps {
   service: BarbershopService
@@ -172,7 +173,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
       <Card>
         <CardContent className="flex items-center gap-3 p-3">
           {/* IMAGE */}
-          <div className="relative max-h-[110px] min-h-[110px] min-w-[110px] max-w-[110px]:">
+          <div className="relative max-h-[110px] min-h-[110px] min-w-[80px] max-w-[80px]">
             <Image
               alt={service.name}
               src={service.imageUrl}
@@ -182,17 +183,30 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
           </div>
           {/* DIREITA */}
           <div className="space-y-2 w-screen flex-1 min-w-0">
-            <h3 className="font-semibold text-sm">{service.name}</h3>
+            <div className="marquee-container truncate">
+              <span
+                className={`marquee-text font-semibold text-sm lg:text-base ${
+                  service.name.length > 20 ? 'marquee-long' : ''
+                }`}
+                title={service.name}
+              >
+                {service.name}
+              </span>
+            </div>
             <p className="text-sm text-gray-400 line-clamp-2 break-words">
               {service.description}
             </p>
-            {/* PREÇO E BOTÃO  */}
+            {/* PREÇO, DURAÇÃO E BOTÃO  */}
             <div className="flex items-center justify-between">
               <p className="font-bold text-sm text-primary">
                 {Intl.NumberFormat('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',
                 }).format(Number(service.price))}
+              </p>
+              <p className="flex items-center gap-[2px] text-xs text-gray-400">
+                <Clock2 width={18} height={18} />
+                {service.duration}min
               </p>
 
               <Sheet

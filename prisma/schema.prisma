@@ -96,7 +96,7 @@ model BarbershopService {
   description  String
   imageUrl     String
   price        Decimal    @db.Decimal(10, 2)
-  // Add duração do serviço
+  duration Int
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   bookings     Booking[]

@@ -1,29 +1,21 @@
 'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog'
-import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { ServiceForm } from './service-form'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FeedbackDialog } from '../feedback-dialog'
+
 const updateService = async (id: string, data: any) => {
   const { updateService } = await import('@/app/_actions/update-service')
   return updateService(id, data)
 }
 
-export function EditServiceDialog({ service }: any) {
-  const [open, setOpen] = useState(false)
+export function EditServiceDialog({ service, open, setOpen }: any) {
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
   const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
   const router = useRouter()
 
-  // 👉 Editar serviço
   const handleEdit = async (data: any) => {
     try {
       await updateService(service.id, data)
@@ -38,12 +30,6 @@ export function EditServiceDialog({ service }: any) {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-            Editar
-          </Button>
-        </DialogTrigger>
-
         <DialogContent className="w-[90%] rounded-lg">
           <DialogHeader>
             <DialogTitle>Editar Serviço</DialogTitle>

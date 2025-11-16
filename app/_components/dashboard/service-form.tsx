@@ -8,13 +8,26 @@ import { ImageUploadField } from './image-upload-field'
 
 export function ServiceForm({ onSubmit, initialData }: any) {
   const [formData, setFormData] = useState(
-    initialData || { name: '', description: '', price: '', imageUrl: '' }
+    initialData || {
+      name: '',
+      description: '',
+      price: '',
+      imageUrl: '',
+      duration: '',
+    }
   )
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target
+
+    if (name === 'duration') {
+      const numeric = value.replace(/\D/g, '') // Só números
+      if (Number(numeric) > 300) return // Ex: máximo 300 min = 5h
+      setFormData({ ...formData, duration: numeric })
+      return
+    }
 
     if (name === 'price') {
       // Permite apenas dígitos, vírgula e ponto (substitui múltiplos separadores)
@@ -23,9 +36,12 @@ export function ServiceForm({ onSubmit, initialData }: any) {
       const parts = formatted.split('.')
       if (parts.length > 2) formatted = parts[0] + '.' + parts.slice(1).join('')
 
-      // Impede valor negativo
-      if (parseFloat(formatted) < 0) return
+      const numeric = parseFloat(formatted)
 
+      if (numeric < 0) return
+
+      const MAX_PRICE = 9999
+      if (numeric > MAX_PRICE) return
       setFormData({ ...formData, price: formatted })
       return
     }
@@ -48,6 +64,7 @@ export function ServiceForm({ onSubmit, initialData }: any) {
     !formData.price ||
     Number(formData.price) <= 0 ||
     !formData.imageUrl
+  !formData.duration || Number(formData.duration) <= 0
 
   return (
     <form
@@ -57,6 +74,7 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           ...formData,
           // Converte vírgula para ponto ao enviar para o banco
           price: parseFloat(formData.price.replace(',', '.')),
+          duration: Number(formData.duration),
         })
       }}
       className="space-y-4"
@@ -97,6 +115,19 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.price}
           onChange={handleChange}
           placeholder="Ex: 50"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="duration">Duração (minutos)</Label>
+        <Input
+          id="duration"
+          name="duration"
+          type="text"
+          inputMode="numeric"
+          value={formData.duration}
+          onChange={handleChange}
+          placeholder="Ex: 45"
         />
       </div>
 
