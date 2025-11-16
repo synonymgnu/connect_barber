@@ -5,9 +5,8 @@ import { ConfirmDialog } from '../confirm-dialog'
 import { FeedbackDialog } from '../feedback-dialog'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Button } from '../ui/button'
 
-export function DeleteServiceButton({ id }: { id: string }) {
+export function DeleteServiceButton({ id, open, setOpen }: any) {
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
   const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
   const router = useRouter()
@@ -15,6 +14,7 @@ export function DeleteServiceButton({ id }: { id: string }) {
   const handleDelete = async () => {
     try {
       await deleteService(id)
+      setOpen(false)
       setSuccessDialogIsOpen(true)
       router.refresh()
     } catch (error) {
@@ -25,11 +25,8 @@ export function DeleteServiceButton({ id }: { id: string }) {
   return (
     <>
       <ConfirmDialog
-        trigger={
-          <Button variant="destructive" size="sm">
-            Excluir
-          </Button>
-        }
+        open={open}
+        onOpenChange={setOpen}
         onConfirm={handleDelete}
         title="Deseja excluir este serviço?"
         description="Ao excluir, o serviço será removido permanentemente. Essa ação é irreversível."

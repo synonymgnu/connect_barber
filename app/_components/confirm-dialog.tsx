@@ -19,6 +19,8 @@ interface ConfirmDialogProps {
   title: string
   description: string
   onConfirm: () => void | Promise<void>
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function ConfirmDialog({
@@ -27,18 +29,25 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
+  open,
+  onOpenChange,
 }: ConfirmDialogProps) {
+  const isControlled = open !== undefined && onOpenChange !== undefined
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {trigger ? (
-          trigger
-        ) : (
-          <Button variant="destructive" className="w-full">
-            {triggerLabel || 'Confirmar'}
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* Só usa DialogTrigger se NÃO estiver controlado externamente */}
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger ? (
+            trigger
+          ) : (
+            <Button variant="destructive" className="w-full">
+              {triggerLabel || 'Confirmar'}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
 
       <DialogContent className="w-[90%] lg:w-[30%] rounded-lg">
         <DialogHeader className="items-center">
