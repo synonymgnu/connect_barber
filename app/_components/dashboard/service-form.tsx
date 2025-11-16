@@ -17,6 +17,13 @@ export function ServiceForm({ onSubmit, initialData }: any) {
     }
   )
 
+  const [touched, setTouched] = useState({
+    name: false,
+    price: false,
+    duration: false,
+    imageUrl: false,
+  })
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -24,7 +31,7 @@ export function ServiceForm({ onSubmit, initialData }: any) {
 
     if (name === 'duration') {
       const numeric = value.replace(/\D/g, '') // Só números
-      if (Number(numeric) > 300) return // Ex: máximo 300 min = 5h
+      if (Number(numeric) > 999) return // Ex: máximo 999 min = 16,667h
       setFormData({ ...formData, duration: numeric })
       return
     }
@@ -63,8 +70,9 @@ export function ServiceForm({ onSubmit, initialData }: any) {
     !formData.name.trim() ||
     !formData.price ||
     Number(formData.price) <= 0 ||
-    !formData.imageUrl
-  !formData.duration || Number(formData.duration) <= 0
+    !formData.imageUrl ||
+    !formData.duration ||
+    Number(formData.duration) <= 0
 
   return (
     <form
@@ -87,7 +95,11 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.name}
           onChange={handleChange}
           placeholder="Ex: Corte Social"
+          onBlur={() => setTouched({ ...touched, name: true })}
         />
+        {touched.name && !formData.name.trim() && (
+          <p className="text-xs text-red-500 mt-1">O nome é obrigatório.</p>
+        )}
       </div>
 
       <div>
@@ -115,7 +127,11 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.price}
           onChange={handleChange}
           placeholder="Ex: 50"
+          onBlur={() => setTouched({ ...touched, price: true })}
         />
+        {touched.price && (!formData.price || Number(formData.price) <= 0) && (
+          <p className="text-xs text-red-500 mt-1">O preço é obrigatório.</p>
+        )}
       </div>
 
       <div>
@@ -128,7 +144,14 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.duration}
           onChange={handleChange}
           placeholder="Ex: 45"
+          onBlur={() => setTouched({ ...touched, duration: true })}
         />
+        {touched.duration &&
+          (!formData.duration || Number(formData.duration) <= 0) && (
+            <p className="text-xs text-red-500 mt-1">
+              A duração é obrigatória.
+            </p>
+          )}
       </div>
 
       <div>
@@ -140,7 +163,10 @@ export function ServiceForm({ onSubmit, initialData }: any) {
             <button
               key={img}
               type="button"
-              onClick={() => handleImageChange(img)}
+              onClick={() => {
+                handleImageChange(img)
+                setTouched({ ...touched, imageUrl: true })
+              }}
               className={`rounded-lg overflow-hidden border-2 transition ${
                 formData.imageUrl === img
                   ? 'border-primary ring-2 ring-primary/40'
@@ -155,6 +181,9 @@ export function ServiceForm({ onSubmit, initialData }: any) {
             </button>
           ))}
         </div>
+        {touched.imageUrl && !formData.imageUrl && (
+          <p className="text-xs text-red-500 mt-1">A imagem é obrigatória.</p>
+        )}
 
         <p className="text-xs text-muted-foreground text-center my-2">
           ou envie uma nova imagem
