@@ -31,6 +31,7 @@ import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
 import RatingDialog from './rating-dialog'
+import { Clock2 } from 'lucide-react'
 
 export interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -111,12 +112,18 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         <CardContent className="flex justify-between p-0 items-stretch">
           {/* ESQUERDA */}
           <div className="flex flex-col gap-2 py-5 pl-5 items-start text-left flex-1">
-            <Badge
-              className="w-fit"
-              variant={isConfirmed ? 'default' : 'secondary'}
-            >
-              {isConfirmed ? 'Confirmado' : 'Finalizado'}
-            </Badge>
+            <div className="flex gap-2">
+              <Badge
+                className="w-fit"
+                variant={isConfirmed ? 'default' : 'secondary'}
+              >
+                {isConfirmed ? 'Confirmado' : 'Finalizado'}
+              </Badge>
+              <p className="flex items-center gap-[2px] text-xs text-gray-400">
+                <Clock2 width={18} height={18} />
+                {booking.service.duration}min
+              </p>
+            </div>
             <h3 className="font-semibold">{booking.service.name}</h3>
 
             <div className="flex items-center gap-2">
@@ -172,12 +179,18 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </div>
 
             <div className="mt-6">
-              <Badge
-                className="w-fit"
-                variant={isConfirmed ? 'default' : 'secondary'}
-              >
-                {isConfirmed ? 'Confirmado' : 'Finalizado'}
-              </Badge>
+              <div className="flex gap-2">
+                <Badge
+                  className="w-fit"
+                  variant={isConfirmed ? 'default' : 'secondary'}
+                >
+                  {isConfirmed ? 'Confirmado' : 'Finalizado'}
+                </Badge>
+                <p className="flex items-center gap-[2px] text-xs text-gray-400">
+                  <Clock2 width={18} height={18} />
+                  {booking.service.duration}min
+                </p>
+              </div>
 
               <div className="mb-3 mt-6">
                 <BookingSummary
