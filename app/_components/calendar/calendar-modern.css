@@ -1,0 +1,173 @@
+/* Modern Calendar Styles - Dark Theme */
+.fc {
+  background-color: #151515 !important;
+  color: white !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.fc .fc-toolbar {
+  padding: 1.5rem !important;
+  background-color: #0F0F0F !important;
+  border-bottom: 1px solid #2A2A2A !important;
+  margin-bottom: 0 !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.fc-toolbar-chunk {
+  display: flex !important;
+  gap: 0.75rem !important;
+  align-items: center !important;
+}
+
+.fc .fc-toolbar-title {
+  color: white !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+}
+
+.fc .fc-button {
+  background-color: #8161FF !important;
+  border-color: #8161FF !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.2s ease !important;
+  font-size: 0.875rem !important;
+}
+
+.fc .fc-button:hover {
+  background-color: #6a4dff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(129, 97, 255, 0.3) !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: #6a4dff !important;
+  border-color: #6a4dff !important;
+}
+
+.fc .fc-col-header {
+  background-color: #1A1A1A !important;
+  border-bottom: 1px solid #2A2A2A !important;
+}
+
+.fc .fc-col-header-cell {
+  padding: 1rem 0 !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  color: #BDBDBD !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  font-size: 0.75rem !important;
+}
+
+.fc-daygrid-day-frame,
+.fc-timegrid-col-frame {
+  background-color: #151515 !important;
+}
+
+.fc .fc-daygrid-day,
+.fc .fc-timegrid-col {
+  border-right: 1px solid #2A2A2A !important;
+  border-bottom: 1px solid #2A2A2A !important;
+}
+
+.fc .fc-daygrid-day:hover,
+.fc .fc-timegrid-slot:hover {
+  background-color: #1A1A1A !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(129, 97, 255, 0.05) !important;
+  border: 2px solid #8161FF !important;
+}
+
+.fc .fc-timegrid-slot {
+  color: #888 !important;
+  border-top: 1px dotted #2A2A2A !important;
+  background-color: #151515 !important;
+  font-size: 0.75rem !important;
+  height: 50px !important;
+}
+
+.fc .fc-event {
+  border-radius: 6px !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem !important;
+  margin: 2px !important;
+  border: none !important;
+  border-left: 4px solid !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  font-weight: 600 !important;
+  cursor: move !important;
+  transition: all 0.2s ease !important;
+}
+
+.fc .fc-event:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.fc .fc-event-main {
+  color: white !important;
+}
+
+.fc .fc-event-main-frame {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.fc .fc-event-time {
+  font-size: 0.75rem !important;
+  opacity: 0.9 !important;
+}
+
+.fc .fc-event-title {
+  font-weight: 600 !important;
+}
+
+.fc .fc-scroller::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.fc .fc-scroller::-webkit-scrollbar-track {
+  background: #1A1A1A !important;
+}
+
+.fc .fc-scroller::-webkit-scrollbar-thumb {
+  background: #8161FF !important;
+  border-radius: 4px !important;
+}
+
+.fc .fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: #6a4dff !important;
+}
+
+/* Status Colors */
+.fc-event.bg-status-pending {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  border-left-color: #fbbf24 !important;
+}
+
+.fc-event.bg-status-confirmed {
+  background: linear-gradient(135deg, #8161FF 0%, #6a4dff 100%) !important;
+  border-left-color: #a78bfa !important;
+}
+
+.fc-event.bg-status-completed {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border-left-color: #34d399 !important;
+}
+
+.fc-event.bg-status-cancelled {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  border-left-color: #f87171 !important;
+}

@@ -1,0 +1,550 @@
+'use client'
+
+import { useState } from 'react'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import ptBrLocale from '@fullcalendar/core/locales/pt-br'
+import { useSession } from 'next-auth/react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Calendar, Clock, Scissors, User, X, Save, Trash2 } from 'lucide-react'
+import { Badge } from '../ui/badge'
+import { Textarea } from '../ui/textarea'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { Calendar as CalendarComponent } from '../ui/calendar'
+import { cn } from '@/app/_lib/utils'
+import { getEventColorByStatus } from '@/app/dashboard/calendar/utils'
+import './calendar-modern.css'
+
+interface AppointmentModalData {
+  id?: string
+  userId: string
+  userName: string
+  userEmail: string
+  userPhone: string
+  serviceId: string
+  barberId: string
+  date: Date
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+  source: 'PRESENCIAL' | 'ONLINE'
+  notes?: string
+}
+
+interface UnifiedCalendarProps {
+  role: 'ADMIN' | 'BARBER'
+  embedded?: boolean
+  date?: Date
+}
+
+export default function UnifiedCalendar({ 
+  role, 
+  embedded = false,
+  date 
+}: UnifiedCalendarProps) {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  const [selectedDate, setSelectedDate] = useState<Date>(date || new Date())
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+
+  const [formData, setFormData] = useState<AppointmentModalData>({
+    userId: '',
+    userName: '',
+    userEmail: '',
+    userPhone: '',
+    serviceId: '',
+    barberId: '',
+    date: new Date(),
+    status: 'PENDING',
+    source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
+    notes: '',
+  })
+
+  const { data: calendarData, isLoading } = useQuery({
+    queryKey: ['calendar-appointments', selectedDate],
+    queryFn: async () => {
+      const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
+      
+      const response = await fetch(
+        `/api/appointments/calendar?start=${start.toISOString()}&end=${end.toISOString()}`
+      )
+      if (!response.ok) throw new Error('Erro ao carregar agendamentos')
+      return response.json()
+    },
+    enabled: !!session,
+  })
+
+  const { data: services } = useQuery({
+    queryKey: ['barbershop-services'],
+    queryFn: async () => {
+      const response = await fetch('/api/barbershop/services')
+      if (!response.ok) throw new Error('Erro ao carregar serviços')
+      return response.json()
+    },
+    enabled: role === 'ADMIN',
+  })
+
+  const { data: barbers } = useQuery({
+    queryKey: ['barbershop-barbers'],
+    queryFn: async () => {
+      const response = await fetch('/api/barbershop/barbers')
+      if (!response.ok) throw new Error('Erro ao carregar barbeiros')
+      return response.json()
+    },
+    enabled: role === 'ADMIN',
+  })
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/appointments/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) throw new Error('Erro ao criar agendamento')
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-appointments'] })
+      toast.success('Agendamento criado com sucesso!')
+      setModalOpen(false)
+      resetForm()
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao criar agendamento')
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await fetch(`/api/appointments/calendar/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) throw new Error('Erro ao atualizar agendamento')
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-appointments'] })
+      toast.success('Agendamento atualizado com sucesso!')
+      setModalOpen(false)
+      resetForm()
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao atualizar agendamento')
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/appointments/calendar/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) throw new Error('Erro ao excluir agendamento')
+      return response
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-appointments'] })
+      toast.success('Agendamento excluído com sucesso!')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao excluir agendamento')
+    },
+  })
+
+  const resetForm = () => {
+    setFormData({
+      userId: '',
+      userName: '',
+      userEmail: '',
+      userPhone: '',
+      serviceId: '',
+      barberId: role === 'BARBER' ? session?.user?.barberId || '' : '',
+      date: new Date(),
+      status: 'PENDING',
+      source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
+      notes: '',
+    })
+  }
+
+  const handleDateClick = (arg: any) => {
+    setModalMode('create')
+    setSelectedAppointment(null)
+    setFormData(prev => ({
+      ...prev,
+      date: arg.date,
+    }))
+    setModalOpen(true)
+  }
+
+  const handleEventClick = (clickInfo: any) => {
+    const event = clickInfo.event
+    const appointment = calendarData?.appointments?.find((a: any) => a.id === event.id)
+    
+    if (appointment) {
+      setSelectedAppointment(appointment)
+      setModalMode('edit')
+      setFormData({
+        id: appointment.id,
+        userId: appointment.user.id,
+        userName: appointment.user.name,
+        userEmail: appointment.user.email,
+        userPhone: appointment.user.phone,
+        serviceId: appointment.service.id,
+        barberId: appointment.barber?.id || '',
+        date: new Date(appointment.date),
+        status: appointment.status,
+        source: appointment.source,
+        notes: appointment.notes || '',
+      })
+      setModalOpen(true)
+    }
+  }
+
+  const handleEventDrop = (dropInfo: any) => {
+    const appointment = calendarData?.appointments?.find((a: any) => a.id === dropInfo.event.id)
+    
+    if (appointment) {
+      const newDate = dropInfo.event.start
+      updateMutation.mutate({
+        id: appointment.id,
+        data: {
+          ...appointment,
+          date: newDate.toISOString(),
+          serviceId: appointment.service.id,
+          barberId: appointment.barber?.id,
+        },
+      })
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const data = {
+      userId: formData.userId,
+      serviceId: formData.serviceId,
+      barberId: role === 'BARBER' ? session?.user?.barberId : formData.barberId,
+      date: formData.date.toISOString(),
+      status: formData.status,
+      source: formData.source,
+      notes: formData.notes,
+    }
+
+    if (modalMode === 'edit' && selectedAppointment) {
+      updateMutation.mutate({ id: selectedAppointment.id, data })
+    } else {
+      createMutation.mutate(data)
+    }
+  }
+
+  const handleDelete = () => {
+    if (selectedAppointment) {
+      deleteMutation.mutate(selectedAppointment.id)
+      setModalOpen(false)
+    }
+  }
+
+  const events = calendarData?.appointments?.map((appointment: any) => ({
+    id: appointment.id,
+    title: `${appointment.user.name} - ${appointment.service.name}`,
+    start: appointment.date,
+    end: new Date(new Date(appointment.date).getTime() + (appointment.service.duration * 60000)).toISOString(),
+    backgroundColor: getEventColorByStatus(appointment.status.toLowerCase()),
+    borderColor: getEventColorByStatus(appointment.status.toLowerCase()),
+    extendedProps: appointment,
+  })) || []
+
+  const renderHeader = () => {
+    if (embedded) return null
+    
+    return (
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white">
+          {role === 'BARBER' ? 'Minha Agenda' : 'Agenda da Barbearia'}
+        </h1>
+        <p className="text-gray-400 mt-1">
+          {role === 'BARBER' 
+            ? 'Gerencie seus agendamentos diários' 
+            : 'Gerencie todos os agendamentos dos seus barbeiros'}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <>
+        {renderHeader()}
+        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)]">
+        <div className="flex-1 bg-[#151515] rounded-xl border border-[#2A2A2A] overflow-hidden">
+            <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            }}
+            events={events}
+            locale={ptBrLocale}
+            selectable={true}
+            editable={true}
+            eventDrop={handleEventDrop}
+            dateClick={handleDateClick}
+            eventClick={handleEventClick}
+            slotMinTime="08:00:00"
+            slotMaxTime="20:00:00"
+            height="100%"
+            allDaySlot={false}
+            buttonText={{
+                today: 'Hoje',
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+            }}
+            loading={(loading) => {
+            }}
+            />
+        </div>
+
+        {/* Modal */}
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+            <DialogContent className="sm:max-w-[600px] bg-[#0c0c0c] border-[#1f1f1f] text-white">
+            <DialogHeader>
+                <DialogTitle className="text-xl font-semibold">
+                {modalMode === 'edit' ? 'Editar Agendamento' : 'Novo Agendamento'}
+                </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                {/* Seleção de Cliente (somente Admin) */}
+                {role === 'ADMIN' && (
+                <div className="space-y-2">
+                    <Label className="text-white flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Cliente
+                    </Label>
+                    <Input
+                    placeholder="Nome do cliente"
+                    value={formData.userName}
+                    onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                    className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    required
+                    />
+                    <Input
+                    placeholder="Email"
+                    type="email"
+                    value={formData.userEmail}
+                    onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
+                    className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    />
+                    <Input
+                    placeholder="Telefone"
+                    value={formData.userPhone}
+                    onChange={(e) => setFormData({ ...formData, userPhone: e.target.value })}
+                    className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    />
+                </div>
+                )}
+
+                {/* Serviço */}
+                <div className="space-y-2">
+                <Label className="text-white flex items-center gap-2">
+                    <Scissors className="w-4 h-4" />
+                    Serviço
+                </Label>
+                <Select
+                    value={formData.serviceId}
+                    onValueChange={(value) => setFormData({ ...formData, serviceId: value })}
+                    required
+                >
+                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue placeholder="Selecione um serviço" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    {services?.map((service: any) => (
+                        <SelectItem key={service.id} value={service.id}>
+                        {service.name} - R$ {Number(service.price).toFixed(2)}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                </div>
+
+                {/* Barbeiro (somente Admin) */}
+                {role === 'ADMIN' && (
+                <div className="space-y-2">
+                    <Label className="text-white">Barbeiro</Label>
+                    <Select
+                    value={formData.barberId}
+                    onValueChange={(value) => setFormData({ ...formData, barberId: value })}
+                    required
+                    >
+                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                        <SelectValue placeholder="Selecione um barbeiro" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                        {barbers?.map((barber: any) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                            {barber.name}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+                )}
+
+                {/* Data e Hora */}
+                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className="text-white flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Data
+                    </Label>
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant="outline"
+                        className="w-full bg-[#0f0f0f] border-[#1f1f1f] text-white justify-start"
+                        >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {format(formData.date, "dd 'de' MMM yyyy", { locale: ptBR })}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-[#0c0c0c] border-[#1f1f1f]">
+                        <CalendarComponent
+                        mode="single"
+                        selected={formData.date}
+                        onSelect={(date) => date && setFormData({ ...formData, date })}
+                        locale={ptBR}
+                        disabled={{ before: new Date() }}
+                        className="bg-[#0c0c0c] text-white"
+                        />
+                    </PopoverContent>
+                    </Popover>
+                </div>
+
+                <div className="space-y-2">
+                    <Label className="text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Hora
+                    </Label>
+                    <Input
+                    type="time"
+                    value={format(formData.date, 'HH:mm')}
+                    onChange={(e) => {
+                        const [hours, minutes] = e.target.value.split(':')
+                        const newDate = new Date(formData.date)
+                        newDate.setHours(parseInt(hours), parseInt(minutes))
+                        setFormData({ ...formData, date: newDate })
+                    }}
+                    className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    required
+                    />
+                </div>
+                </div>
+
+                {/* Status */}
+                <div className="space-y-2">
+                <Label className="text-white">Status</Label>
+                <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as any })}
+                >
+                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectItem value="PENDING">Pendente</SelectItem>
+                    <SelectItem value="CONFIRMED">Confirmado</SelectItem>
+                    <SelectItem value="COMPLETED">Concluído</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                    </SelectContent>
+                </Select>
+                </div>
+
+                {/* Observações */}
+                <div className="space-y-2">
+                <Label className="text-white">Observações</Label>
+                <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    rows={3}
+                />
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-between items-center pt-4 border-t border-[#1f1f1f]">
+                <div className="flex items-center gap-2">
+                    <Badge 
+                    className={cn(
+                        "text-white",
+                        formData.status === "PENDING" && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+                        formData.status === "CONFIRMED" && "bg-blue-500/20 text-blue-400 border-blue-500/30",
+                        formData.status === "COMPLETED" && "bg-green-500/20 text-green-400 border-green-500/30",
+                        formData.status === "CANCELLED" && "bg-red-500/20 text-red-400 border-red-500/30",
+                    )}
+                    >
+                    {formData.status === 'PENDING' && 'Pendente'}
+                    {formData.status === 'CONFIRMED' && 'Confirmado'}
+                    {formData.status === 'COMPLETED' && 'Concluído'}
+                    {formData.status === 'CANCELLED' && 'Cancelado'}
+                    </Badge>
+                    {formData.source && (
+                    <Badge variant="outline" className="text-xs">
+                        {formData.source === 'PRESENCIAL' ? 'Presencial' : 'Online'}
+                    </Badge>
+                    )}
+                </div>
+
+                <div className="flex gap-2">
+                    {modalMode === 'edit' && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleDelete}
+                        className="text-red-400 border-red-500/30 hover:bg-red-500/20"
+                        disabled={deleteMutation.isPending}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir
+                    </Button>
+                    )}
+                    <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setModalOpen(false)}
+                    >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancelar
+                    </Button>
+                    <Button
+                    type="submit"
+                    className="bg-[#8161FF] hover:bg-[#6a4dff]"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                    >
+                    <Save className="w-4 h-4 mr-2" />
+                    {modalMode === 'edit' ? 'Salvar' : 'Criar'}
+                    </Button>
+                </div>
+                </div>
+            </form>
+            </DialogContent>
+        </Dialog>
+        </div>
+    </>
+  )
+}
