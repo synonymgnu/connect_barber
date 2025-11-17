@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog'
 import { ServiceForm } from './service-form'
-import { createService } from '@/app/_actions/services'
+import { createService } from '@/app/_actions/create-service'
 import { Button } from '../ui/button'
 import { useState } from 'react'
 import { FeedbackDialog } from '../feedback-dialog'
@@ -38,7 +38,7 @@ export function CreateServiceDialog() {
           <Button onClick={() => setOpen(true)}>Cadastrar novo</Button>
         </DialogTrigger>
 
-        <DialogContent className="w-[90%] h-[90%]rounded-lg">
+        <DialogContent className="w-[90%] h-[90%] rounded-lg">
           <DialogHeader>
             <DialogTitle>Cadastrar Serviço</DialogTitle>
           </DialogHeader>

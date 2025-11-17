@@ -8,16 +8,16 @@ type UpdateServiceData = {
   description?: string
   price?: number | string
   imageUrl?: string
+  duration?: number // <-- ADICIONAR AQUI
   barbershopId?: string
-  barbershop?: any // Pode vir do client, mas será ignorado
-  id?: string // Pode vir do client, mas será ignorado
+  barbershop?: any
+  id?: string
 }
 
 export async function updateService(id: string, data: UpdateServiceData) {
-  // Converte preço se vier como string
   const price = typeof data.price === 'string' ? Number(data.price) : data.price
 
-  // Remove campos não permitidos antes de enviar ao Prisma
+  // limpar campos que não podem ir pro banco
   const { barbershopId, barbershop, id: ignoredId, ...safeData } = data
   void barbershopId
   void barbershop
@@ -27,7 +27,8 @@ export async function updateService(id: string, data: UpdateServiceData) {
     where: { id },
     data: {
       ...safeData,
-      ...(price != undefined ? { price } : {}),
+      ...(price !== undefined ? { price } : {}),
+      ...(data.duration !== undefined ? { duration: data.duration } : {}), // OK
     },
   })
 

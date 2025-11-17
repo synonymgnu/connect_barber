@@ -5,6 +5,7 @@ import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { ImageUploadField } from './image-upload-field'
+import { Trash } from 'lucide-react'
 
 export function ServiceForm({ onSubmit, initialData }: any) {
   const [formData, setFormData] = useState(
@@ -17,6 +18,13 @@ export function ServiceForm({ onSubmit, initialData }: any) {
     }
   )
 
+  const [touched, setTouched] = useState({
+    name: false,
+    price: false,
+    duration: false,
+    imageUrl: false,
+  })
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -24,7 +32,7 @@ export function ServiceForm({ onSubmit, initialData }: any) {
 
     if (name === 'duration') {
       const numeric = value.replace(/\D/g, '') // Só números
-      if (Number(numeric) > 300) return // Ex: máximo 300 min = 5h
+      if (Number(numeric) > 999) return // Ex: máximo 999 min = 16,667h
       setFormData({ ...formData, duration: numeric })
       return
     }
@@ -55,29 +63,30 @@ export function ServiceForm({ onSubmit, initialData }: any) {
 
   const referenceImages = [
     'https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png', // Barba
-    'https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png', // Pézinho / Hidratação
-    'https://utfs.io/f/c4919193-a675-4c47-9f21-ebd86d1c8e6a-4oen2a.png', // Massagem
+    'https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png',
   ]
 
   const isDisabled =
     !formData.name.trim() ||
     !formData.price ||
     Number(formData.price) <= 0 ||
-    !formData.imageUrl
-  !formData.duration || Number(formData.duration) <= 0
+    !formData.imageUrl ||
+    !formData.duration ||
+    Number(formData.duration) <= 0
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault()
         onSubmit({
-          ...formData,
-          // Converte vírgula para ponto ao enviar para o banco
+          name: formData.name,
+          description: formData.description,
           price: parseFloat(formData.price.replace(',', '.')),
-          duration: Number(formData.duration),
+          imageUrl: formData.imageUrl,
+          duration: Number(formData.duration), // <-- AGORA VAI
         })
       }}
-      className="space-y-4"
+      className="gap-5  flex flex-col"
     >
       <div>
         <Label htmlFor="name">Nome</Label>
@@ -87,7 +96,11 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.name}
           onChange={handleChange}
           placeholder="Ex: Corte Social"
+          onBlur={() => setTouched({ ...touched, name: true })}
         />
+        {touched.name && !formData.name.trim() && (
+          <p className="text-xs text-red-500 mt-1">O nome é obrigatório.</p>
+        )}
       </div>
 
       <div>
@@ -115,7 +128,11 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.price}
           onChange={handleChange}
           placeholder="Ex: 50"
+          onBlur={() => setTouched({ ...touched, price: true })}
         />
+        {touched.price && (!formData.price || Number(formData.price) <= 0) && (
+          <p className="text-xs text-red-500 mt-1">O preço é obrigatório.</p>
+        )}
       </div>
 
       <div>
@@ -128,45 +145,89 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           value={formData.duration}
           onChange={handleChange}
           placeholder="Ex: 45"
+          onBlur={() => setTouched({ ...touched, duration: true })}
         />
+        {touched.duration &&
+          (!formData.duration || Number(formData.duration) <= 0) && (
+            <p className="text-xs text-red-500 mt-1">
+              A duração é obrigatória.
+            </p>
+          )}
       </div>
 
       <div>
         <Label>Imagem do serviço</Label>
 
-        {/* Galeria de imagens de referência */}
-        <div className="grid grid-cols-3 gap-2 mt-2">
-          {referenceImages.map((img) => (
-            <button
-              key={img}
-              type="button"
-              onClick={() => handleImageChange(img)}
-              className={`rounded-lg overflow-hidden border-2 transition ${
-                formData.imageUrl === img
-                  ? 'border-primary ring-2 ring-primary/40'
-                  : 'border-muted hover:border-primary/40'
-              }`}
-            >
+        <div className="grid grid-cols-3 gap-4 mt-3 items-center justify-items-center w-full">
+          {/* Imagem da ESQUERDA */}
+          <button
+            type="button"
+            onClick={() => {
+              handleImageChange(referenceImages[0])
+              setTouched({ ...touched, imageUrl: true })
+            }}
+            className={`w-14 h-14 lg:w-20 lg:h-20 rounded-lg overflow-hidden border-2 transition ${
+              formData.imageUrl === referenceImages[0]
+                ? 'border-primary ring-2 ring-primary/40'
+                : 'border-muted hover:border-primary/40'
+            }`}
+          >
+            <img
+              src={referenceImages[0]}
+              alt="Imagem de referência"
+              className="object-cover w-full h-full"
+            />
+          </button>
+
+          {/* Upload no CENTRO */}
+          {formData.imageUrl ? (
+            <div className="relative w-full h-full rounded-lg overflow-hidden border">
               <img
-                src={img}
-                alt="Imagem de referência"
+                src={formData.imageUrl}
+                alt="Preview"
                 className="object-cover w-full h-full"
               />
-            </button>
-          ))}
+
+              <Button
+                variant="destructive"
+                type="button"
+                size="default"
+                onClick={() => handleImageChange('')}
+                className="absolute top-2 right-2  text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+              >
+                <Trash />
+              </Button>
+            </div>
+          ) : (
+            <ImageUploadField
+              value={formData.imageUrl}
+              onChange={handleImageChange}
+            />
+          )}
+
+          {/* Imagem da DIREITA */}
+          <button
+            type="button"
+            onClick={() => {
+              handleImageChange(referenceImages[1])
+              setTouched({ ...touched, imageUrl: true })
+            }}
+            className={`w-14 h-14 lg:w-20 lg:h-20 rounded-lg overflow-hidden border-2 transition ${
+              formData.imageUrl === referenceImages[1]
+                ? 'border-primary ring-2 ring-primary/40'
+                : 'border-muted hover:border-primary/40'
+            }`}
+          >
+            <img
+              src={referenceImages[1]}
+              alt="Imagem de referência"
+              className="object-cover w-full h-full"
+            />
+          </button>
         </div>
-
-        <p className="text-xs text-muted-foreground text-center my-2">
-          ou envie uma nova imagem
-        </p>
-
-        <ImageUploadField
-          value={formData.imageUrl}
-          onChange={handleImageChange}
-        />
       </div>
 
-      <Button type="submit" className="w-full mt-4" disabled={isDisabled}>
+      <Button type="submit" className="w-full mt-auto" disabled={isDisabled}>
         Salvar
       </Button>
     </form>

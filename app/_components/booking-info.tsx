@@ -22,6 +22,7 @@ import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
 import RatingDialog from './rating-dialog'
+import { FeedbackDialog } from './feedback-dialog'
 
 interface BookingInfoProps extends BookingItemProps {
   onBookingCanceled?: () => void
@@ -39,7 +40,6 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
     try {
       await deleteBooking(booking.id)
       setSuccessDialogIsOpen(true)
-      onBookingCanceled?.()
     } catch (error) {
       console.error(error)
       setErrorDialogIsOpen(true)
@@ -118,15 +118,18 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
                     Voltar
                   </Button>
                 </DialogClose>
-                <DialogClose className="w-full">
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={handleCancelBooking}
-                  >
-                    Confirmar
-                  </Button>
-                </DialogClose>
+
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={async () => {
+                    await handleCancelBooking()
+                    // fecha o dialogo manualmente se quiser
+                    setSuccessDialogIsOpen(true)
+                  }}
+                >
+                  Confirmar
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -136,58 +139,31 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             barbershopName={booking.service.barbershop.name}
           />
         )}
-        {/* Dialog de sucesso */}
-        <Dialog
+
+        {/* Sucesso */}
+        <FeedbackDialog
           open={successDialogIsOpen}
-          onOpenChange={setSuccessDialogIsOpen}
-        >
-          <DialogContent className="w-[90%] lg:w-[30%] text-center rounded-lg">
-            <DialogHeader className="items-center">
-              <Image alt="Check" src="/Vector.png" height={60} width={60} />
-              <DialogTitle className="text-lg font-bold">
-                Reserva cancelada com sucesso!
-              </DialogTitle>
-            </DialogHeader>
-            <DialogDescription>
-              Sua reserva foi cancelada com sucesso.
-            </DialogDescription>
+          onOpenChange={(open) => {
+            setSuccessDialogIsOpen(open)
+            if (!open) {
+              // quando o dialog fechar → avisa o parent
+              onBookingCanceled?.()
+            }
+          }}
+          type="success"
+          title="Reserva cancelada com sucesso!"
+          description="Sua reserva foi cancelada com sucesso."
+        />
 
-            <DialogFooter className="flex flex-col gap-2">
-              <Button
-                className="w-full"
-                onClick={() => setSuccessDialogIsOpen(false)}
-              >
-                Fechar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de erro */}
-        <Dialog open={errorDialogIsOpen} onOpenChange={setErrorDialogIsOpen}>
-          <DialogContent className="w-[90%] lg:w-[30%] text-center rounded-lg">
-            <DialogHeader className="items-center">
-              <Image alt="Erro" src="/Error.png" height={60} width={60} />
-              <DialogTitle className="text-lg font-bold text-red-600">
-                Erro ao cancelar reserva!
-              </DialogTitle>
-            </DialogHeader>
-            <DialogDescription>
-              Ocorreu um erro ao tentar cancelar sua reserva. Tente novamente em
-              alguns instantes.
-            </DialogDescription>
-
-            <DialogFooter className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setErrorDialogIsOpen(false)}
-              >
-                Fechar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Erro */}
+        <FeedbackDialog
+          open={errorDialogIsOpen}
+          onOpenChange={setErrorDialogIsOpen}
+          type="error"
+          title="Erro ao cancelar reserva!"
+          description=" Ocorreu um erro ao tentar cancelar sua reserva. Tente novamente em
+              alguns instantes."
+        />
       </CardContent>
     </Card>
   )
