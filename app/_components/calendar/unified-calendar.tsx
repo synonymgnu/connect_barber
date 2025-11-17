@@ -58,17 +58,21 @@ export default function UnifiedCalendar({
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
 
   const [formData, setFormData] = useState<AppointmentModalData>({
-    userId: '',
-    userName: '',
-    userEmail: '',
-    userPhone: '',
-    serviceId: '',
-    barberId: '',
-    date: new Date(),
-    status: 'PENDING',
-    source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
-    notes: '',
-  })
+  userId: '',
+  userName: '',
+  userEmail: '',
+  userPhone: '',
+  serviceId: '',
+  barberId: '',
+  date: new Date(),
+  status: 'PENDING',
+  source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
+  notes: '',
+})
+
+  const isValidDate = (date: any): date is Date => {
+    return date instanceof Date && !isNaN(date.getTime())
+  }
 
   const { data: calendarData, isLoading } = useQuery({
     queryKey: ['calendar-appointments', selectedDate],
@@ -182,9 +186,10 @@ export default function UnifiedCalendar({
   const handleDateClick = (arg: any) => {
     setModalMode('create')
     setSelectedAppointment(null)
+    const clickedDate = arg.date instanceof Date ? arg.date : new Date(arg.date)
     setFormData(prev => ({
       ...prev,
-      date: arg.date,
+      date: clickedDate,
     }))
     setModalOpen(true)
   }
@@ -194,6 +199,12 @@ export default function UnifiedCalendar({
     const appointment = calendarData?.appointments?.find((a: any) => a.id === event.id)
     
     if (appointment) {
+      const appointmentDate = new Date(appointment.date)
+      if (!isValidDate(appointmentDate)) {
+        toast.error("Data do agendamento inválida")
+        return
+      }
+      
       setSelectedAppointment(appointment)
       setModalMode('edit')
       setFormData({
@@ -204,7 +215,7 @@ export default function UnifiedCalendar({
         userPhone: appointment.user.phone,
         serviceId: appointment.service.id,
         barberId: appointment.barber?.id || '',
-        date: new Date(appointment.date),
+        date: appointmentDate,
         status: appointment.status,
         source: appointment.source,
         notes: appointment.notes || '',
@@ -415,13 +426,15 @@ export default function UnifiedCalendar({
                     </Label>
                     <Popover>
                     <PopoverTrigger asChild>
-                        <Button
+                      <Button
                         variant="outline"
                         className="w-full bg-[#0f0f0f] border-[#1f1f1f] text-white justify-start"
-                        >
+                      >
                         <Calendar className="mr-2 h-4 w-4" />
-                        {format(formData.date, "dd 'de' MMM yyyy", { locale: ptBR })}
-                        </Button>
+                        {isValidDate(formData.date) 
+                          ? format(formData.date, "dd 'de' MMM yyyy", { locale: ptBR })
+                          : "Selecione uma data"}
+                      </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 bg-[#0c0c0c] border-[#1f1f1f]">
                         <CalendarComponent
@@ -437,22 +450,24 @@ export default function UnifiedCalendar({
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white flex items-center gap-2">
+                  <Label className="text-white flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     Hora
-                    </Label>
-                    <Input
+                  </Label>
+                  <Input
                     type="time"
-                    value={format(formData.date, 'HH:mm')}
+                    value={isValidDate(formData.date) ? format(formData.date, 'HH:mm') : '09:00'}
                     onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':')
-                        const newDate = new Date(formData.date)
-                        newDate.setHours(parseInt(hours), parseInt(minutes))
-                        setFormData({ ...formData, date: newDate })
+                      if (!isValidDate(formData.date)) return
+                      
+                      const [hours, minutes] = e.target.value.split(':')
+                      const newDate = new Date(formData.date)
+                      newDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+                      setFormData({ ...formData, date: newDate })
                     }}
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
                     required
-                    />
+                  />
                 </div>
                 </div>
 

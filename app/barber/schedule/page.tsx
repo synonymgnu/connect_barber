@@ -13,7 +13,6 @@ import ProfileCard from "@/app/_components/profile-card"
 import ReviewsChart from "@/app/_components/reviews-chart"
 import { WorkSchedule } from "@/app/_components/work-schedule"
 import { AbsenceManager } from "@/app/_components/dashboard/absence-manager"
-import { NotificationToast } from "@/app/_components/notification-toast"
 import UnifiedCalendar from "@/app/_components/calendar/unified-calendar"
 
 import "./fullcalendar-theme.css"
@@ -38,9 +37,21 @@ export default function BarberSchedulePage() {
 
   const fetchBookings = useCallback(async () => {
     const start = format(selectedDate, "yyyy-MM-dd")
-    const end = format(addDays(selectedDate, period === "day" ? 0 : period === "week" ? 7 : 30), "dd-MM-yyyy")
+    const end = format(
+      addDays(selectedDate, period === "day" ? 0 : period === "week" ? 7 : 30), 
+      "yyyy-MM-dd"
+    )
+    
     const res = await fetch(`/api/barber/bookings?start=${start}&end=${end}`)
-    if (res.ok) setBookings(await res.json())
+    
+    if (!res.ok) {
+      console.error("Failed to fetch bookings:", res.status, res.statusText)
+      toast.error("Erro ao carregar agendamentos")
+      return
+    }
+    
+    const data = await res.json()
+    setBookings(data)
   }, [selectedDate, period])
 
   const fetchStats = useCallback(async () => {
@@ -60,19 +71,49 @@ export default function BarberSchedulePage() {
   }, [fetchBookings, fetchStats, fetchReviews])
 
   useEffect(() => {
-    const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || "")
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.type === "new_booking") {
-        toast.success("Novo agendamento!", { description: `${data.clientName} - ${data.time}` })
-        fetchBookings()
-      }
-      if (data.type === "cancelled_booking") {
-        toast.error("Agendamento cancelado", { description: `${data.clientName} - ${data.time}` })
-        fetchBookings()
-      }
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL
+    if (!wsUrl) {
+      console.warn("WebSocket URL not configured")
+      return
     }
-    return () => ws.close()
+
+    try {
+      const ws = new WebSocket(wsUrl)
+      
+      ws.onopen = () => console.log("WebSocket connected")
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.type === "new_booking") {
+            toast.success("Novo agendamento!", { 
+              description: `${data.clientName} - ${data.time}` 
+            })
+            fetchBookings()
+          }
+          if (data.type === "cancelled_booking") {
+            toast.error("Agendamento cancelado", { 
+              description: `${data.clientName} - ${data.time}` 
+            })
+            fetchBookings()
+          }
+        } catch (error) {
+          console.error("WebSocket message error:", error)
+        }
+      }
+      
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error)
+      }
+      
+      return () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
+      }
+    } catch (error) {
+      console.error("Failed to create WebSocket:", error)
+    }
   }, [fetchBookings])
 
   const initialView = useMemo(() => {
@@ -171,12 +212,9 @@ export default function BarberSchedulePage() {
                   ))}
                 </TabsList>
 
-                {/* ✅ AQUI ESTÁ A MUDANÇA: Substitua o FullCalendar antigo */}
                 <TabsContent value="calendar" className="space-y-3 sm:space-y-4">
                   <Card className="bg-[#0F0F0F] border-2 border-[#333] shadow-xl">
                     <CardContent className="p-0">
-                      {/* ❌ ANTES: <FullCalendar ... /> */}
-                      {/* ✅ DEPOIS: UnifiedCalendar */}
                       <UnifiedCalendar role="BARBER" embedded={true} />
                     </CardContent>
                   </Card>
@@ -201,8 +239,6 @@ export default function BarberSchedulePage() {
               </Tabs>
             </CardContent>
           </Card>
-
-          <NotificationToast />
         </div>
       </div>
     </AuthCheck>
