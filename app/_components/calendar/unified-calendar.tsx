@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Calendar, Clock, Scissors, User, X, Save, Trash2 } from 'lucide-react'
+import { Calendar, Clock, Scissors, User, X, Save, Trash2, Globe, Store } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Textarea } from '../ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -473,6 +473,42 @@ export default function UnifiedCalendar({
                     <SelectItem value="CANCELLED">Cancelado</SelectItem>
                     </SelectContent>
                 </Select>
+                </div>
+
+                {/* Origem do Agendamento */}
+                <div className="space-y-2">
+                <Label className="text-white flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Origem do Agendamento
+                </Label>
+                <Select
+                    value={formData.source}
+                    onValueChange={(value) => setFormData({ ...formData, source: value as 'PRESENCIAL' | 'ONLINE' })}
+                    disabled={role === 'BARBER'}
+                >
+                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue placeholder="Selecione a origem" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectItem value="PRESENCIAL">
+                        <div className="flex items-center gap-2">
+                        <Store className="w-3 h-3" />
+                        Presencial
+                        </div>
+                    </SelectItem>
+                    <SelectItem value="ONLINE">
+                        <div className="flex items-center gap-2">
+                        <Globe className="w-3 h-3" />
+                        Online
+                        </div>
+                    </SelectItem>
+                    </SelectContent>
+                </Select>
+                {role === 'BARBER' && (
+                    <p className="text-xs text-slate-400">
+                    Os barbeiros só podem criar agendamentos presenciais
+                    </p>
+                )}
                 </div>
 
                 {/* Observações */}
