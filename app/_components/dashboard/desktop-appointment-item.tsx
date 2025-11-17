@@ -3,6 +3,7 @@ import { Checkbox } from "../ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { AppointmentProps } from "./appointment-activity-section";
+import { UserAvatar } from "../ui/user-avatar"
 
 interface DesktopAppointmentItemProps {
   appointment: AppointmentProps;
@@ -32,9 +33,11 @@ const DesktopAppointmentItem = ({
                     onCheckedChange={() => toggleSelectOne(appointment.id)}
                     className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white"
                 />
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {appointment.customerName.split(' ').map((n: string) => n[0]).join('')}
-                </div>
+                <UserAvatar 
+                    src={appointment.customerImageUrl} 
+                    name={appointment.customerName}
+                    size="md"
+                />
                 <div>
                     <p className="text-white font-medium text-sm">{appointment.customerName}</p>
                     <p className="text-xs text-slate-400 truncate max-w-[120px]">{appointment.customerPhone}</p>

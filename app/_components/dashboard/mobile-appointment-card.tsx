@@ -1,8 +1,9 @@
 import { Checkbox } from "../ui/checkbox";
-import { CalendarIcon, Clock, Edit, Eye, MoreHorizontal, Phone, Trash2, User } from "lucide-react";
+import { CalendarIcon, Clock, Edit, Eye, MoreHorizontal, Trash2, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { AppointmentProps } from "./appointment-activity-section";
+import { UserAvatar } from "../ui/user-avatar"
 
 interface MobileAppointmentCardProps {
   appointment: AppointmentProps;
@@ -35,13 +36,14 @@ const MobileAppointmentCard = ({
                         onCheckedChange={() => toggleSelectOne(appointment.id)}
                         className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white mt-1"
                     />
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                        {appointment.customerName.split(' ').map((n: string) => n[0]).join('')}
-                    </div>
+                    <UserAvatar 
+                        src={appointment.customerImageUrl} 
+                        name={appointment.customerName}
+                        size="lg"
+                    />
                     <div className="flex-1 min-w-0">
                         <p className="text-white font-medium text-sm truncate">{appointment.customerName}</p>
                         <div className="flex items-center gap-1 mt-1">
-                            <Phone className="h-3 w-3 text-slate-400" />
                             <span className="text-xs text-slate-400 truncate">{appointment.customerPhone}</span>
                         </div>
                     </div>

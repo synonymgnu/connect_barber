@@ -32,6 +32,7 @@ export interface AppointmentProps {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  customerImageUrl?: string | null;
   type: string;
   serviceId: string;
   date: string;
@@ -201,34 +202,31 @@ const AppointmentActivitySection = () => {
       setLoading(true)
       setError(null)
 
-      const params = new URLSearchParams()
-      params.append('page', currentPage.toString())
-      params.append('pageSize', itemsPerPage.toString())
-      
-      if (searchTerm) params.append('search', searchTerm)
-      if (statusFilter !== 'all') params.append('status', statusFilter)
-      
-      if (dateFilter.type && dateFilter.value) {
-        params.append('dateFilterType', dateFilter.type)
-        params.append('dateFilterValue', dateFilter.value.toISOString())
-      }
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: itemsPerPage.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(dateFilter.type && dateFilter.value && {
+          dateFilterType: dateFilter.type,
+          dateFilterValue: dateFilter.value.toISOString()
+        })
+      })
 
-      const response = await fetch(`/api/appointments/activity?${params.toString()}`)
-      if (!response.ok) {
-        throw new Error('Erro ao carregar agendamentos');
-      }
+      const response = await fetch(`/api/appointments/activity?${params}`)
+      if (!response.ok) throw new Error('Erro ao carregar agendamentos')
 
-      const data = await response.json();
-      setAppointments(data.data || []);
-      setTotalPages(data.totalPages || 1);
-      setTotalCount(data.totalCount || 0);
+      const data = await response.json()
+      setAppointments(data.data || [])
+      setTotalPages(data.totalPages || 1)
+      setTotalCount(data.totalCount || 0)
     } catch (err) {
-      setError('Erro ao carregar agendamentos');
-      console.error('Error fetching appointments:', err);
+      setError('Erro ao carregar agendamentos')
+      console.error('Error fetching appointments:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [currentPage, itemsPerPage, searchTerm, statusFilter, dateFilter]);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, dateFilter.type, dateFilter.value])
 
   const fetchBarbershopData = useCallback(async () => {
     try {
