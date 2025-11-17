@@ -143,11 +143,17 @@ model BarberWorkSchedule {
   @@unique([barberId, dayOfWeek])
 }
 
+enum AbsenceType {
+  BARBER_ABSENCE
+  SHOP_CLOSURE
+}
+
 model BarberAbsence {
   id       String   @id @default(uuid())
-  barberId String
-  barber   Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  barberId String?
+  barber   Barber?   @relation(fields: [barberId], references: [id], onDelete: Cascade)
   date     DateTime
+  type     AbsenceType  @default(BARBER_ABSENCE)
   reason   String?
   isAllDay Boolean  @default(true)
 
@@ -205,3 +211,4 @@ model Rating {
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 }
+
