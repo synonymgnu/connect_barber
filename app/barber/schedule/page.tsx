@@ -4,12 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { format, addDays } from "date-fns"
 import { toast } from "sonner"
-import FullCalendar from "@fullcalendar/react"
-import dayGridPlugin from "@fullcalendar/daygrid"
-import timeGridPlugin from "@fullcalendar/timegrid"
-import interactionPlugin from "@fullcalendar/interaction"
-import ptLocale from "@fullcalendar/core/locales/pt-br"
-
 import { Button } from "@/app/_components/ui/button"
 import StatsCards from "@/app/_components/stats-cards"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/_components/ui/tabs"
@@ -18,8 +12,9 @@ import BookingsTable from "@/app/_components/bookings-table"
 import ProfileCard from "@/app/_components/profile-card"
 import ReviewsChart from "@/app/_components/reviews-chart"
 import { WorkSchedule } from "@/app/_components/work-schedule"
-import { AbsenceManager } from "@/app/_components/absence-manager"
+import { AbsenceManager } from "@/app/_components/dashboard/absence-manager"
 import { NotificationToast } from "@/app/_components/notification-toast"
+import UnifiedCalendar from "@/app/_components/calendar/unified-calendar"
 
 import "./fullcalendar-theme.css"
 import AuthCheck from "@/app/_components/auth-check"
@@ -80,15 +75,6 @@ export default function BarberSchedulePage() {
     return () => ws.close()
   }, [fetchBookings])
 
-  // Eventos do calendário
-  const calendarEvents = useMemo(() => bookings.map(b => ({
-    id: b.id,
-    title: `${b.clientName} - ${b.serviceName}`,
-    start: b.date,
-    className: `bg-status-${b.status.toLowerCase()}`
-  })), [bookings])
-
-  // View inicial do calendário
   const initialView = useMemo(() => {
      if (period === "day") return "timeGridDay";
      if (period === "week") return "timeGridWeek";
@@ -107,6 +93,7 @@ export default function BarberSchedulePage() {
               </h1>
               <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Gerencie sua agenda e desempenho profissional</p>
             </div>
+            {/* Botões de período */}
             <div className="flex gap-1 sm:gap-2 bg-[#1A1A1A] p-1 rounded-lg border border-[#333] w-fit mx-auto sm:mx-0">
               <Button
                 variant={period === "day" ? "default" : "ghost"}
@@ -184,27 +171,13 @@ export default function BarberSchedulePage() {
                   ))}
                 </TabsList>
 
+                {/* ✅ AQUI ESTÁ A MUDANÇA: Substitua o FullCalendar antigo */}
                 <TabsContent value="calendar" className="space-y-3 sm:space-y-4">
                   <Card className="bg-[#0F0F0F] border-2 border-[#333] shadow-xl">
                     <CardContent className="p-0">
-                      <FullCalendar
-                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                        initialView={initialView}
-                        headerToolbar={{
-                          left: "prev,next today",
-                          center: "title",
-                          right: "dayGridMonth,timeGridWeek,timeGridDay"
-                        }}
-                        events={calendarEvents}
-                        locale={ptLocale}
-                        height="auto"
-                        dateClick={(info) => setSelectedDate(info.date)}
-                        eventClick={(info) => toast.info("Detalhes do Agendamento", { description: info.event.title })}
-                        themeSystem="standard"
-                        dayMaxEvents={true}
-                        slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-                        contentHeight="auto"
-                      />
+                      {/* ❌ ANTES: <FullCalendar ... /> */}
+                      {/* ✅ DEPOIS: UnifiedCalendar */}
+                      <UnifiedCalendar role="BARBER" embedded={true} />
                     </CardContent>
                   </Card>
                 </TabsContent>

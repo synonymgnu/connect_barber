@@ -1,39 +1,31 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/app/_lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/_lib/auth'
+import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/_lib/auth"
+import { db } from "@/app/_lib/prisma"
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'ADMIN') {
-      return new NextResponse('Unauthorized', { status: 401 })
-    }
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
-    if (!session?.user?.barbershopId) {
-      return NextResponse.json({ error: 'Barbearia não encontrada' }, { status: 404 })
+  try {
+    const barbershopId = session.user.barbershopId || 
+      (await db.barbershop.findFirst({ where: { ownerId: session.user.id } }))?.id
+
+    if (!barbershopId) {
+      return NextResponse.json({ error: "Barbershop not found" }, { status: 404 })
     }
 
     const barbers = await db.barber.findMany({
-      where: { 
-        barbershopId: session.user.barbershopId, 
-        isActive: true 
-      },
-      select: {
-        id: true,
-        name: true,
-        user: {
-          select: {
-            image: true
-          }
-        }
-      },
-      orderBy: { name: 'asc' }
+      where: { barbershopId, isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
     })
 
     return NextResponse.json(barbers)
   } catch (error) {
-    console.error('Error fetching barbers:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error fetching barbers:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
