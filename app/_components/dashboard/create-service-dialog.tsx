@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog'
 import { ServiceForm } from './service-form'
-import { createService } from '@/app/_actions/services'
+import { createService } from '@/app/_actions/create-service'
 import { Button } from '../ui/button'
 import { useState } from 'react'
 import { FeedbackDialog } from '../feedback-dialog'

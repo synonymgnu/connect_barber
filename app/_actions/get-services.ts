@@ -1,21 +1,30 @@
 'use server'
 
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/_lib/auth'
+
 import { db } from '../_lib/prisma'
 
 export async function getServices() {
-  const services = await db.barbershopService.findMany({
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.email) return []
+
+  const barbershop = await db.barbershop.findFirst({
     where: {
-      barbershop: {
-        name: 'Barbearia Vintage', // ✅ mostra apenas os serviços dessa barbearia
+      owner: {
+        email: session.user.email,
       },
-    },
-    include: {
-      barbershop: true,
-    },
-    orderBy: {
-      name: 'asc',
     },
   })
 
-  return services
+  if (!barbershop) return []
+
+  return await db.barbershopService.findMany({
+    where: {
+      barbershopId: barbershop.id,
+    },
+    include: { barbershop: true },
+    orderBy: { name: 'asc' },
+  })
 }

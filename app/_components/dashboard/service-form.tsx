@@ -79,10 +79,11 @@ export function ServiceForm({ onSubmit, initialData }: any) {
       onSubmit={(e) => {
         e.preventDefault()
         onSubmit({
-          ...formData,
-          // Converte vírgula para ponto ao enviar para o banco
+          name: formData.name,
+          description: formData.description,
           price: parseFloat(formData.price.replace(',', '.')),
-          duration: Number(formData.duration),
+          imageUrl: formData.imageUrl,
+          duration: Number(formData.duration), // <-- AGORA VAI
         })
       }}
       className="gap-5  flex flex-col"
