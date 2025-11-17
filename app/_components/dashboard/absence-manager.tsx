@@ -8,7 +8,7 @@ import { Textarea } from '@/app/_components/ui/textarea'
 import { Badge } from '@/app/_components/ui/badge'
 import { Switch } from '@/app/_components/ui/switch'
 import { Popover, PopoverContent, PopoverTrigger } from '@/app/_components/ui/popover'
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2 } from 'lucide-react'
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, User, Store } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -22,21 +22,51 @@ import {
   DialogTrigger,
 } from '@/app/_components/ui/dialog'
 import { Label } from '@/app/_components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/_components/ui/select'
 
 interface Absence {
   id: string
   date: Date
   reason: string
   isAllDay: boolean
+  barberId: string | null
+  barberName: string | null
+  type: 'BARBER_ABSENCE' | 'SHOP_CLOSURE'
 }
+
+interface Barber {
+  id: string
+  name: string
+}
+
+// Opções
+const REASON_OPTIONS = [
+  { value: 'FOLGA', label: 'Folga programada' },
+  { value: 'FERIADO', label: 'Feriado' },
+  { value: 'MANUTENCAO', label: 'Manutenção' },
+  { value: 'EVENTO', label: 'Evento especial' },
+  { value: 'FALTA', label: 'Falta injustificada' },
+  { value: 'OUTRO', label: 'Outro motivo' },
+]
 
 export function AbsenceManager() {
   const [absences, setAbsences] = useState<Absence[]>([])
+  const [barbers, setBarbers] = useState<Barber[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>()
-  const [reason, setReason] = useState('')
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [selectedBarber, setSelectedBarber] = useState<string>('')
+  const [selectedReasonType, setSelectedReasonType] = useState<string>('FOLGA')
+  const [customReason, setCustomReason] = useState<string>('')
   const [isAllDay, setIsAllDay] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [absenceType, setAbsenceType] = useState<'BARBER_ABSENCE' | 'SHOP_CLOSURE'>('BARBER_ABSENCE')
 
   const fetchAbsences = useCallback(async () => {
     try {
@@ -57,38 +87,84 @@ export function AbsenceManager() {
     }
   }, [])
 
+  const fetchBarbers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/barbershop/barbers')
+      if (!response.ok) throw new Error('Erro ao carregar barbeiros')
+      const data = await response.json()
+      setBarbers(data)
+    } catch (error) {
+      console.error('Erro ao carregar barbeiros:', error)
+      toast.error('Erro ao carregar lista de barbeiros')
+    }
+  }, [])
+
   useEffect(() => {
     fetchAbsences()
-  }, [fetchAbsences])
+    fetchBarbers()
+  }, [fetchAbsences, fetchBarbers])
 
   const handleAddAbsence = async () => {
+    // Validação baseada no tipo
+    if (absenceType === 'BARBER_ABSENCE' && !selectedBarber) {
+      toast.error('Selecione um barbeiro para registrar ausência')
+      return
+    }
+    
     if (!selectedDate) {
       toast.error('Selecione uma data')
       return
     }
 
+    setSaving(true)
     try {
+      // Lógica para motivo
+      const reasonText = selectedReasonType === 'OUTRO' ? customReason : REASON_OPTIONS.find(r => r.value === selectedReasonType)?.label
+      
+      const payload = {
+        date: selectedDate.toISOString(),
+        barberId: absenceType === 'BARBER_ABSENCE' ? selectedBarber : null,
+        type: absenceType,
+        reason: reasonText?.trim() || '',
+        isAllDay: Boolean(isAllDay)
+      }
+
+      console.log('Enviando dados:', payload) // Debug
+
       const response = await fetch('/api/availability/absences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: selectedDate,
-          reason,
-          isAllDay
-        })
+        body: JSON.stringify(payload)
       })
       
-      if (!response.ok) throw new Error('Erro ao adicionar ausência')
+      const responseData = await response.json()
+      console.log('📥 Resposta:', responseData) // Debug
       
-      toast.success('Ausência adicionada com sucesso!')
+      if (!response.ok) {
+        throw new Error(responseData.details || responseData.error || 'Erro ao adicionar ausência')
+      }
+      
+      toast.success(
+        absenceType === 'SHOP_CLOSURE' 
+          ? 'Fechamento da barbearia registrado com sucesso!' 
+          : 'Ausência registrada com sucesso!'
+      )
+      
+      // Reset form
       setDialogOpen(false)
       setSelectedDate(undefined)
-      setReason('')
+      setSelectedBarber('')
+      setSelectedReasonType('FOLGA')
+      setCustomReason('')
       setIsAllDay(true)
+      setAbsenceType('BARBER_ABSENCE')
+      
       fetchAbsences()
     } catch (error) {
-      toast.error('Erro ao adicionar ausência')
-      console.error(error)
+      console.error('Erro detalhado:', error)
+      toast.error(error instanceof Error ? error.message : 'Erro ao registrar ausência')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -100,10 +176,10 @@ export function AbsenceManager() {
       
       if (!response.ok) throw new Error('Erro ao excluir ausência')
       
-      toast.success('Ausência excluída com sucesso!')
+      toast.success('Registro excluído com sucesso!')
       fetchAbsences()
     } catch (error) {
-      toast.error('Erro ao excluir ausência')
+      toast.error('Erro ao excluir registro')
       console.error(error)
     }
   }
@@ -118,32 +194,90 @@ export function AbsenceManager() {
     )
   }
 
+  // mostrar/ocultar seletor barbeiro
+  const showBarberSelector = absenceType === 'BARBER_ABSENCE'
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <CardTitle className="text-white">Gerenciar Ausências</CardTitle>
+        <CardTitle className="text-white">Gerenciar Ausências e Fechamentos</CardTitle>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#8161FF] hover:bg-[#8161FF]/80 text-white">
               <Plus className="mr-2 h-4 w-4" />
-              Adicionar Ausência
+              Adicionar
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[#0c0c0c] border-[#1f1f1f] text-white">
+          <DialogContent className="bg-[#0c0c0c] border-[#1f1f1f] text-white max-w-lg">
             <DialogHeader>
-              <DialogTitle>Nova Ausência</DialogTitle>
+              <DialogTitle>Registrar Ausência ou Fechamento</DialogTitle>
               <DialogDescription className="text-slate-400">
-                Marque um dia ou período em que a barbearia não estará disponível
+                Marque um dia de ausência de barbeiro ou fechamento da barbearia
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Tipo de registro */}
+              <div className="space-y-2">
+                <Label className="text-white">Tipo</Label>
+                <Select 
+                  value={absenceType} 
+                  onValueChange={(value) => setAbsenceType(value as 'BARBER_ABSENCE' | 'SHOP_CLOSURE')}
+                >
+                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectItem value="BARBER_ABSENCE">Ausência de Barbeiro</SelectItem>
+                    <SelectItem value="SHOP_CLOSURE">Fechamento da Barbearia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {showBarberSelector && (
+                <div className="space-y-2">
+                  <Label className="text-white flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Barbeiro
+                  </Label>
+                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                      <SelectValue placeholder="Selecione um barbeiro" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                      {barbers.length === 0 ? (
+                        <SelectItem value="no-barbers" disabled>
+                          Nenhum barbeiro cadastrado
+                        </SelectItem>
+                      ) : (
+                        barbers.map(barber => (
+                          <SelectItem key={barber.id} value={barber.id}>
+                            {barber.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* fechamento */}
+              {!showBarberSelector && (
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center gap-3">
+                  <Store className="w-5 h-5 text-blue-400" />
+                  <div>
+                    <p className="text-sm text-blue-400 font-medium">Fechamento da Barbearia</p>
+                    <p className="text-xs text-slate-400">Afetará todos os barbeiros</p>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>Data</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                      className="w-full bg-[#0f0f0f] border-[#1f1f1f] text-white justify-start"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {selectedDate ? format(selectedDate, "dd 'de' MMM yyyy", { locale: ptBR }) : "Selecione uma data"}
@@ -156,19 +290,39 @@ export function AbsenceManager() {
                       onSelect={setSelectedDate}
                       locale={ptBR}
                       className="bg-[#0c0c0c] text-white"
+                      disabled={{ before: new Date() }}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
+
+              {/* Motivo */}
               <div className="space-y-2">
-                <Label>Motivo (opcional)</Label>
-                <Textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Ex: Feriado, evento especial, etc."
-                  className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
-                />
+                <Label>Motivo</Label>
+                <Select value={selectedReasonType} onValueChange={setSelectedReasonType}>
+                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    {REASON_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {selectedReasonType === 'OUTRO' && (
+                  <Textarea
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    placeholder="Descreva o motivo..."
+                    className="bg-[#0f0f0f] border-[#1f1f1f] text-white mt-2"
+                    rows={2}
+                  />
+                )}
               </div>
+
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={isAllDay}
@@ -178,12 +332,27 @@ export function AbsenceManager() {
                 <Label>Dia todo</Label>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <DialogFooter className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setDialogOpen(false)}
+                disabled={saving}
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleAddAbsence} className="bg-[#8161FF] hover:bg-[#8161FF]/80">
-                Adicionar
+              <Button 
+                onClick={handleAddAbsence} 
+                className="bg-[#8161FF] hover:bg-[#8161FF]/80 text-white"
+                disabled={saving || !selectedDate || (showBarberSelector && !selectedBarber)}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Registrar'
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -195,39 +364,48 @@ export function AbsenceManager() {
           <Card className="col-span-full bg-[#0f0f0f] border-[#1f1f1f]">
             <CardContent className="py-8 text-center">
               <CalendarIcon className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-              <p className="text-slate-400">Nenhuma ausência programada</p>
+              <p className="text-slate-400">Nenhuma ausência ou fechamento programado</p>
             </CardContent>
           </Card>
         ) : (
           absences.map((absence) => (
-            <Card key={absence.id} className="bg-[#0f0f0f] border-[#1f1f1f]">
+            <Card key={absence.id} className="bg-[#0f0f0f] border-[#1f1f1f] hover:border-red-500/30 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between p-4">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30">
-                    Ausência
+                  <Badge variant="outline" className={
+                    absence.type === 'SHOP_CLOSURE' 
+                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+                      : 'bg-red-500/20 text-red-400 border-red-500/30'
+                  }>
+                    {absence.type === 'SHOP_CLOSURE' ? 'Fechamento' : 'Ausência'}
                   </Badge>
-                  <CardTitle className="text-sm font-medium text-white">
-                    {format(absence.date, "dd/MM/yyyy", { locale: ptBR })}
-                  </CardTitle>
+                  <div>
+                    <CardTitle className="text-sm font-medium text-white">
+                      {format(absence.date, "dd/MM/yyyy", { locale: ptBR })}
+                    </CardTitle>
+                    <p className="text-xs text-slate-400">
+                      {absence.type === 'SHOP_CLOSURE' ? 'Barbearia fechada' : absence.barberName}
+                    </p>
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDeleteAbsence(absence.id)}
-                  className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/20"
+                  className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                {absence.reason && (
+              {absence.reason && (
+                <CardContent className="p-4 pt-0">
                   <p className="text-sm text-slate-300">{absence.reason}</p>
-                )}
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <CalendarIcon className="h-3 w-3" />
-                  {absence.isAllDay ? 'Dia todo' : 'Período parcial'}
-                </div>
-              </CardContent>
+                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
+                    <CalendarIcon className="h-3 w-3" />
+                    {absence.isAllDay ? 'Dia todo' : 'Período parcial'}
+                  </div>
+                </CardContent>
+              )}
             </Card>
           ))
         )}

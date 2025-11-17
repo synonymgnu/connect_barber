@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/_components/ui/card'
-
 import { Button } from '@/app/_components/ui/button'
 import { Badge } from '@/app/_components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,7 +13,7 @@ import {
   TooltipTrigger,
 } from '@/app/_components/ui/tooltip'
 import { toast } from 'sonner'
-import { format, endOfMonth, startOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { 
   Clock, 
@@ -24,7 +23,11 @@ import {
   ChevronRight, 
   CalendarOff, 
   Info,
-  CalendarIcon
+  CalendarIcon,
+  Users,
+  UserX,
+  AlertCircle,
+  Store
 } from 'lucide-react'
 
 interface WorkSchedule {
@@ -39,28 +42,67 @@ interface Absence {
   date: Date
   reason: string
   isAllDay: boolean
+  barberId: string | null
+  barberName: string | null
+  type: 'BARBER_ABSENCE' | 'SHOP_CLOSURE'
+}
+
+interface Barber {
+  id: string
+  name: string
 }
 
 interface DayInfo {
   isWorkingDay: boolean
   schedule?: WorkSchedule
+  shopClosures: Absence[]
+  barberAbsences: Absence[]
+  availableBarbers: number
+  totalBarbers: number
+}
+
+interface BarberInfo {
+  id: string
+  name: string
+  schedule: WorkSchedule | undefined
   isAbsent: boolean
   absence?: Absence
 }
 
-
-
 // Helper functions
-function getDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence[]) {
+function getDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence[], barbers: Barber[]): DayInfo {
   const dayOfWeek = date.getDay()
-  const isAbsent = absences.some(a => isSameDay(a.date, date))
+  const dayAbsences = absences.filter(a => isSameDay(a.date, date))
+  const shopClosures = dayAbsences.filter(a => a.type === 'SHOP_CLOSURE')
+  const barberAbsences = dayAbsences.filter(a => a.type === 'BARBER_ABSENCE')
   const schedule = workSchedules.find(s => s.dayOfWeek === dayOfWeek)
   
+  const availableBarbers = barbers.filter(barber => {
+    const barberAbsence = barberAbsences.find(a => a.barberId === barber.id)
+    return !barberAbsence && schedule?.isActive
+  }).length
+
   return {
-    isWorkingDay: schedule?.isActive && !isAbsent,
+    isWorkingDay: (schedule?.isActive ?? false) && shopClosures.length === 0,
     schedule,
-    isAbsent,
-    absence: absences.find(a => isSameDay(a.date, date))
+    shopClosures,
+    barberAbsences,
+    availableBarbers,
+    totalBarbers: barbers.length
+  }
+}
+
+function getBarberInfo(barber: Barber, date: Date, workSchedules: WorkSchedule[], absences: Absence[]): BarberInfo {
+  const dayOfWeek = date.getDay()
+  const schedule = workSchedules.find(s => s.dayOfWeek === dayOfWeek)
+  const absence = absences.find(a => isSameDay(a.date, date) && a.barberId === barber.id && a.type === 'BARBER_ABSENCE')
+
+  return {
+    id: barber.id,
+    name: barber.name,
+    schedule,
+    isAbsent: !!absence,
+    absence
   }
 }
 
@@ -75,25 +117,32 @@ export function AvailabilityCalendar() {
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [monthStats, setMonthStats] = useState({ working: 0, absent: 0, closed: 0 })
+  const [barbers, setBarbers] = useState<Barber[]>([])
+  const [showAbsenceModal, setShowAbsenceModal] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
-      const [schedulesRes, absencesRes] = await Promise.all([
+      const [schedulesRes, absencesRes, barbersRes] = await Promise.all([
         fetch('/api/availability/schedule'),
-        fetch('/api/availability/absences')
+        fetch('/api/availability/absences'),
+        fetch('/api/barbershop/barbers')
       ])
       
-      if (!schedulesRes.ok || !absencesRes.ok) throw new Error('Erro ao carregar dados')
+      if (!schedulesRes.ok || !absencesRes.ok || !barbersRes.ok) {
+        throw new Error('Erro ao carregar dados')
+      }
       
       const schedules = await schedulesRes.json()
       const absencesData = await absencesRes.json()
+      const barbersData = await barbersRes.json()
       
       setWorkSchedules(schedules)
       setAbsences(absencesData.map((a: any) => ({
         ...a,
         date: new Date(a.date)
       })))
+      setBarbers(barbersData)
     } catch (error) {
       toast.error('Erro ao carregar disponibilidade')
       console.error(error)
@@ -106,8 +155,6 @@ export function AvailabilityCalendar() {
     fetchData()
   }, [fetchData])
 
-
-
   // Calcula estatísticas do mês
   useEffect(() => {
     const days = eachDayOfInterval({
@@ -118,21 +165,23 @@ export function AvailabilityCalendar() {
     const stats = { working: 0, absent: 0, closed: 0 }
 
     days.forEach(date => {
-      const dayOfWeek = date.getDay()
-      const isAbsent = absences.some(a => isSameDay(a.date, date))
-      const schedule = workSchedules.find(s => s.dayOfWeek === dayOfWeek)
-
-      if (isAbsent) {
-        stats.absent++
-      } else if (schedule?.isActive) {
-        stats.working++
+      const dayInfo = getDayInfo(date, workSchedules, absences, barbers)
+      
+      if (dayInfo.shopClosures.length > 0) {
+        stats.closed++
+      } else if (dayInfo.isWorkingDay) {
+        if (dayInfo.barberAbsences.length === 0) {
+          stats.working++
+        } else {
+          stats.absent++
+        }
       } else {
         stats.closed++
       }
     })
 
     setMonthStats(stats)
-  }, [selectedMonth, workSchedules, absences])
+  }, [selectedMonth, workSchedules, absences, barbers])
 
   const handlePreviousMonth = () => {
     setSelectedDate(null)
@@ -142,6 +191,11 @@ export function AvailabilityCalendar() {
   const handleNextMonth = () => {
     setSelectedDate(null)
     setSelectedMonth(prev => addMonths(prev, 1))
+  }
+
+  const openAbsenceModalWithDate = (date: Date) => {
+    setSelectedDate(date)
+    setShowAbsenceModal(true)
   }
 
   if (loading) {
@@ -214,7 +268,7 @@ export function AvailabilityCalendar() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Dias de Trabalho</p>
+                <p className="text-sm text-slate-400">Dias Completos</p>
                 <p className="text-2xl font-bold text-green-400">{monthStats.working}</p>
               </div>
               <Check className="w-8 h-8 text-green-400/30" />
@@ -226,10 +280,10 @@ export function AvailabilityCalendar() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Ausências</p>
-                <p className="text-2xl font-bold text-red-400">{monthStats.absent}</p>
+                <p className="text-sm text-slate-400">Dias com Ausências</p>
+                <p className="text-2xl font-bold text-yellow-400">{monthStats.absent}</p>
               </div>
-              <X className="w-8 h-8 text-red-400/30" />
+              <UserX className="w-8 h-8 text-yellow-400/30" />
             </div>
           </CardContent>
         </Card>
@@ -273,34 +327,37 @@ export function AvailabilityCalendar() {
                   start: startOfMonth(selectedMonth),
                   end: endOfMonth(selectedMonth)
                 }).map((date) => {
-                  const dayInfo = getDayInfo(date, workSchedules, absences)
+                  const dayInfo = getDayInfo(date, workSchedules, absences, barbers)
                   const isSelected = isDateSelected(selectedDate, date)
                   const isCurrentMonth = date.getMonth() === selectedMonth.getMonth()
 
                   const baseClasses = "relative w-full h-16 flex flex-col items-center justify-center p-2 rounded-lg transition-all cursor-pointer"
 
                   const getDayClassName = () => {
-                    if (!isCurrentMonth) {
-                      return `${baseClasses} opacity-30`
+                    if (!isCurrentMonth) return `${baseClasses} opacity-30`
+                    if (isSelected) return `${baseClasses} ring-2 ring-white bg-[#8161FF]/30`
+                    if (isToday(date)) return `${baseClasses} ring-2 ring-[#8161FF] bg-[#8161FF]/20`
+                    if (dayInfo.shopClosures.length > 0) {
+                      return `${baseClasses} bg-blue-500/20 hover:bg-blue-500/30 text-blue-300`
                     }
-                    
-                    if (isSelected) {
-                      return `${baseClasses} ring-2 ring-white bg-[#8161FF]/30`
+                    if (!dayInfo.isWorkingDay) return `${baseClasses} bg-[#0c0c0c]/50 text-slate-500 hover:bg-[#0c0c0c]/70`
+                    if (dayInfo.barberAbsences.length > 0) {
+                      if (dayInfo.availableBarbers === 0) {
+                        return `${baseClasses} bg-red-500/20 hover:bg-red-500/30 text-red-300`
+                      }
+                      return `${baseClasses} bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300`
                     }
-                    
-                    if (isToday(date)) {
-                      return `${baseClasses} ring-2 ring-[#8161FF] bg-[#8161FF]/20`
+                    return `${baseClasses} bg-green-500/20 hover:bg-green-500/30 text-green-300`
+                  }
+
+                  const getStatusIcon = () => {
+                    if (dayInfo.shopClosures.length > 0) return <Store className="w-3 h-3 text-blue-400" />
+                    if (!dayInfo.isWorkingDay) return <CalendarOff className="w-3 h-3 text-slate-400" />
+                    if (dayInfo.barberAbsences.length > 0) {
+                      if (dayInfo.availableBarbers === 0) return <X className="w-3 h-3 text-red-400" />
+                      return <AlertCircle className="w-3 h-3 text-yellow-400" />
                     }
-                    
-                    if (dayInfo.isAbsent) {
-                      return `${baseClasses} bg-red-500/20 hover:bg-red-500/30 text-red-300`
-                    }
-                    
-                    if (dayInfo.isWorkingDay) {
-                      return `${baseClasses} bg-[#8161FF]/20 hover:bg-[#8161FF]/30 text-white`
-                    }
-                    
-                    return `${baseClasses} bg-[#0c0c0c]/50 text-slate-500 hover:bg-[#0c0c0c]/70`
+                    return <Check className="w-3 h-3 text-green-400" />
                   }
 
                   return (
@@ -314,29 +371,43 @@ export function AvailabilityCalendar() {
                             onClick={() => setSelectedDate(date)}
                           >
                             <span className="text-sm font-medium">{format(date, 'd')}</span>
-                            
-                            <div className="flex gap-1 mt-1">
-                              {dayInfo.isAbsent && (
-                                <X className="w-3 h-3 text-red-400" />
-                              )}
-                              {dayInfo.isWorkingDay && (
-                                <div className="w-2 h-2 bg-[#8161FF] rounded-full" />
-                              )}
-                            </div>
+                            <div className="flex gap-1 mt-1">{getStatusIcon()}</div>
                           </motion.div>
                         </TooltipTrigger>
-                        <TooltipContent className="bg-[#0c0c0c] border-[#1f1f1f] text-white p-3">
+                        <TooltipContent className="bg-[#0c0c0c] border-[#1f1f1f] text-white p-3 max-w-xs">
                           <div className="space-y-1">
                             <p className="font-medium">{format(date, "EEEE, dd/MM/yyyy", { locale: ptBR })}</p>
-                            {dayInfo.isAbsent ? (
+                            
+                            {dayInfo.shopClosures.length > 0 ? (
                               <>
-                                <p className="text-red-400">❌ Ausência marcada</p>
-                                {dayInfo.absence?.reason && <p className="text-sm text-slate-300">{dayInfo.absence.reason}</p>}
+                                <p className="text-blue-400">🏪 Barbearia fechada</p>
+                                {dayInfo.shopClosures[0]?.reason && (
+                                  <p className="text-xs text-slate-300">{dayInfo.shopClosures[0].reason}</p>
+                                )}
                               </>
-                            ) : dayInfo.isWorkingDay ? (
-                              <p className="text-[#8161FF]">✅ {dayInfo.schedule?.startTime} - {dayInfo.schedule?.endTime}</p>
+                            ) : !dayInfo.isWorkingDay ? (
+                              <p className="text-slate-400">⏸️ Dia sem expediente</p>
+                            ) : dayInfo.barberAbsences.length > 0 ? (
+                              <>
+                                {dayInfo.availableBarbers === 0 ? (
+                                  <p className="text-red-400">❌ Nenhum barbeiro disponível</p>
+                                ) : (
+                                  <p className="text-yellow-400">
+                                    ⚠️ {dayInfo.availableBarbers}/{dayInfo.totalBarbers} barbeiros
+                                  </p>
+                                )}
+                                <p className="text-xs text-slate-300">
+                                  {dayInfo.barberAbsences.length} ausência(s) registrada(s)
+                                </p>
+                              </>
                             ) : (
-                              <p className="text-slate-400">⏸️ Fechado</p>
+                              <p className="text-green-400">✅ Funcionamento normal</p>
+                            )}
+                            
+                            {dayInfo.schedule && dayInfo.isWorkingDay && (
+                              <p className="text-xs text-slate-400">
+                                Expediente: {dayInfo.schedule.startTime} - {dayInfo.schedule.endTime}
+                              </p>
                             )}
                           </div>
                         </TooltipContent>
@@ -364,83 +435,219 @@ export function AvailabilityCalendar() {
                     <CalendarIcon className="w-5 h-5" />
                     Detalhes do Dia
                   </CardTitle>
+                  <p className="text-sm text-slate-400">
+                    {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                  </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   {(() => {
-                    const dayInfo = getDayInfo(selectedDate, workSchedules, absences)
+                    const dayInfo = getDayInfo(selectedDate, workSchedules, absences, barbers)
                     
-                    if (dayInfo.isAbsent) {
+                    // Fechamento da barbearia
+                    if (dayInfo.shopClosures.length > 0) {
                       return (
                         <>
-                          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
-                            <div className="flex items-center gap-2 text-red-400 mb-2">
-                              <X className="w-5 h-5" />
-                              <span className="font-medium">Ausência Marcada</span>
+                          <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                            <div className="flex items-center gap-2 text-blue-400 mb-2">
+                              <Store className="w-5 h-5" />
+                              <span className="font-medium">Barbearia Fechada</span>
                             </div>
-                            {dayInfo.absence?.reason && (
-                              <p className="text-sm text-slate-300">{dayInfo.absence.reason}</p>
+                            {dayInfo.shopClosures[0]?.reason && (
+                              <p className="text-sm text-slate-300">{dayInfo.shopClosures[0].reason}</p>
                             )}
                             <p className="text-xs text-slate-400 mt-2">
-                              {dayInfo.absence?.isAllDay ? 'Dia todo' : 'Período parcial'}
-                            </p>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            className="w-full bg-[#0c0c0c] border-[#1f1f1f] text-white hover:bg-red-500/20 hover:text-red-400 hover:border-red-500"
-                          >
-                            Remover Ausência
-                          </Button>
-                        </>
-                      )
-                    }
-
-                    if (dayInfo.isWorkingDay) {
-                      return (
-                        <>
-                          <div className="p-4 rounded-lg bg-[#8161FF]/20 border border-[#8161FF]/30">
-                            <div className="flex items-center gap-2 text-[#8161FF] mb-2">
-                              <Clock className="w-5 h-5" />
-                              <span className="font-medium">Dia de Trabalho</span>
-                            </div>
-                            <p className="text-sm text-white">
-                              Expediente: {dayInfo.schedule?.startTime} às {dayInfo.schedule?.endTime}
+                              {dayInfo.shopClosures[0]?.isAllDay ? 'Dia todo' : 'Período parcial'}
                             </p>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <Button 
                               variant="outline" 
                               className="bg-[#0c0c0c] border-[#1f1f1f] text-white hover:bg-[#8161FF]/20"
+                              onClick={() => setSelectedDate(null)}
                             >
-                              Editar Horário
+                              Fechar
                             </Button>
                             <Button 
                               variant="outline" 
                               className="bg-[#0c0c0c] border-[#1f1f1f] text-white hover:bg-red-500/20 hover:text-red-400 hover:border-red-500"
                             >
-                              Marcar Ausência
+                              Remover Fechamento
                             </Button>
                           </div>
                         </>
                       )
                     }
 
+                    // Dia sem expediente
+                    if (!dayInfo.isWorkingDay) {
+                      return (
+                        <div className="p-4 rounded-lg bg-[#0c0c0c] border border-[#1f1f1f] text-center">
+                          <CalendarOff className="w-8 h-8 text-slate-500 mx-auto mb-3" />
+                          <p className="text-sm text-slate-300">Dia sem expediente</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {`Configure os horários na aba "Horários de Trabalho"`}
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="mt-4 w-full bg-[#0c0c0c] border-[#1f1f1f] text-white hover:bg-blue-500/20 hover:text-blue-400 hover:border-blue-500"
+                            onClick={() => openAbsenceModalWithDate(selectedDate)}
+                          >
+                            <Store className="w-4 h-4 mr-2" />
+                            Marcar Fechamento
+                          </Button>
+                        </div>
+                      )
+                    }
+
+                    // Funcionamento com ausências
                     return (
-                      <div className="p-4 rounded-lg bg-[#0c0c0c] border border-[#1f1f1f] text-center">
-                        <CalendarOff className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                        <p className="text-sm text-slate-300">Dia sem expediente</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Configure os horários na aba "Horários de Trabalho"
-                        </p>
-                      </div>
+                      <>
+                        {/* Status do dia */}
+                        <div className={`p-4 rounded-lg border ${
+                          dayInfo.availableBarbers === 0 ? 'bg-red-500/10 border-red-500/30' :
+                          dayInfo.barberAbsences.length > 0 ? 'bg-yellow-500/10 border-yellow-500/30' :
+                          'bg-green-500/10 border-green-500/30'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            {dayInfo.availableBarbers === 0 ? 
+                              <X className="w-5 h-5 text-red-400" /> :
+                              dayInfo.barberAbsences.length > 0 ?
+                              <AlertCircle className="w-5 h-5 text-yellow-400" /> :
+                              <Check className="w-5 h-5 text-green-400" />
+                            }
+                            <span className={`font-medium ${
+                              dayInfo.availableBarbers === 0 ? 'text-red-400' :
+                              dayInfo.barberAbsences.length > 0 ? 'text-yellow-400' :
+                              'text-green-400'
+                            }`}>
+                              {dayInfo.availableBarbers === 0 ? 'Nenhum barbeiro disponível' :
+                               dayInfo.barberAbsences.length > 0 ? 'Funcionamento com ausências' :
+                               'Funcionamento normal'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-300">
+                            {dayInfo.availableBarbers} de {dayInfo.totalBarbers} barbeiros disponíveis
+                          </p>
+                          {dayInfo.schedule && (
+                            <p className="text-xs text-slate-400 mt-1">
+                              Expediente: {dayInfo.schedule.startTime} às {dayInfo.schedule.endTime}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Lista de ausências */}
+                        {dayInfo.barberAbsences.length > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                              <UserX className="w-4 h-4" />
+                              Ausências Registradas
+                            </h4>
+                            <div className="space-y-2">
+                              {dayInfo.barberAbsences.map((absence) => (
+                                <div 
+                                  key={absence.id} 
+                                  className="p-3 rounded-lg bg-red-500/10 border border-red-500/30"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-3 h-3 rounded-full bg-red-400" />
+                                      <div>
+                                        <p className="text-sm text-white">{absence.barberName}</p>
+                                        {absence.reason && (
+                                          <p className="text-xs text-slate-300">{absence.reason}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                                      {absence.isAllDay ? 'Dia todo' : 'Parcial'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Lista de barbeiros */}
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Barbeiros
+                          </h4>
+                          <div className="space-y-2">
+                            {barbers.map((barber) => {
+                              const barberInfo = getBarberInfo(barber, selectedDate, workSchedules, absences)
+                              
+                              return (
+                                <div 
+                                  key={barber.id} 
+                                  className={`p-3 rounded-lg border flex items-center justify-between ${
+                                    barberInfo.isAbsent ? 'bg-red-500/10 border-red-500/30' :
+                                    barberInfo.schedule?.isActive ? 'bg-green-500/10 border-green-500/30' :
+                                    'bg-[#0c0c0c] border-[#1f1f1f]'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-3 h-3 rounded-full ${
+                                      barberInfo.isAbsent ? 'bg-red-400' :
+                                      barberInfo.schedule?.isActive ? 'bg-green-400' :
+                                      'bg-slate-500'
+                                    }`} />
+                                    <div>
+                                      <p className="text-sm text-white">{barber.name}</p>
+                                      {barberInfo.schedule?.isActive && !barberInfo.isAbsent && (
+                                        <p className="text-xs text-slate-400">
+                                          {barberInfo.schedule.startTime} - {barberInfo.schedule.endTime}
+                                        </p>
+                                      )}
+                                      {barberInfo.absence?.reason && (
+                                        <p className="text-xs text-red-300">{barberInfo.absence.reason}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="text-xs">
+                                    {barberInfo.isAbsent ? (
+                                      <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30">
+                                        Ausente
+                                      </Badge>
+                                    ) : barberInfo.schedule?.isActive ? (
+                                      <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30">
+                                        Disponível
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="bg-slate-500/20 text-slate-400 border-slate-500/30">
+                                        Folga
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Botões de ação */}
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          <Button 
+                            variant="outline" 
+                            className="bg-[#0c0c0c] border-[#1f1f1f] text-white hover:bg-[#8161FF]/20"
+                            onClick={() => setSelectedDate(null)}
+                          >
+                            Fechar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="bg-[#0c0c0c] border-[#1f1f1f] text-white hover:bg-red-500/20 hover:text-red-400 hover:border-red-500"
+                            onClick={() => openAbsenceModalWithDate(selectedDate)}
+                          >
+                            <UserX className="w-4 h-4 mr-2" />
+                            Ausência
+                          </Button>
+                        </div>
+                      </>
                     )
                   })()}
-                  
-                  <div>
-                    <p className="text-sm text-slate-400 mb-1">Data</p>
-                    <p className="text-lg font-medium text-white">
-                      {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -455,7 +662,7 @@ export function AvailabilityCalendar() {
                   <Info className="w-12 h-12 text-slate-500 mx-auto mb-4" />
                   <p className="text-slate-300 mb-2">Nenhum dia selecionado</p>
                   <p className="text-sm text-slate-500">
-                    Clique em um dia do calendário para ver detalhes
+                    Clique em um dia do calendário para ver detalhes dos barbeiros
                   </p>
                 </CardContent>
               </Card>

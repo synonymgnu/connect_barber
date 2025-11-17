@@ -10,7 +10,7 @@ export async function GET() {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    if (!session.user.barbershopId) {
+    if (!session?.user?.barbershopId) {
       return NextResponse.json({ error: 'Barbearia não encontrada' }, { status: 404 })
     }
 
@@ -19,7 +19,16 @@ export async function GET() {
         barbershopId: session.user.barbershopId, 
         isActive: true 
       },
-      select: { id: true, name: true }
+      select: {
+        id: true,
+        name: true,
+        user: {
+          select: {
+            image: true
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
     })
 
     return NextResponse.json(barbers)
