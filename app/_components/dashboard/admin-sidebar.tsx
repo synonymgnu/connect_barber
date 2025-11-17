@@ -11,6 +11,10 @@ import {
   X,
   Users,
   Store,
+  LogOutIcon,
+  Bell,
+  UserCog,
+  CircleUserRound,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -31,7 +35,10 @@ import { Avatar, AvatarImage } from '../ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import {
@@ -40,8 +47,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip'
+import { useSession } from 'next-auth/react'
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
+import { Button } from '../ui/button'
+import SignOutDialog from '../sign-out-dialog'
+import SignInDialog from '../sign-in-dialog'
 
 export function AdminSidebar() {
+  const { data } = useSession()
+
   const pathname = usePathname()
   const sidebar = useSidebar() // 👈 pegando o objeto inteiro
   const { open, setOpen } = useSidebar()
@@ -165,31 +179,71 @@ export function AdminSidebar() {
         >
           <SidebarMenu>
             <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
-                    <Avatar className="w-4 h-4">
-                      <AvatarImage src="/user-img.svg" />
-                    </Avatar>
-                    Username
-                    <ChevronUp className="ml-auto" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="top"
-                  className="w-[--radix-popper-anchor-width]"
-                >
-                  <DropdownMenuItem>
-                    <span>Account</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {data?.user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton>
+                      <Avatar className="w-4 h-4">
+                        <AvatarImage src={data?.user?.image ?? ''} />
+                      </Avatar>
+                      <p className="whitespace-nowrap">{data.user.name}</p>
+                      <ChevronUp className="ml-auto" />
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="top" className="w-full">
+                    <DropdownMenuLabel>
+                      <div className="p-2  flex gap-2 border-b border-solid">
+                        <Avatar>
+                          <AvatarImage src={data?.user?.image ?? ''} />
+                        </Avatar>
+                        <div className="flex flex-col ml-3">
+                          <p className="font-bold">{data.user.name}</p>
+                          <p className="text-xs">{data.user.email}</p>
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuGroup className="p-2">
+                      <DropdownMenuItem>
+                        <UserCog /> Minha conta
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Bell /> Notificações
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <div className="py-5 flex flex-col gap-2 items-start">
+                      <Dialog>
+                        <DialogTrigger className="w-full">
+                          <Button
+                            variant="ghost"
+                            className="gap-2 justify-start w-full text-left"
+                          >
+                            <LogOutIcon size={18} />
+                            Sair da Conta
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[30%]">
+                          <SignOutDialog />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Dialog>
+                    <DialogTrigger className="flex" asChild>
+                      <SidebarMenuButton>
+                        <CircleUserRound className="w-4 h-4" />
+                        Perfil
+                      </SidebarMenuButton>
+                    </DialogTrigger>
+                    <DialogContent className="w-[30%]">
+                      <SignInDialog />
+                    </DialogContent>
+                  </Dialog>
+                </>
+              )}
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
