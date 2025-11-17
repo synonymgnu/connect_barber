@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/_components/ui/card'
-
+import { Calendar } from '@/app/_components/ui/calendar'
 import { Button } from '@/app/_components/ui/button'
 import { Badge } from '@/app/_components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -48,10 +48,16 @@ interface DayInfo {
   absence?: Absence
 }
 
+// Componente personalizado para cada dia do calendário
+interface DayCellProps {
+  date: Date
+  displayMonth: Date
+}
 
 
-// Helper functions
-function getDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence[]) {
+
+// Custom hooks para evitar prop drilling
+function useDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence[]) {
   const dayOfWeek = date.getDay()
   const isAbsent = absences.some(a => isSameDay(a.date, date))
   const schedule = workSchedules.find(s => s.dayOfWeek === dayOfWeek)
@@ -64,8 +70,8 @@ function getDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence
   }
 }
 
-function isDateSelected(selectedDate: Date | null, checkDate: Date) {
-  return selectedDate ? isSameDay(checkDate, selectedDate) : false
+function useSelectedDate(selectedDate: Date | null) {
+  return (checkDate: Date) => selectedDate ? isSameDay(checkDate, selectedDate) : false
 }
 
 export function AvailabilityCalendar() {
@@ -273,8 +279,8 @@ export function AvailabilityCalendar() {
                   start: startOfMonth(selectedMonth),
                   end: endOfMonth(selectedMonth)
                 }).map((date) => {
-                  const dayInfo = getDayInfo(date, workSchedules, absences)
-                  const isSelected = isDateSelected(selectedDate, date)
+                  const dayInfo = useDayInfo(date, workSchedules, absences)
+                  const isSelected = useSelectedDate(selectedDate)
                   const isCurrentMonth = date.getMonth() === selectedMonth.getMonth()
 
                   const baseClasses = "relative w-full h-16 flex flex-col items-center justify-center p-2 rounded-lg transition-all cursor-pointer"
@@ -284,7 +290,7 @@ export function AvailabilityCalendar() {
                       return `${baseClasses} opacity-30`
                     }
                     
-                    if (isSelected) {
+                    if (isSelected(date)) {
                       return `${baseClasses} ring-2 ring-white bg-[#8161FF]/30`
                     }
                     
@@ -366,8 +372,16 @@ export function AvailabilityCalendar() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-slate-400 mb-1">Data</p>
+                    <p className="text-lg font-medium text-white">
+                      {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                    </p>
+                  </div>
+
                   {(() => {
-                    const dayInfo = getDayInfo(selectedDate, workSchedules, absences)
+                    const dayInfo = useDayInfo(selectedDate)
+                    const isSelected = useSelectedDate(selectedDate)
                     
                     if (dayInfo.isAbsent) {
                       return (
@@ -434,13 +448,6 @@ export function AvailabilityCalendar() {
                       </div>
                     )
                   })()}
-                  
-                  <div>
-                    <p className="text-sm text-slate-400 mb-1">Data</p>
-                    <p className="text-lg font-medium text-white">
-                      {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
