@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { UploadButton } from '@/utils/uploadthing'
 import { Button } from '../ui/button'
@@ -9,33 +9,45 @@ import { CirclePlus } from 'lucide-react'
 export function ImageUploadField({
   value,
   onChange,
+  isSelected,
 }: {
   value?: string
   onChange: (url: string) => void
+  isSelected?: boolean
 }) {
   const [preview, setPreview] = useState<string | undefined>(value)
 
-  return (
-    <div className="flex flex-col items-center gap-3 relative">
-      {preview && (
-        <div className="relative w-40 h-40">
-          <Image
-            src={preview}
-            alt="Preview da imagem"
-            fill
-            className="rounded-lg object-cover border"
-          />
-        </div>
-      )}
+  useEffect(() => {
+    setPreview(value)
+  }, [value])
 
-      {/* Botão visual personalizado */}
+  return (
+    <div className="flex flex-col items-center gap-2 relative">
+      {/* Área do preview SEMPRE existente */}
+      <div
+        className={`
+          relative w-20 h-20 lg:w-32 lg:h-32 rounded-lg overflow-hidden border-2
+          transition 
+          ${isSelected ? 'border-primary ring-2 ring-primary/40' : 'border-muted'}
+        `}
+      >
+        {preview ? (
+          <Image src={preview} alt="Preview" fill className="object-cover" />
+        ) : (
+          <div className="w-full h-full flex flex-col gap-2 items-center justify-center text-xs text-muted-foreground text-center">
+            Faça upload de uma imagem
+          </div>
+        )}
+      </div>
+
+      {/* Botão personalizado */}
       <div className="relative">
-        <Button type="button">
+        <Button type="button" size="sm">
           <CirclePlus />
           {preview ? 'Trocar imagem' : 'Fazer upload'}
         </Button>
 
-        {/* UploadButton real posicionado sobre o botão, mas invisível */}
+        {/* Upload real invisível */}
         <div className="absolute inset-0 opacity-0 cursor-pointer">
           <UploadButton
             endpoint="serviceImage"
@@ -44,10 +56,10 @@ export function ImageUploadField({
               setPreview(url)
               onChange(url)
             }}
-            onUploadError={(error: Error) => alert(`Erro: ${error.message}`)}
+            onUploadError={(err) => alert(err.message)}
             content={{
               button() {
-                return null // escondemos o botão interno
+                return null
               },
               allowedContent() {
                 return ''

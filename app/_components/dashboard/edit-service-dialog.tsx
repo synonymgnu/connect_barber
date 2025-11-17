@@ -30,7 +30,7 @@ export function EditServiceDialog({ service, open, setOpen }: any) {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[90%] rounded-lg">
+        <DialogContent className="w-[90%] h-[90%] rounded-lg">
           <DialogHeader>
             <DialogTitle>Editar Serviço</DialogTitle>
           </DialogHeader>
