@@ -9,7 +9,7 @@ import PhoneItem from '@/app/_components/phone-item'
 import { Sheet, SheetTrigger } from '@/app/_components/ui/sheet'
 import SidebarSheet from '@/app/_components/sidebar-sheet'
 import Header from '@/app/_components/header'
-import { Card } from '@/app/_components/ui/card'
+import { Card, CardContent } from '@/app/_components/ui/card'
 import { Avatar, AvatarImage } from '@/app/_components/ui/avatar'
 
 interface BarbershopPageProps {
@@ -151,19 +151,28 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </h2>
             <p className="text-sn text-justify">{barbershop?.description}</p>
           </div>
+
           {/* SERVIÇOS*/}
           <div className="p-5 space-y-3  lg:p-0 lg:mt-10">
             <h2 className="font-bold uppercase text-gray-400 text-xs mb-3 lg:text-sm">
               Serviços
             </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4 lg:gap-x-5 lg:gap-y-3">
-              {barbershop.services.map((service) => (
-                <ServiceItem
-                  key={service.id}
-                  barbershop={JSON.parse(JSON.stringify(barbershop))}
-                  service={JSON.parse(JSON.stringify(service))}
-                />
-              ))}
+            <div className="mt-4">
+              {barbershop.services.length === 0 ? (
+                <p className="text-sm text-gray-400">
+                  Esta barbearia ainda não possui serviços cadastrados.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4 lg:gap-x-5 lg:gap-y-3">
+                  {barbershop.services.map((service) => (
+                    <ServiceItem
+                      key={service.id}
+                      barbershop={JSON.parse(JSON.stringify(barbershop))}
+                      service={JSON.parse(JSON.stringify(service))}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
