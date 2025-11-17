@@ -1,21 +1,28 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { MoreHorizontal, TrendingUp, TrendingDown } from "lucide-react"
+import { 
+  TrendingUp, 
+  TrendingDown,
+  RefreshCw,
+  Download
+} from "lucide-react"
 import { Button } from "../ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { 
-  CartesianGrid, 
   ResponsiveContainer, 
-  Scatter, 
-  ScatterChart, 
-  Tooltip, 
-  XAxis, 
-  YAxis 
+  ScatterChart,
+  Scatter,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip // ✅ Renomeado para evitar conflito
 } from "recharts"
 import { Skeleton } from "../ui/skeleton"
+import { toast } from "sonner"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
 
 interface StatData {
   count: number
@@ -24,9 +31,9 @@ interface StatData {
 
 interface DashboardStats {
   bookings: StatData
-  users: StatData
-  barbershops: StatData
   revenue: StatData
+  customers: StatData
+  barbers: StatData
 }
 
 interface DataPoint {
@@ -36,109 +43,144 @@ interface DataPoint {
   size: number
   color: string
   label: string
-  type: 'bookings' | 'users' | 'barbershops' | 'revenue'
+  type: keyof DashboardStats
   percentage: number
-}
-
-interface TooltipProps {
-  active?: boolean
-  payload?: Array<{ payload: DataPoint }>
 }
 
 const COLORS = {
   bookings: '#8161FF',
-  users: '#f97316',
-  barbershops: '#ec4899',
-  revenue: '#10b981'
+  revenue: '#10b981',
+  customers: '#f97316',
+  barbers: '#ec4899'
 }
 
 export default function RecentStatsSection() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await fetch('/api/dashboard/recent-stats')
+      if (!response.ok) throw new Error('Failed to fetch stats')
+      
+      const data = await response.json()
+      setStats(data)
+      setLastUpdate(new Date())
+    } catch (err) {
+      setError('Erro ao carregar estatísticas')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/dashboard/stats')
-        if (!response.ok) throw new Error('Failed to fetch stats')
-        
-        const data = await response.json()
-        setStats(data)
-      } catch (err) {
-        setError('Erro ao carregar estatísticas')
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchStats()
+    
     // Atualizar a cada 5 minutos
     const interval = setInterval(fetchStats, 300000)
     
     return () => clearInterval(interval)
-  }, [])
+  }, [fetchStats])
+
+  const handleRefresh = async () => {
+    toast.loading('Atualizando estatísticas...')
+    await fetchStats()
+    toast.dismiss()
+    toast.success('Estatísticas atualizadas!')
+  }
+
+  const handleExport = () => {
+    if (!stats) return
+    
+    const data = {
+      barbearia: 'Minha Barbearia',
+      data: format(new Date(), 'dd/MM/yyyy HH:mm'),
+      estatisticas: {
+        'Agendamentos (7 dias)': stats.bookings.count,
+        'Receita (7 dias)': `R$ ${stats.revenue.count.toFixed(2)}`,
+        'Clientes (7 dias)': stats.customers.count,
+        'Barbeiros Ativos': stats.barbers.count
+      }
+    }
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `estatisticas-${format(new Date(), 'yyyy-MM-dd-HH-mm')}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    toast.success('Dados exportados com sucesso!')
+  }
 
   const prepareChartData = (): DataPoint[] => {
     if (!stats) return []
 
-    const data: DataPoint[] = [
+    const mainData: DataPoint[] = [
       {
-        x: 5,
-        y: 20 + Math.random() * 20,
-        value: stats.users.count.toString(),
-        size: Math.min(80, 30 + stats.users.count * 2),
-        color: COLORS.users,
-        label: 'Novos Usuários',
-        type: 'users',
-        percentage: stats.users.percentage
+        x: 2,
+        y: 30,
+        value: stats.bookings.count.toString(),
+        size: Math.min(100, 40 + stats.bookings.count * 1.5),
+        color: COLORS.bookings,
+        label: 'Agendamentos',
+        type: 'bookings',
+        percentage: stats.bookings.percentage
       },
       {
-        x: 6.5,
-        y: 50 + Math.random() * 30,
+        x: 3.5,
+        y: 60,
         value: `R$ ${(stats.revenue.count / 1000).toFixed(1)}k`,
-        size: Math.min(100, 40 + (stats.revenue.count / 100) * 2),
+        size: Math.min(110, 50 + (stats.revenue.count / 100) * 1.2),
         color: COLORS.revenue,
         label: 'Receita',
         type: 'revenue',
         percentage: stats.revenue.percentage
       },
       {
-        x: 8,
-        y: 30 + Math.random() * 20,
-        value: stats.barbershops.count.toString(),
-        size: Math.min(90, 35 + stats.barbershops.count * 3),
-        color: COLORS.barbershops,
-        label: 'Barbearias',
-        type: 'barbershops',
-        percentage: stats.barbershops.percentage
+        x: 5,
+        y: 35,
+        value: stats.customers.count.toString(),
+        size: Math.min(90, 35 + stats.customers.count * 2),
+        color: COLORS.customers,
+        label: 'Clientes',
+        type: 'customers',
+        percentage: stats.customers.percentage
       },
       {
-        x: 9.5,
-        y: 60 + Math.random() * 25,
-        value: stats.bookings.count.toString(),
-        size: Math.min(120, 50 + stats.bookings.count * 1.5),
-        color: COLORS.bookings,
-        label: 'Agendamentos',
-        type: 'bookings',
-        percentage: stats.bookings.percentage
+        x: 6.5,
+        y: 70,
+        value: stats.barbers.count.toString(),
+        size: Math.min(80, 30 + stats.barbers.count * 8),
+        color: COLORS.barbers,
+        label: 'Barbeiros',
+        type: 'barbers',
+        percentage: stats.barbers.percentage
       }
     ]
 
-    const extraPoints = [
-      { x: 5.5, y: 70, value: "", size: 12, color: COLORS.users, label: "Usuário", type: 'users' as const, percentage: 0 },
-      { x: 7, y: 80, value: "", size: 10, color: COLORS.revenue, label: "Venda", type: 'revenue' as const, percentage: 0 },
-      { x: 8.5, y: 75, value: "", size: 14, color: COLORS.barbershops, label: "Barbearia", type: 'barbershops' as const, percentage: 0 },
-      { x: 10, y: 85, value: "", size: 11, color: COLORS.bookings, label: "Booking", type: 'bookings' as const, percentage: 0 },
+    const decorativePoints = [
+      { x: 2.3, y: 70, value: "", size: 8, color: COLORS.bookings, label: "Booking", type: 'bookings' as const, percentage: 0 },
+      { x: 3.8, y: 35, value: "", size: 10, color: COLORS.revenue, label: "Venda", type: 'revenue' as const, percentage: 0 },
+      { x: 5.3, y: 65, value: "", size: 9, color: COLORS.customers, label: "Cliente", type: 'customers' as const, percentage: 0 },
+      { x: 6.8, y: 45, value: "", size: 7, color: COLORS.barbers, label: "Barbeiro", type: 'barbers' as const, percentage: 0 },
     ]
 
-    return [...data, ...extraPoints]
+    return [...mainData, ...decorativePoints]
   }
 
-  const CustomTooltip = ({ active, payload }: TooltipProps) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload
+      const data = payload[0].payload as DataPoint
       return (
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 shadow-xl">
           <p className="text-white font-semibold text-sm">{data.label}</p>
@@ -225,11 +267,23 @@ export default function RecentStatsSection() {
     return (
       <Card className="bg-[#0c0c0c] border-[#1f1f1f]">
         <CardContent className="flex items-center justify-center h-64">
-          <p className="text-red-500">{error}</p>
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={fetchStats}
+              className="text-slate-400 border-slate-700 hover:bg-slate-800/50"
+            >
+              Tentar novamente
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
   }
+
+  if (!stats) return null
 
   const chartData = prepareChartData()
 
@@ -242,22 +296,50 @@ export default function RecentStatsSection() {
               Estatísticas Recentes
             </CardTitle>
             <p className="text-xs text-slate-500 mt-1">
-              Últimos 7 dias • Atualizado {format(new Date(), "HH:mm", { locale: ptBR })}
+              Últimos 7 dias • Atualizado {format(lastUpdate, "HH:mm", { locale: ptBR })}
             </p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-slate-400 hover:text-white h-8 w-8"
-            onClick={() => window.location.reload()}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-slate-400 hover:text-white h-8 w-8"
+                    onClick={handleExport}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Exportar dados</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-slate-400 hover:text-white h-8 w-8"
+                    onClick={handleRefresh}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Atualizar agora</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </CardHeader>
       
       <CardContent className="pt-0 px-4 sm:px-6 flex flex-col flex-1">
-        <div className="flex-1 min-h-[250px] sm:min-h-[300px] lg:min-h-0">
+        <div className="flex-1 min-h-[250px] sm:min-h-[300px] lg:min-h-0 relative">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart
               margin={{ top: 10, right: -10, bottom: 10, left: -10 }}
@@ -277,64 +359,24 @@ export default function RecentStatsSection() {
                 stroke="#212121"
                 strokeWidth={0.5}
                 style={{ pointerEvents: "none" }}
+                vertical={false}
               />
               
               <XAxis
                 type="number"
                 dataKey="x"
-                domain={[4.5, 10.5]}
-                ticks={[5, 6.5, 8, 9.5]}
-                axisLine={false}
-                tickLine={true}
-                tickSize={25}
-                strokeWidth={0.2}
-                tickMargin={10}
-                tickFormatter={(value) => {
-                  const labels: Record<number, string> = {
-                    5: 'Usuários',
-                    6.5: 'Receita',
-                    8: 'Barbearias',
-                    9.5: 'Agendamentos'
-                  }
-                  return labels[value] || ''
-                }}
-                tick={({ x, y, payload }) => (
-                  <text
-                    x={x}
-                    y={y - 15}
-                    textAnchor="middle"
-                    fill="#9ca3af"
-                    fontSize={10}
-                  >
-                    {payload.value}
-                  </text>
-                )}
+                domain={[1.5, 7]}
+                hide={true}
               />
               
               <YAxis
                 type="number"
                 domain={[0, 100]}
-                ticks={[0, 25, 50, 75, 100]}
-                axisLine={false}
-                tickLine={true}
-                tickSize={25}
-                strokeWidth={0.2}
-                tickFormatter={(value) => `${value}%`}
-                tickMargin={10}
-                tick={({ x, y, payload }) => (
-                  <text
-                    x={x + 15}
-                    y={y + 20}
-                    textAnchor="middle"
-                    fill="#9ca3af"
-                    fontSize={9}
-                  >
-                    {payload.value}%
-                  </text>
-                )}
+                hide={true}
               />
               
-              <Tooltip content={<CustomTooltip />} />
+              {/* ✅ CORRETO: Passando CustomTooltip via prop 'content' */}
+              <RechartsTooltip content={<CustomTooltip />} />
               
               <Scatter 
                 data={chartData}
@@ -352,16 +394,16 @@ export default function RecentStatsSection() {
             <span className="text-xs sm:text-sm text-slate-400">Agendamentos</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS.users }} />
-            <span className="text-xs sm:text-sm text-slate-400">Usuários</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS.barbershops }} />
-            <span className="text-xs sm:text-sm text-slate-400">Barbearias</span>
-          </div>
-          <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS.revenue }} />
             <span className="text-xs sm:text-sm text-slate-400">Receita</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS.customers }} />
+            <span className="text-xs sm:text-sm text-slate-400">Clientes</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS.barbers }} />
+            <span className="text-xs sm:text-sm text-slate-400">Barbeiros</span>
           </div>
         </div>
       </CardContent>
