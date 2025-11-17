@@ -183,10 +183,12 @@ export function AdminSidebar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton className="gap-2">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-4 w-4">
                         <AvatarImage src={data?.user?.image ?? ''} />
                       </Avatar>
-                      <span className="truncate">{data?.user?.name || 'Username'}</span>
+                      <span className="truncate">
+                        {data?.user?.name || 'Username'}
+                      </span>
                       <ChevronUp className="ml-auto" />
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
