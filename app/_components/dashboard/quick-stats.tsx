@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader } from "../ui/card"
 import { Skeleton } from "../ui/skeleton"
 import { ShoppingCart, User, DollarSign } from "lucide-react"
+import { Button } from "../ui/button"
 
 interface QuickStatsData {
   newOrders: number
@@ -11,38 +12,26 @@ interface QuickStatsData {
   totalRevenue: number
 }
 
+async function fetchQuickStats(): Promise<QuickStatsData> {
+  const response = await fetch('/api/reports/quick-stats')
+  if (!response.ok) throw new Error('Erro ao carregar dados')
+  return response.json()
+}
+
 export default function QuickStats() {
-  const [data, setData] = useState<QuickStatsData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['reports', 'quick-stats'],
+    queryFn: fetchQuickStats,
+    staleTime: 60 * 1000,
+  })
 
-  const fetchQuickStats = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/reports/quick-stats')
-      if (!response.ok) throw new Error('Erro ao carregar dados')
-      
-      const result = await response.json()
-      setData(result)
-    } catch (error) {
-      console.error('Erro ao buscar estatísticas rápidas:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchQuickStats()
-  }, [fetchQuickStats])
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
-          <Card key={i} className="bg-[#0c0c0c] border-[#1f1f1f]">
-            <CardHeader>
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
+          <Card key={i} className="h-[120px]">
+            <CardContent className="p-6">
+              <Skeleton className="h-4 w-24 mb-3" />
               <Skeleton className="h-8 w-32" />
             </CardContent>
           </Card>
@@ -51,11 +40,24 @@ export default function QuickStats() {
     )
   }
 
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">Erro ao carregar estatísticas</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
+      </Card>
+    )
+  }
+
   if (!data) return null
 
   const stats = [
     {
-      title: "New Orders",
+      title: "Novos Pedidos",
       value: data.newOrders.toLocaleString('pt-BR'),
       icon: ShoppingCart,
       color: "text-blue-400",
@@ -82,15 +84,15 @@ export default function QuickStats() {
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
-          <Card key={index} className="bg-[#0c0c0c] border-[#1f1f1f]">
+          <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium text-slate-400">{stat.title}</p>
+              <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
               <div className={`p-2 rounded-lg ${stat.bgColor}`}>
                 <Icon className={`h-4 w-4 ${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stat.value}</div>
+              <div className="text-2xl font-bold">{stat.value}</div>
             </CardContent>
           </Card>
         )

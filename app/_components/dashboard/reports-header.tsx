@@ -17,13 +17,12 @@ export default function ReportsHeader() {
 
   return (
     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-      {/* Título Relatórios */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-white">Relatórios</h1>
         <p className="text-slate-400 mt-1">Acompanhe o desempenho da sua barbearia</p>
       </div>
 
-      {/* Calendário Mensal */}
+      {/* Calendário */}
       <Popover>
         <PopoverTrigger asChild>
           <Button

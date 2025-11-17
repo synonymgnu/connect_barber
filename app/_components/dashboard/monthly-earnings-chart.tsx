@@ -54,7 +54,7 @@ export default function MonthlyEarningsChart() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-[#0c0c0c] border-[#1f1f1f]">
-              {/* Gerar últimos 12 meses */}
+              {/* últimos 12 meses */}
               {Array.from({ length: 12 }, (_, i) => {
                 const date = new Date()
                 date.setMonth(date.getMonth() - i)
