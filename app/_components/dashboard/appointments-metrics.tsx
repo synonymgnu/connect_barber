@@ -92,7 +92,7 @@ export default function AppointmentsMetrics() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="bg-[#15141b] border-[#1f1f1f]">
             <CardContent className="p-6">
@@ -111,7 +111,7 @@ export default function AppointmentsMetrics() {
 
   if (error) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {['Próximos', 'Concluídos', 'Cancelados', 'Clientes'].map((title) => (
           <Card key={title} className="bg-[#15141b] border-[#1f1f1f]">
             <CardContent className="p-6">
@@ -126,7 +126,7 @@ export default function AppointmentsMetrics() {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {metrics.map((metric, index) => {
         const TrendIcon = metric.trend === "up" ? TrendingUp : TrendingDown
         const trendColor = metric.trend === "up" ? "text-green-500" : "text-red-500"
