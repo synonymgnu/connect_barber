@@ -96,7 +96,7 @@ export default function UnifiedCalendar({
       if (!response.ok) throw new Error('Erro ao carregar serviços')
       return response.json()
     },
-    enabled: role === 'ADMIN',
+    enabled: !!session,
   })
 
   const { data: barbers } = useQuery({
@@ -106,7 +106,7 @@ export default function UnifiedCalendar({
       if (!response.ok) throw new Error('Erro ao carregar barbeiros')
       return response.json()
     },
-    enabled: role === 'ADMIN',
+    enabled: role === 'ADMIN' && !!session,
   })
 
   const createMutation = useMutation({
@@ -196,7 +196,7 @@ export default function UnifiedCalendar({
 
   const handleEventClick = (clickInfo: any) => {
     const event = clickInfo.event
-    const appointment = calendarData?.appointments?.find((a: any) => a.id === event.id)
+    const appointment = event.extendedProps
     
     if (appointment) {
       const appointmentDate = new Date(appointment.date)
@@ -216,7 +216,7 @@ export default function UnifiedCalendar({
         serviceId: appointment.service.id,
         barberId: appointment.barber?.id || '',
         date: appointmentDate,
-        status: appointment.status,
+        status: appointment.status.toUpperCase(),
         source: appointment.source,
         notes: appointment.notes || '',
       })
@@ -225,17 +225,20 @@ export default function UnifiedCalendar({
   }
 
   const handleEventDrop = (dropInfo: any) => {
-    const appointment = calendarData?.appointments?.find((a: any) => a.id === dropInfo.event.id)
+    const appointment = dropInfo.event.extendedProps
     
     if (appointment) {
       const newDate = dropInfo.event.start
       updateMutation.mutate({
         id: appointment.id,
         data: {
-          ...appointment,
-          date: newDate.toISOString(),
+          userId: appointment.user.id,
           serviceId: appointment.service.id,
           barberId: appointment.barber?.id,
+          date: newDate.toISOString(),
+          status: appointment.status.toUpperCase(),
+          source: appointment.source,
+          notes: appointment.notes || '',
         },
       })
     }
@@ -246,6 +249,9 @@ export default function UnifiedCalendar({
     
     const data = {
       userId: formData.userId,
+      userName: formData.userName,
+      userEmail: formData.userEmail,
+      userPhone: formData.userPhone,
       serviceId: formData.serviceId,
       barberId: role === 'BARBER' ? session?.user?.barberId : formData.barberId,
       date: formData.date.toISOString(),
@@ -268,14 +274,14 @@ export default function UnifiedCalendar({
     }
   }
 
-  const events = calendarData?.appointments?.map((appointment: any) => ({
-    id: appointment.id,
-    title: `${appointment.user.name} - ${appointment.service.name}`,
-    start: appointment.date,
-    end: new Date(new Date(appointment.date).getTime() + (appointment.service.duration * 60000)).toISOString(),
-    backgroundColor: getEventColorByStatus(appointment.status.toLowerCase()),
-    borderColor: getEventColorByStatus(appointment.status.toLowerCase()),
-    extendedProps: appointment,
+  const events = calendarData?.events?.map((event: any) => ({
+    id: event.id,
+    title: event.title,
+    start: event.start,
+    end: event.end,
+    backgroundColor: event.backgroundColor,
+    borderColor: event.borderColor,
+    extendedProps: event.extendedProps,
   })) || []
 
   const renderHeader = () => {
@@ -340,8 +346,7 @@ export default function UnifiedCalendar({
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                {/* Seleção de Cliente (somente Admin) */}
-                {role === 'ADMIN' && (
+                {/* Seleção de Cliente */}
                 <div className="space-y-2">
                     <Label className="text-white flex items-center gap-2">
                     <User className="w-4 h-4" />
@@ -368,7 +373,6 @@ export default function UnifiedCalendar({
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
                     />
                 </div>
-                )}
 
                 {/* Serviço */}
                 <div className="space-y-2">

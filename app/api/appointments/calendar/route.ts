@@ -136,14 +136,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Horário indisponível" }, { status: 409 })
     }
 
+    // Criar ou encontrar usuário
+    let userId = data.userId
+    if (!userId && (data.userName || data.userEmail)) {
+      let user = null
+      
+      if (data.userEmail) {
+        user = await db.user.findUnique({ where: { email: data.userEmail } })
+      }
+      
+      if (!user) {
+        user = await db.user.create({
+          data: {
+            name: data.userName || 'Cliente',
+            email: data.userEmail || `cliente_${Date.now()}@temp.com`,
+            phone: data.userPhone || null,
+            role: 'CLIENT',
+          },
+        })
+      }
+      
+      userId = user.id
+    }
+
     const booking = await db.booking.create({
       data: {
-        userId: data.userId || session.user.id,
+        userId: userId || session.user.id,
         serviceId: data.serviceId,
         barberId: session.user.role === "BARBER" ? session.user.barberId || undefined : data.barberId,
         date: new Date(data.date),
         status: data.status || "PENDING",
         source: session.user.role === "BARBER" ? "PRESENCIAL" : data.source || "ONLINE",
+        notes: data.notes || null,
       },
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
