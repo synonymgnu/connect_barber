@@ -186,7 +186,7 @@ export default function BarberSchedulePage() {
               <Tabs defaultValue="calendar" className="space-y-4 sm:space-y-6">
                 
                 <TabsList
-                  className="flex bg-[#151515] border border-[#333] p-1 rounded-lg gap-1 overflow-x-auto scrollbar-hide min-h-[2.5rem] justify-start"
+                  className="grid w-full grid-cols-5 bg-[#151515] border border-[#333] p-1 rounded-lg gap-1 min-h-[2.5rem]"
                 >
                   {[
                     { value: "calendar", label: "Calendário", icon: "📅", shortLabel: "Calend." },
