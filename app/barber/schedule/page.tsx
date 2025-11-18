@@ -14,6 +14,7 @@ import ReviewsChart from "@/app/_components/reviews-chart"
 import { WorkSchedule } from "@/app/_components/work-schedule"
 import { BarberAbsenceManager } from "@/app/_components/dashboard/barber-absence-manager"
 import UnifiedCalendar from "@/app/_components/calendar/unified-calendar"
+import Header from "@/app/_components/header"
 
 import "./fullcalendar-theme.css"
 import AuthCheck from "@/app/_components/auth-check"
@@ -124,6 +125,7 @@ export default function BarberSchedulePage() {
 
   return (
     <AuthCheck requiredRole="BARBER">
+      <Header />
       <div className="min-h-screen text-white p-3 sm:p-4 md:p-6">
         <div className="container mx-auto max-w-7xl">
           {/* Header */}

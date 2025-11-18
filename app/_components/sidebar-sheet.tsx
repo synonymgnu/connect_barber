@@ -77,12 +77,26 @@ const SidebarSheet = () => {
             </Button>
           </SheetClose>
           {data?.user ? (
-            <Button className="justify-start gap-2" variant="ghost" asChild>
-              <Link href="/bookings">
-                <CalendarIcon size={18} />
-                Agendamentos
-              </Link>
-            </Button>
+            <>
+              <SheetClose asChild>
+                <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Link href="/bookings">
+                    <CalendarIcon size={18} />
+                    Agendamentos
+                  </Link>
+                </Button>
+              </SheetClose>
+              {data.user.role === 'BARBER' && (
+                <SheetClose asChild>
+                  <Button className="justify-start gap-2" variant="ghost" asChild>
+                    <Link href="/barber/schedule">
+                      <CalendarIcon size={18} />
+                      Minha Agenda
+                    </Link>
+                  </Button>
+                </SheetClose>
+              )}
+            </>
           ) : (
             <>
               <Dialog>

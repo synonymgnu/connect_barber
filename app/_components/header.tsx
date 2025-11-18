@@ -13,7 +13,7 @@ import { useSession } from 'next-auth/react'
 import Search from './search'
 
 import { quickSearchOptions } from '../_constants/search'
-import { ChevronDown, ChevronUp, LogOutIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp, LogOutIcon, CalendarIcon } from 'lucide-react'
 import SignOutDialog from './sign-out-dialog'
 import {
   DropdownMenu,
@@ -127,6 +127,22 @@ const Header = ({ isHidden }: HeaderProps) => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuGroup>
+                    {data.user.role === 'BARBER' && (
+                      <DropdownMenuItem>
+                        <div className="flex flex-col border-b border-solid w-full">
+                          <Button
+                            className="justify-start"
+                            variant="ghost"
+                            asChild
+                          >
+                            <Link href="/barber/schedule">
+                              <CalendarIcon size={18} />
+                              Minha Agenda
+                            </Link>
+                          </Button>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
                     {quickSearchOptions.map((service) => (
                       <DropdownMenuItem key={service.title}>
                         <div className="flex flex-col border-b border-solid w-full">
