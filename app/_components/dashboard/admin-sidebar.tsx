@@ -15,6 +15,9 @@ import {
   Bell,
   UserCog,
   CircleUserRound,
+  Home,
+  Clock,
+  BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -61,10 +64,13 @@ export function AdminSidebar() {
   const [hover, setHover] = useState(false)
 
   const menuItems = [
+    { label: 'Início', href: '/', icon: Home },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Agenda', href: '/dashboard/calendar', icon: Calendar },
     { label: 'Serviços', href: '/dashboard/services', icon: Scissors },
     { label: 'Equipe', href: '/dashboard/barbers', icon: Users },
+    { label: 'Disponibilidade', href: '/dashboard/availability', icon: Clock },
+    { label: 'Relatórios', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Barbearia', href: '/dashboard/settings', icon: Store },
   ]
 

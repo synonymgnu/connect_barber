@@ -97,6 +97,16 @@ const SidebarSheet = () => {
                   </Button>
                 </SheetClose>
               )}
+              {data.user.role === 'ADMIN' && (
+                <SheetClose asChild>
+                  <Button className="justify-start gap-2" variant="ghost" asChild>
+                    <Link href="/dashboard">
+                      <CalendarIcon size={18} />
+                      Dashboard Admin
+                    </Link>
+                  </Button>
+                </SheetClose>
+              )}
             </>
           ) : (
             <>

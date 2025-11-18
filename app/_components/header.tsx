@@ -145,6 +145,22 @@ const Header = ({ isHidden }: HeaderProps) => {
                         </div>
                       </DropdownMenuItem>
                     )}
+                    {data.user.role === 'ADMIN' && (
+                      <DropdownMenuItem>
+                        <div className="flex flex-col border-b border-solid w-full">
+                          <Button
+                            className="justify-start"
+                            variant="ghost"
+                            asChild
+                          >
+                            <Link href="/dashboard">
+                              <CalendarIcon size={18} />
+                              Dashboard Admin
+                            </Link>
+                          </Button>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
                     {quickSearchOptions.map((service) => (
                       <DropdownMenuItem key={service.title}>
                         <div className="flex flex-col border-b border-solid w-full">
