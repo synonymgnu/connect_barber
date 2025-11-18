@@ -218,6 +218,7 @@ export default function UnifiedCalendar({
         date: appointmentDate,
         status: appointment.status.toUpperCase(),
         source: appointment.source,
+        notes: appointment.notes || '',
       })
       setModalOpen(true)
     }
@@ -237,6 +238,7 @@ export default function UnifiedCalendar({
           date: newDate.toISOString(),
           status: appointment.status.toUpperCase(),
           source: appointment.source,
+          notes: appointment.notes || '',
         },
       })
     }
@@ -255,6 +257,7 @@ export default function UnifiedCalendar({
       date: formData.date.toISOString(),
       status: formData.status,
       source: formData.source,
+      notes: formData.notes,
     }
 
     if (modalMode === 'edit' && selectedAppointment) {
@@ -357,14 +360,14 @@ export default function UnifiedCalendar({
                     required
                     />
                     <Input
-                    placeholder="Email"
+                    placeholder="Email (opcional)"
                     type="email"
                     value={formData.userEmail}
                     onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
                     />
                     <Input
-                    placeholder="Telefone"
+                    placeholder="Telefone (opcional)"
                     value={formData.userPhone}
                     onChange={(e) => setFormData({ ...formData, userPhone: e.target.value })}
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"

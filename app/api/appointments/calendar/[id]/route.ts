@@ -14,6 +14,7 @@ export async function PUT(
 
   try {
     const data = await req.json()
+    console.log('[UPDATE BOOKING] Received data:', JSON.stringify(data, null, 2))
     const bookingId = params.id
 
     // Verificar se o agendamento existe e se o usuário tem permissão
@@ -38,6 +39,21 @@ export async function PUT(
       if (existingBooking.service.barbershop.id !== session.user.barbershopId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
       }
+    }
+
+    // Atualizar dados do cliente se fornecidos
+    if (data.userName || data.userEmail || data.userPhone) {
+      const userUpdateData: any = {}
+      if (data.userName) userUpdateData.name = data.userName
+      if (data.userEmail) userUpdateData.email = data.userEmail
+      if (data.userPhone) userUpdateData.phone = data.userPhone
+      
+      console.log('[UPDATE BOOKING] Updating user:', existingBooking.userId, userUpdateData)
+      
+      await db.user.update({
+        where: { id: existingBooking.userId },
+        data: userUpdateData
+      })
     }
 
     // Verificar conflito de horário se a data ou barbeiro mudou
@@ -77,7 +93,9 @@ export async function PUT(
     if (data.source && data.source !== existingBooking.source) {
       updateData.source = data.source
     }
-
+    if (data.notes !== undefined && data.notes !== existingBooking.notes) {
+      updateData.notes = data.notes
+    }
 
     // Atualizar agendamento apenas se houver mudanças
     const updatedBooking = Object.keys(updateData).length > 0 
