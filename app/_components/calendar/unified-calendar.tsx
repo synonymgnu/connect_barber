@@ -218,7 +218,6 @@ export default function UnifiedCalendar({
         date: appointmentDate,
         status: appointment.status.toUpperCase(),
         source: appointment.source,
-        notes: appointment.notes || '',
       })
       setModalOpen(true)
     }
@@ -238,7 +237,6 @@ export default function UnifiedCalendar({
           date: newDate.toISOString(),
           status: appointment.status.toUpperCase(),
           source: appointment.source,
-          notes: appointment.notes || '',
         },
       })
     }
@@ -257,7 +255,6 @@ export default function UnifiedCalendar({
       date: formData.date.toISOString(),
       status: formData.status,
       source: formData.source,
-      notes: formData.notes,
     }
 
     if (modalMode === 'edit' && selectedAppointment) {

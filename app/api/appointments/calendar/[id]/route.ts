@@ -40,12 +40,15 @@ export async function PUT(
       }
     }
 
-    // Verificar conflito de horário se a data mudou
-    if (data.date && new Date(data.date).getTime() !== existingBooking.date.getTime()) {
+    // Verificar conflito de horário se a data ou barbeiro mudou
+    const newDate = data.date ? new Date(data.date) : existingBooking.date
+    const newBarberId = data.barberId || existingBooking.barberId
+    
+    if (data.date || data.barberId) {
       const conflictBooking = await db.booking.findFirst({
         where: {
-          barberId: data.barberId || existingBooking.barberId,
-          date: new Date(data.date),
+          barberId: newBarberId,
+          date: newDate,
           status: { not: "CANCELLED" },
           id: { not: bookingId }
         },
@@ -56,23 +59,45 @@ export async function PUT(
       }
     }
 
-    // Atualizar agendamento
-    const updatedBooking = await db.booking.update({
-      where: { id: bookingId },
-      data: {
-        serviceId: data.serviceId || existingBooking.serviceId,
-        barberId: data.barberId || existingBooking.barberId,
-        date: data.date ? new Date(data.date) : existingBooking.date,
-        status: data.status || existingBooking.status,
-        source: data.source || existingBooking.source,
-        notes: data.notes !== undefined ? data.notes : existingBooking.notes,
-      },
-      include: {
-        user: { select: { id: true, name: true, email: true, phone: true } },
-        service: { select: { id: true, name: true, price: true, duration: true } },
-        barber: { select: { id: true, name: true } },
-      },
-    })
+    // Preparar dados para atualização
+    const updateData: any = {}
+    
+    if (data.serviceId && data.serviceId !== existingBooking.serviceId) {
+      updateData.serviceId = data.serviceId
+    }
+    if (data.barberId && data.barberId !== existingBooking.barberId) {
+      updateData.barberId = data.barberId
+    }
+    if (data.date && new Date(data.date).getTime() !== existingBooking.date.getTime()) {
+      updateData.date = new Date(data.date)
+    }
+    if (data.status && data.status !== existingBooking.status) {
+      updateData.status = data.status
+    }
+    if (data.source && data.source !== existingBooking.source) {
+      updateData.source = data.source
+    }
+
+
+    // Atualizar agendamento apenas se houver mudanças
+    const updatedBooking = Object.keys(updateData).length > 0 
+      ? await db.booking.update({
+          where: { id: bookingId },
+          data: updateData,
+          include: {
+            user: { select: { id: true, name: true, email: true, phone: true } },
+            service: { select: { id: true, name: true, price: true, duration: true } },
+            barber: { select: { id: true, name: true } },
+          },
+        })
+      : await db.booking.findUnique({
+          where: { id: bookingId },
+          include: {
+            user: { select: { id: true, name: true, email: true, phone: true } },
+            service: { select: { id: true, name: true, price: true, duration: true } },
+            barber: { select: { id: true, name: true } },
+          },
+        })
 
     return NextResponse.json(updatedBooking)
   } catch (error) {

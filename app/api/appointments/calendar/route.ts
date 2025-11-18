@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
         date: new Date(data.date),
         status: data.status || "PENDING",
         source: session.user.role === "BARBER" ? "PRESENCIAL" : data.source || "ONLINE",
-        notes: data.notes || null,
+
       },
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
