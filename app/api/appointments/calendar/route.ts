@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await req.json()
+    console.log('[CREATE BOOKING] Received data:', JSON.stringify(data, null, 2))
     
     // Validação de permissões
     const barbershopId = session.user.barbershopId
@@ -136,14 +137,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Horário indisponível" }, { status: 409 })
     }
 
+    // Criar ou encontrar usuário
+    let userId = data.userId
+    if (!userId) {
+      if (!data.userName) {
+        return NextResponse.json({ error: "Nome do cliente é obrigatório" }, { status: 400 })
+      }
+
+      let user = null
+      
+      if (data.userEmail) {
+        user = await db.user.findUnique({ where: { email: data.userEmail } })
+      }
+      
+      if (!user) {
+        user = await db.user.create({
+          data: {
+            name: data.userName,
+            email: data.userEmail || `cliente_${Date.now()}@temp.com`,
+            phone: data.userPhone || null,
+            role: 'CLIENT',
+          },
+        })
+      } else {
+        const updateData: any = {}
+        if (data.userName && user.name !== data.userName) updateData.name = data.userName
+        if (data.userPhone && user.phone !== data.userPhone) updateData.phone = data.userPhone
+        
+        if (Object.keys(updateData).length > 0) {
+          user = await db.user.update({
+            where: { id: user.id },
+            data: updateData
+          })
+        }
+      }
+      
+      userId = user.id
+    }
+    
+    console.log('[CREATE BOOKING] Final userId:', userId)
+
     const booking = await db.booking.create({
       data: {
-        userId: data.userId || session.user.id,
+        userId: userId,
         serviceId: data.serviceId,
         barberId: session.user.role === "BARBER" ? session.user.barberId || undefined : data.barberId,
         date: new Date(data.date),
         status: data.status || "PENDING",
         source: session.user.role === "BARBER" ? "PRESENCIAL" : data.source || "ONLINE",
+        notes: data.notes || null,
       },
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
@@ -152,6 +194,12 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    console.log('[CREATE BOOKING] Created booking:', JSON.stringify({
+      id: booking.id,
+      userName: booking.user.name,
+      userEmail: booking.user.email
+    }, null, 2))
+    
     return NextResponse.json(booking)
   } catch (error) {
     console.error("Error creating appointment:", error)

@@ -15,6 +15,9 @@ import {
   Bell,
   UserCog,
   CircleUserRound,
+  Home,
+  Clock,
+  BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -57,16 +60,17 @@ export function AdminSidebar() {
   const { data } = useSession()
 
   const pathname = usePathname()
-  const sidebar = useSidebar() // 👈 pegando o objeto inteiro
   const { open, setOpen } = useSidebar()
   const [hover, setHover] = useState(false)
-  const expanded = open || hover
 
   const menuItems = [
+    { label: 'Início', href: '/', icon: Home },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Agenda', href: '/dashboard/calendar', icon: Calendar },
     { label: 'Serviços', href: '/dashboard/services', icon: Scissors },
     { label: 'Equipe', href: '/dashboard/barbers', icon: Users },
+    { label: 'Disponibilidade', href: '/dashboard/availability', icon: Clock },
+    { label: 'Relatórios', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Barbearia', href: '/dashboard/settings', icon: Store },
   ]
 
@@ -74,12 +78,12 @@ export function AdminSidebar() {
     <Sidebar
       collapsible="icon"
       className="border-r bg-card shadow-sm text-card-foreground"
-      onMouseEnter={() => setHover(true)}
+      onMouseEnter={() => !open && setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
       <motion.div
         animate={{
-          width: expanded ? 240 : 72,
+          width: open ? 240 : 72,
         }}
         transition={{ duration: 0.25, ease: 'easeInOut' }}
         className="overflow-hidden h-full flex flex-col"
@@ -95,8 +99,8 @@ export function AdminSidebar() {
         )}
         {/* HEADER */}
         <SidebarHeader
-          className={`p-[9px]  transition-all duration-200 ${
-            expanded ? 'border-border' : 'border-transparent'
+          className={`p-[9px] transition-all duration-200 ${
+            open ? 'border-border' : 'border-transparent'
           }`}
         >
           <button
@@ -145,7 +149,7 @@ export function AdminSidebar() {
                               className="flex items-center gap-3 px-3 py-2 rounded-md transition hover:bg-muted relative"
                             >
                               <Icon className="w-5 h-5" />
-                              {expanded && (
+                              {(open || hover) && (
                                 <span className="font-medium text-sm">
                                   {item.label}
                                 </span>

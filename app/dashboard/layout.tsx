@@ -12,15 +12,12 @@ export default function DashboardLayout({
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AdminSidebar />
-        <div className="flex flex-col flex-1">
-          {/* TOPO */}
-          <header className="flex items-center gap-2 border-b px-5 py-3">
+        <div className="flex flex-col flex-1 min-w-0">
+          <header className="flex items-center gap-2 border-b px-4 py-3 shrink-0">
             <SidebarTrigger />
             <h1 className="font-semibold text-lg">Painel Administrativo</h1>
           </header>
-
-          {/* CONTEÚDO */}
-          <main className="flex-1 overflow-y-auto p-5 lg:p-10">{children}</main>
+          <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
         </div>
       </div>
     </SidebarProvider>

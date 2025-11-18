@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
-import { Avatar, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import { Sheet, SheetTrigger } from './ui/sheet'
 import SidebarSheet from './sidebar-sheet'
 import Link from 'next/link'
@@ -13,7 +13,7 @@ import { useSession } from 'next-auth/react'
 import Search from './search'
 
 import { quickSearchOptions } from '../_constants/search'
-import { ChevronDown, ChevronUp, LogOutIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp, LogOutIcon, CalendarIcon } from 'lucide-react'
 import SignOutDialog from './sign-out-dialog'
 import {
   DropdownMenu,
@@ -105,6 +105,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                   <div className="flex items-center gap-2 cursor-pointer">
                     <Avatar className="w-9 h-9">
                       <AvatarImage src={data?.user?.image ?? ''} />
+                      <AvatarFallback>{data.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <p className="whitespace-nowrap">{data.user.name}</p>
                     {open ? (
@@ -119,6 +120,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                     <div className="p-2  flex gap-2 border-b border-solid">
                       <Avatar>
                         <AvatarImage src={data?.user?.image ?? ''} />
+                        <AvatarFallback>{data.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col ml-3">
                         <p className="font-bold">{data.user.name}</p>
@@ -127,6 +129,38 @@ const Header = ({ isHidden }: HeaderProps) => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuGroup>
+                    {data.user.role === 'BARBER' && (
+                      <DropdownMenuItem>
+                        <div className="flex flex-col border-b border-solid w-full">
+                          <Button
+                            className="justify-start"
+                            variant="ghost"
+                            asChild
+                          >
+                            <Link href="/barber/schedule">
+                              <CalendarIcon size={18} />
+                              Minha Agenda
+                            </Link>
+                          </Button>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
+                    {data.user.role === 'ADMIN' && (
+                      <DropdownMenuItem>
+                        <div className="flex flex-col border-b border-solid w-full">
+                          <Button
+                            className="justify-start"
+                            variant="ghost"
+                            asChild
+                          >
+                            <Link href="/dashboard">
+                              <CalendarIcon size={18} />
+                              Dashboard Admin
+                            </Link>
+                          </Button>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
                     {quickSearchOptions.map((service) => (
                       <DropdownMenuItem key={service.title}>
                         <div className="flex flex-col border-b border-solid w-full">

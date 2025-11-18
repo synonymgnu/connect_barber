@@ -10,8 +10,22 @@ export async function GET() {
   }
 
   try {
-    const barbershopId = session.user.barbershopId || 
-      (await db.barbershop.findFirst({ where: { ownerId: session.user.id } }))?.id
+    let barbershopId = session.user.barbershopId
+    
+    // Se for admin, buscar pela propriedade
+    if (!barbershopId && session.user.role === "ADMIN") {
+      const barbershop = await db.barbershop.findFirst({ where: { ownerId: session.user.id } })
+      barbershopId = barbershop?.id
+    }
+    
+    // Se for barbeiro, buscar pela relação
+    if (!barbershopId && session.user.role === "BARBER") {
+      const barber = await db.barber.findFirst({ 
+        where: { userId: session.user.id },
+        select: { barbershopId: true }
+      })
+      barbershopId = barber?.barbershopId
+    }
 
     if (!barbershopId) {
       return NextResponse.json({ error: "Barbershop not found" }, { status: 404 })

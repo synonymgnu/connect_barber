@@ -8,34 +8,29 @@ import AuthCheck from "../_components/auth-check"
 const DashboardPage = () => {
     return (
         <AuthCheck requiredRole="ADMIN">
-            <div className="min-h-screen bg-background overflow-x-hidden">
-
-                <main className="mx-auto max-w-fit px-4 sm:px-6 lg:px-8 py-6 space-y-6 overflow-x-hidden">
-
-                    <Card className="w-full">
-                        <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
-                                Visão geral dos agendamentos
-                            </h2>
-                        </CardHeader>
-                        <CardContent className="px-4 sm:px-6 space-y-6 overflow-x-auto">
-                            
-                            <AppointmentsMetrics />
-                            
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-                                <div className="lg:col-span-8">
-                                    <AppointmentStatsSection />
-                                </div>
-                                <div className="lg:col-span-4">
-                                    <RecentStatsSection />
-                                </div>
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <h2 className="text-xl font-semibold">
+                            Visão geral dos agendamentos
+                        </h2>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <AppointmentsMetrics />
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div className="lg:col-span-8">
+                                <AppointmentStatsSection />
                             </div>
-                            <AppointmentActivitySection />
-                        </CardContent>
-                    </Card>
-
-                </main>
-            </div> 
+                            <div className="lg:col-span-4">
+                                <RecentStatsSection />
+                            </div>
+                        </div>
+                        
+                        <AppointmentActivitySection />
+                    </CardContent>
+                </Card>
+            </div>
         </AuthCheck>
     )
 }

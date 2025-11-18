@@ -180,6 +180,7 @@ model Booking {
   date   DateTime
   status    BookingStatus     @default(PENDING)
   source BookingSource     @default(ONLINE)
+  notes  String?
 
   employee  String?
   duration  Int?

@@ -56,7 +56,7 @@ export const authOptions: AuthOptions = {
             }
             
             const updateData: any = {}
-            if (profile?.image && !existingUser.image) {
+            if (profile?.image) {
               updateData.image = profile.image
             }
             if (profile?.name && !existingUser.name) {

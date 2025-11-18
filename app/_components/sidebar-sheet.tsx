@@ -21,7 +21,7 @@ import { Button } from './ui/button'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
 import { useSession } from 'next-auth/react'
-import { Avatar, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import SignInDialog from './sign-in-dialog'
 import SignOutDialog from './sign-out-dialog'
 
@@ -44,6 +44,7 @@ const SidebarSheet = () => {
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src={data?.user?.image ?? ''} />
+                <AvatarFallback>{data.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col ml-3">
                 <p className="font-bold">{data.user.name}</p>
@@ -77,12 +78,36 @@ const SidebarSheet = () => {
             </Button>
           </SheetClose>
           {data?.user ? (
-            <Button className="justify-start gap-2" variant="ghost" asChild>
-              <Link href="/bookings">
-                <CalendarIcon size={18} />
-                Agendamentos
-              </Link>
-            </Button>
+            <>
+              <SheetClose asChild>
+                <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Link href="/bookings">
+                    <CalendarIcon size={18} />
+                    Agendamentos
+                  </Link>
+                </Button>
+              </SheetClose>
+              {data.user.role === 'BARBER' && (
+                <SheetClose asChild>
+                  <Button className="justify-start gap-2" variant="ghost" asChild>
+                    <Link href="/barber/schedule">
+                      <CalendarIcon size={18} />
+                      Minha Agenda
+                    </Link>
+                  </Button>
+                </SheetClose>
+              )}
+              {data.user.role === 'ADMIN' && (
+                <SheetClose asChild>
+                  <Button className="justify-start gap-2" variant="ghost" asChild>
+                    <Link href="/dashboard">
+                      <CalendarIcon size={18} />
+                      Dashboard Admin
+                    </Link>
+                  </Button>
+                </SheetClose>
+              )}
+            </>
           ) : (
             <>
               <Dialog>
