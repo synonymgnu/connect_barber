@@ -31,10 +31,11 @@ import SignInDialog from './sign-in-dialog'
 import BookingSummary from './booking-summary'
 import { useRouter } from 'next/navigation'
 import { Clock2 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 interface ServiceItemProps {
   service: BarbershopService
-  barbershop: Pick<Barbershop, 'name'>
+  barbershop: Pick<Barbershop, 'id' | 'name'>
 }
 
 const TIME_LIST = [
@@ -102,17 +103,20 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const [dayBookings, setDayBookings] = useState<Booking[]>([])
   const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
 
+  const [selectedBarber, setSelectedBarber] = useState<any>(null)
+  const [barbers, setBarbers] = useState<any[]>([])
+
   useEffect(() => {
-    if (!selectedDay) return
-    const fetch = async () => {
-      const bookings = await getBookings({
-        date: selectedDay,
-        serviceId: service.id,
-      })
-      setDayBookings(bookings)
+    const fetchBarbers = async () => {
+      const res = await fetch(
+        `/api/barbers/active?barbershopId=${barbershop.id}`
+      )
+
+      const data = await res.json()
+      setBarbers(data)
     }
-    fetch()
-  }, [selectedDay, service.id])
+    fetchBarbers()
+  }, [])
 
   const selectedDate = useMemo(() => {
     if (!selectedDay || !selectedTime) return
@@ -132,13 +136,24 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const handleBookingSheetOpenChange = () => {
     setSelectedDay(undefined)
     setSelectedTime(undefined)
+    setSelectedBarber(null)
     setDayBookings([])
     setBookingSheetIsOpen(false)
   }
 
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = async (date: Date | undefined) => {
     setSelectedDay(date)
     setSelectedTime(undefined)
+    setSelectedBarber(null)
+
+    if (!date) return
+
+    // 🔥 Carregar agendamentos do dia
+    const bookings = await getBookings({
+      date,
+      serviceId: service.id,
+    })
+    setDayBookings(bookings)
   }
 
   const handleTimeSelect = (time: string) => {
@@ -147,9 +162,10 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
   const handleCreateBooking = async () => {
     try {
-      if (!selectedDate) return
+      if (!selectedDate || !selectedBarber) return
       await createBooking({
         serviceId: service.id,
+        barberId: selectedBarber.id,
         date: selectedDate,
       })
       handleBookingSheetOpenChange()
@@ -221,107 +237,187 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                   Reservar
                 </Button>
 
-                <SheetContent className="px-0">
-                  <SheetHeader>
-                    <SheetTitle className="px-5">Fazer Reserva</SheetTitle>
-                  </SheetHeader>
+                <SheetContent className="px-0 p-0">
+                  <div className="overflow-y-auto max-h-[80vh] pb-6">
+                    <SheetHeader>
+                      <SheetTitle className="px-5">Fazer Reserva</SheetTitle>
+                    </SheetHeader>
 
-                  <div className="flex flex-col items-center  py-5 border-b border-solid">
-                    <Calendar
-                      mode="single"
-                      locale={ptBR}
-                      selected={selectedDay}
-                      onSelect={handleDateSelect}
-                      disabled={{ before: new Date() }}
-                      styles={{
-                        head_cell: {
-                          width: '100%',
-                          textTransform: 'capitalize',
-                        },
-                        cell: {
-                          width: '100%',
-                        },
-                        button: {
-                          width: '100%',
-                        },
-                        nav_button_previous: {
-                          width: '32px',
-                          height: '32px',
-                        },
-                        nav_button_next: {
-                          width: '32px',
-                          height: '32px',
-                        },
-                        caption: {
-                          textTransform: 'capitalize',
-                        },
-                      }}
-                    />
-                  </div>
-
-                  {selectedDay && (
-                    <div
-                      className="flex gap-3 border-b border-solid overflow-x-auto p-5 [&::-webkit-scrollbar]:hidden select-none"
-                      onMouseDown={(e) => {
-                        const container = e.currentTarget
-                        let startX = e.pageX - container.offsetLeft
-                        let scrollLeft = container.scrollLeft
-                        let isDragging = true
-
-                        const handleMouseMove = (event: MouseEvent) => {
-                          if (!isDragging) return
-                          event.preventDefault()
-                          const x = event.pageX - container.offsetLeft
-                          const walk = (x - startX) * 1.2
-                          container.scrollLeft = scrollLeft - walk
-                        }
-
-                        const handleMouseUp = () => {
-                          isDragging = false
-                          window.removeEventListener(
-                            'mousemove',
-                            handleMouseMove
-                          )
-                          window.removeEventListener('mouseup', handleMouseUp)
-                        }
-
-                        window.addEventListener('mousemove', handleMouseMove)
-                        window.addEventListener('mouseup', handleMouseUp)
-                      }}
-                    >
-                      {timeList.length > 0 ? (
-                        timeList.map((time) => (
-                          <Button
-                            key={time}
-                            variant={
-                              selectedTime == time ? 'default' : 'outline'
-                            }
-                            className="rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleTimeSelect(time)
-                            }}
-                          >
-                            {time}
-                          </Button>
-                        ))
-                      ) : (
-                        <p className="text-xs">
-                          Não há horários disponíveis para este dia.
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {selectedDate && (
-                    <div className="p-5">
-                      <BookingSummary
-                        barbershop={barbershop}
-                        service={service}
-                        selectedDate={selectedDate}
+                    <div className="flex flex-col items-center   border-b border-solid">
+                      <Calendar
+                        mode="single"
+                        locale={ptBR}
+                        selected={selectedDay}
+                        onSelect={handleDateSelect}
+                        disabled={{ before: new Date() }}
+                        styles={{
+                          head_cell: {
+                            width: '100%',
+                            textTransform: 'capitalize',
+                          },
+                          cell: {
+                            width: '100%',
+                          },
+                          button: {
+                            width: '100%',
+                          },
+                          nav_button_previous: {
+                            width: '32px',
+                            height: '32px',
+                          },
+                          nav_button_next: {
+                            width: '32px',
+                            height: '32px',
+                          },
+                          caption: {
+                            textTransform: 'capitalize',
+                          },
+                        }}
                       />
                     </div>
-                  )}
+
+                    {/* 👍 MOSTRAR BARBEIROS SÓ APÓS SELECIONAR O DIA */}
+                    {selectedDay && (
+                      <div className="border-b p-5 space-y-3 transition-all">
+                        <p className="font-medium text-sm">
+                          Selecione o barbeiro:
+                        </p>
+
+                        <div
+                          className="flex gap-3 overflow-x-auto p-5 [&::-webkit-scrollbar]:hidden select-none"
+                          onMouseDown={(e) => {
+                            const container = e.currentTarget
+                            let startX = e.pageX - container.offsetLeft
+                            let scrollLeft = container.scrollLeft
+                            let isDragging = true
+
+                            const handleMouseMove = (event: MouseEvent) => {
+                              if (!isDragging) return
+                              event.preventDefault()
+                              const x = event.pageX - container.offsetLeft
+                              const walk = (x - startX) * 1.2
+                              container.scrollLeft = scrollLeft - walk
+                            }
+
+                            const handleMouseUp = () => {
+                              isDragging = false
+                              window.removeEventListener(
+                                'mousemove',
+                                handleMouseMove
+                              )
+                              window.removeEventListener(
+                                'mouseup',
+                                handleMouseUp
+                              )
+                            }
+
+                            window.addEventListener(
+                              'mousemove',
+                              handleMouseMove
+                            )
+                            window.addEventListener('mouseup', handleMouseUp)
+                          }}
+                        >
+                          {barbers.map((barber) => (
+                            <button
+                              key={barber.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedBarber(barber)
+                                setSelectedTime(undefined)
+                              }}
+                              className={`flex flex-col items-center p-3 rounded-xl border min-w-[100px] transition-all ${
+                                selectedBarber?.id === barber.id
+                                  ? 'border-primary bg-primary text-white'
+                                  : 'border-muted '
+                              }`}
+                            >
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage
+                                  src={
+                                    barber.imageUrl ||
+                                    `https://ui-avatars.com/api/?name=${barber.name}&background=bc130d&color=fff`
+                                  }
+                                />
+                                <AvatarFallback>
+                                  {barber.name[0].toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+
+                              <span className="text-xs mt-2 font-medium">
+                                {barber.name}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedDay && selectedBarber && (
+                      <div
+                        className="flex gap-3 border-b border-solid overflow-x-auto p-5 [&::-webkit-scrollbar]:hidden select-none"
+                        onMouseDown={(e) => {
+                          const container = e.currentTarget
+                          let startX = e.pageX - container.offsetLeft
+                          let scrollLeft = container.scrollLeft
+                          let isDragging = true
+
+                          const handleMouseMove = (event: MouseEvent) => {
+                            if (!isDragging) return
+                            event.preventDefault()
+                            const x = event.pageX - container.offsetLeft
+                            const walk = (x - startX) * 1.2
+                            container.scrollLeft = scrollLeft - walk
+                          }
+
+                          const handleMouseUp = () => {
+                            isDragging = false
+                            window.removeEventListener(
+                              'mousemove',
+                              handleMouseMove
+                            )
+                            window.removeEventListener('mouseup', handleMouseUp)
+                          }
+
+                          window.addEventListener('mousemove', handleMouseMove)
+                          window.addEventListener('mouseup', handleMouseUp)
+                        }}
+                      >
+                        {timeList.length > 0 ? (
+                          timeList.map((time) => (
+                            <Button
+                              key={time}
+                              variant={
+                                selectedTime == time ? 'default' : 'outline'
+                              }
+                              className="rounded-full"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleTimeSelect(time)
+                              }}
+                            >
+                              {time}
+                            </Button>
+                          ))
+                        ) : (
+                          <p className="text-xs">
+                            Não há horários disponíveis para este dia.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedDate && (
+                      <div className="p-5">
+                        <BookingSummary
+                          barbershop={barbershop}
+                          service={service}
+                          selectedDate={selectedDate}
+                          barber={selectedBarber}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <SheetFooter className="mt-5 px-5">
                     <SheetClose asChild>
                       <Button

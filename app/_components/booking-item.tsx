@@ -41,6 +41,7 @@ export interface BookingItemProps {
           barbershop: true
         }
       }
+      barber: true
     }
   }>
 }
@@ -132,6 +133,17 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               </Avatar>
               <p className="text-sm">{booking.service.barbershop.name}</p>
             </div>
+            <div className="flex items-center gap-2 mt-1">
+              <Avatar className="h-6 w-6">
+                <AvatarImage
+                  src={
+                    booking.barber?.imageUrl ||
+                    `https://ui-avatars.com/api/?name=${booking.barber?.name}&background=bc130d&color=fff`
+                  }
+                />
+              </Avatar>
+              <p className="text-sm">{booking.barber?.name}</p>
+            </div>
           </div>
           {/* DIREITA */}
           <div className=" flex-none w-28 flex flex-col items-center justify-center border-l-2 border-solid px-5">
@@ -197,6 +209,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                   barbershop={barbershop}
                   service={booking.service}
                   selectedDate={booking.date}
+                  barber={booking.barber!}
                 />
               </div>
 

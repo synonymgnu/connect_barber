@@ -101,6 +101,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
               barbershop={barbershop}
               service={booking.service}
               selectedDate={booking.date}
+              barber={booking.barber}
             />
           </div>
         </div>
