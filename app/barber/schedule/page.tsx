@@ -12,7 +12,7 @@ import BookingsTable from "@/app/_components/bookings-table"
 import ProfileCard from "@/app/_components/profile-card"
 import ReviewsChart from "@/app/_components/reviews-chart"
 import { WorkSchedule } from "@/app/_components/work-schedule"
-import { AbsenceManager } from "@/app/_components/dashboard/absence-manager"
+import { BarberAbsenceManager } from "@/app/_components/dashboard/barber-absence-manager"
 import UnifiedCalendar from "@/app/_components/calendar/unified-calendar"
 
 import "./fullcalendar-theme.css"
@@ -234,7 +234,7 @@ export default function BarberSchedulePage() {
 
                 <TabsContent value="schedule" className="space-y-4">
                   <WorkSchedule />
-                  <AbsenceManager />
+                  <BarberAbsenceManager />
                 </TabsContent>
               </Tabs>
             </CardContent>

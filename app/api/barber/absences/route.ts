@@ -1,100 +1,101 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/_lib/auth"
-import { db } from "@/app/_lib/prisma"
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/_lib/auth'
+import { db } from '@/app/_lib/prisma'
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "BARBER") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const barberId = session.user.barberId
-  if (!barberId) {
-    return NextResponse.json({ error: "Barber not found" }, { status: 404 })
-  }
-
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id || session.user.role !== 'BARBER') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const barber = await db.barber.findFirst({
+      where: { userId: session.user.id }
+    })
+
+    if (!barber) {
+      return NextResponse.json({ error: 'Barbeiro não encontrado' }, { status: 404 })
+    }
+
     const absences = await db.barberAbsence.findMany({
-      where: { 
-        barberId,
-        date: { gte: new Date() }
+      where: {
+        barberId: barber.id
       },
       orderBy: { date: 'asc' }
     })
 
-    return NextResponse.json(absences)
+    const formattedAbsences = absences.map(absence => ({
+      id: absence.id,
+      date: absence.date,
+      reason: absence.reason,
+      isAllDay: absence.isAllDay,
+      barberId: absence.barberId,
+      barberName: barber.name,
+      type: 'BARBER_ABSENCE'
+    }))
+
+    return NextResponse.json(formattedAbsences)
   } catch (error) {
-    console.error("Error fetching absences:", error)
-    return NextResponse.json(
-      { error: "Internal server error" }, 
-      { status: 500 }
-    )
+    console.error('Error fetching barber absences:', error)
+    return NextResponse.json({ error: 'Erro ao carregar ausências' }, { status: 500 })
   }
 }
 
-export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "BARBER") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const barberId = session.user.barberId
-  if (!barberId) {
-    return NextResponse.json({ error: "Barber not found" }, { status: 404 })
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { date, reason, isAllDay = true } = await req.json()
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id || session.user.role !== 'BARBER') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const barber = await db.barber.findFirst({
+      where: { userId: session.user.id }
+    })
+
+    if (!barber) {
+      return NextResponse.json({ error: 'Barbeiro não encontrado' }, { status: 404 })
+    }
+
+    const body = await request.json()
+    const { date, reason, isAllDay } = body
+
+    if (!date) {
+      return NextResponse.json({ 
+        error: 'Data é obrigatória'
+      }, { status: 400 })
+    }
+
+    const dateObj = new Date(date)
+    if (isNaN(dateObj.getTime())) {
+      return NextResponse.json({ 
+        error: 'Data inválida'
+      }, { status: 400 })
+    }
 
     const absence = await db.barberAbsence.create({
       data: {
-        barberId,
-        date: new Date(date),
-        reason,
-        isAllDay
+        barberId: barber.id,
+        date: dateObj.toISOString(),
+        type: 'BARBER_ABSENCE',
+        reason: reason?.trim() || null,
+        isAllDay: Boolean(isAllDay)
       }
     })
 
-    return NextResponse.json(absence)
-  } catch (error) {
-    console.error("Error creating absence:", error)
-    return NextResponse.json(
-      { error: "Internal server error" }, 
-      { status: 500 }
-    )
-  }
-}
-
-export async function DELETE(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "BARBER") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const barberId = session.user.barberId
-  if (!barberId) {
-    return NextResponse.json({ error: "Barber not found" }, { status: 404 })
-  }
-
-  try {
-    const { searchParams } = new URL(req.url)
-    const id = searchParams.get("id")
-
-    if (!id) {
-      return NextResponse.json({ error: "Absence ID required" }, { status: 400 })
-    }
-
-    await db.barberAbsence.delete({
-      where: { id, barberId }
+    return NextResponse.json({
+      id: absence.id,
+      date: absence.date,
+      reason: absence.reason,
+      isAllDay: absence.isAllDay,
+      barberId: absence.barberId,
+      barberName: barber.name,
+      type: 'BARBER_ABSENCE'
     })
-
-    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting absence:", error)
-    return NextResponse.json(
-      { error: "Internal server error" }, 
-      { status: 500 }
-    )
+    console.error('Error creating barber absence:', error)
+    return NextResponse.json({ error: 'Erro ao registrar ausência' }, { status: 500 })
   }
 }
