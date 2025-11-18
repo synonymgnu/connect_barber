@@ -21,7 +21,7 @@ import { Button } from './ui/button'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
 import { useSession } from 'next-auth/react'
-import { Avatar, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import SignInDialog from './sign-in-dialog'
 import SignOutDialog from './sign-out-dialog'
 
@@ -44,6 +44,7 @@ const SidebarSheet = () => {
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src={data?.user?.image ?? ''} />
+                <AvatarFallback>{data.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col ml-3">
                 <p className="font-bold">{data.user.name}</p>
