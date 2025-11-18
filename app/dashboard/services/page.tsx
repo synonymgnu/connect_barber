@@ -13,6 +13,13 @@ export default async function ServicesPage() {
           <CreateServiceDialog />
         </div>
 
+        {/* Nenhum serviço cadastrado */}
+        {services.length === 0 && (
+          <p className="text-start text-muted-foreground mt-10">
+            Nenhum serviço cadastrado.
+          </p>
+        )}
+
         <div className="mt-7 gap-7  grid grid-cols-1 lg:grid-cols-2">
           {services.map((service) => (
             <AdminServiceItem key={service.id} service={service} />

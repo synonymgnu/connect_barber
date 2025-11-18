@@ -23,6 +23,7 @@ import { useState } from 'react'
 import BookingSummary from './booking-summary'
 import RatingDialog from './rating-dialog'
 import { FeedbackDialog } from './feedback-dialog'
+import { Clock2 } from 'lucide-react'
 
 interface BookingInfoProps extends BookingItemProps {
   onBookingCanceled?: () => void
@@ -82,12 +83,18 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
         </div>
 
         <div className="mt-6">
-          <Badge
-            className="w-fit"
-            variant={isConfirmed ? 'default' : 'secondary'}
-          >
-            {isConfirmed ? 'Confirmado' : 'Finalizado'}
-          </Badge>
+          <div className="flex gap-2">
+            <Badge
+              className="w-fit"
+              variant={isConfirmed ? 'default' : 'secondary'}
+            >
+              {isConfirmed ? 'Confirmado' : 'Finalizado'}
+            </Badge>
+            <p className="flex items-center gap-[2px] text-xs text-gray-400">
+              <Clock2 width={18} height={18} />
+              {booking.service.duration}min
+            </p>
+          </div>
 
           <div className="mb-3 mt-6">
             <BookingSummary
