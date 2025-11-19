@@ -8,23 +8,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  role          UserRole  @default(CLIENT)
-  phone         String?
-  accounts      Account[]
-  sessions      Session[]
-  bookings      Booking[]
-  ratings       Rating[]
-
-  ownedBarbershop Barbershop?
+  id              String      @id @default(cuid())
+  email           String      @unique
+  name            String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  emailVerified   DateTime?
+  image           String?
+  role            UserRole    @default(CLIENT)
+  phone           String?
+  accounts        Account[]
   barber          Barber?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  ownedBarbershop Barbershop?
+  bookings        Booking[]
+  ratings         Rating[]
+  sessions        Session[]
 }
 
 model Account {
@@ -39,11 +37,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
@@ -52,10 +48,9 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {
@@ -66,28 +61,20 @@ model VerificationToken {
   @@id([identifier, token])
 }
 
-enum UserRole {
-  CLIENT
-  BARBER
-  ADMIN
-}
-
 model Barbershop {
-  id          String   @id @default(uuid())
+  id          String              @id @default(uuid())
   name        String
   address     String
   phone       String[]
-  description String
   imageUrl    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  ownerId String? @unique
-  owner   User?   @relation(fields: [ownerId], references: [id])
-
-  services BarbershopService[]
-  ratings  Rating[]
-  barbers  Barber[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  description String
+  ownerId     String?             @unique
+  barbers     Barber[]
+  owner       User?               @relation(fields: [ownerId], references: [id])
+  services    BarbershopService[]
+  ratings     Rating[]
 }
 
 model BarbershopService {
@@ -96,51 +83,98 @@ model BarbershopService {
   description  String
   imageUrl     String
   price        Decimal    @db.Decimal(10, 2)
-  duration Int
   barbershopId String
+  duration     Int
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   bookings     Booking[]
 }
 
 model Barber {
-  id         String  @id @default(uuid())
-  name       String
-  email      String? @unique
-  phone      String?
-  imageUrl   String?
-  isActive   Boolean @default(true)
-  speciality String?
-  bio        String?
-  instagram  String?
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id           String               @id @default(uuid())
+  name         String
+  email        String?              @unique
+  phone        String?
+  imageUrl     String?
+  userId       String               @unique
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-
-  bookings Booking[]
-
-  workSchedule BarberWorkSchedule[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  bio          String?
+  instagram    String?
+  isActive     Boolean              @default(true)
+  speciality   String?
+  barbershop   Barbershop           @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   absences     BarberAbsence[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  workSchedule BarberWorkSchedule[]
+  bookings     Booking[]
+  Rating       Rating[]
 }
 
 model BarberWorkSchedule {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   barberId  String
-  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
   dayOfWeek Int
   startTime String
   endTime   String
-  isActive  Boolean @default(true)
-
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
 
   @@unique([barberId, dayOfWeek])
+}
+
+model BarberAbsence {
+  id        String      @id @default(uuid())
+  barberId  String?
+  date      DateTime
+  reason    String?
+  isAllDay  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  type      AbsenceType @default(BARBER_ABSENCE)
+  barber    Barber?     @relation(fields: [barberId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id        String            @id @default(uuid())
+  userId    String
+  serviceId String
+  date      DateTime
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  barberId  String?
+  status    BookingStatus     @default(PENDING)
+  duration  Int?
+  employee  String?
+  source    BookingSource     @default(ONLINE)
+  notes     String?
+  barber    Barber?           @relation(fields: [barberId], references: [id])
+  service   BarbershopService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ratings   Rating[]
+}
+
+model Rating {
+  id           String      @id @default(uuid())
+  userId       String
+  barbershopId String?
+  comment      String?
+  createdAt    DateTime    @default(now())
+  bookingId    String
+  value        Int
+  barberId     String?
+  Barber       Barber?     @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop? @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  booking      Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  CLIENT
+  BARBER
+  ADMIN
 }
 
 enum AbsenceType {
@@ -148,46 +182,9 @@ enum AbsenceType {
   SHOP_CLOSURE
 }
 
-model BarberAbsence {
-  id       String   @id @default(uuid())
-  barberId String?
-  barber   Barber?   @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  date     DateTime
-  type     AbsenceType  @default(BARBER_ABSENCE)
-  reason   String?
-  isAllDay Boolean  @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum BookingSource {
   PRESENCIAL
   ONLINE
-}
-
-model Booking {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  serviceId String
-  service   BarbershopService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  barberId String?
-  barber   Barber? @relation(fields: [barberId], references: [id])
-
-  date   DateTime
-  status    BookingStatus     @default(PENDING)
-  source BookingSource     @default(ONLINE)
-  notes  String?
-
-  employee  String?
-  duration  Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ratings   Rating[]
 }
 
 enum BookingStatus {
@@ -196,20 +193,3 @@ enum BookingStatus {
   CANCELLED
   PENDING
 }
-
-model Rating {
-  id        String   @id @default(uuid())
-  value     Int
-  comment   String?
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  bookingId String
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-
-  barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-}
-

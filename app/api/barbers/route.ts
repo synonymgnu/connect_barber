@@ -15,9 +15,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, email, phone, imageUrl, speciality, bio, instagram } = await req.json()
-
-    console.log("Dados recebidos:", { name, email, phone })
+    const body = await req.json()
+    const { name, email, phone, speciality, bio, instagram } = body
 
     if (!name || !email) {
       return NextResponse.json(
@@ -48,46 +47,40 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log("Barbearia encontrada:", barbershop.id)
-
     const user = await db.user.create({
       data: {
         name,
         email,
         role: "BARBER",
-        image: imageUrl,
         emailVerified: new Date(),
       }
     })
-
-    console.log("Usuário criado:", user.id)
 
     const barber = await db.barber.create({
       data: {
         name,
         email,
         phone: phone || null,
-        imageUrl: imageUrl || null,
         speciality: speciality || null,
         bio: bio || null,
         instagram: instagram || null,
         userId: user.id,
-        barbershopId: barbershop.id
+        barbershopId: barbershop.id,
+        isActive: true
       },
       include: {
         user: {
           select: {
             id: true,
             email: true,
-            role: true
+            role: true,
+            image: true
           }
         }
       }
     })
 
-    console.log("Barbeiro criado com sucesso:", barber.id)
-
-    return NextResponse.json(barber)
+    return NextResponse.json(barber, { status: 201 })
 
   } catch (error) {
     console.error("Erro ao criar barbeiro:", error)
