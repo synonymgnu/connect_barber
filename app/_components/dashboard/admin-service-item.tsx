@@ -48,20 +48,21 @@ export function AdminServiceItem({ service }: any) {
             {service.description}
           </p>
 
-          {/* PRICE + DURATION + MENU */}
+          {/* PREÇO + DURAÇÃO + MENU */}
           <div className="flex items-center justify-between mt-2">
-            <p className="font-bold text-sm text-primary lg:text-base">
-              {Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(Number(service.price))}
-            </p>
+            <div className="flex gap-2">
+              <p className="font-bold text-sm text-primary lg:text-base">
+                {Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(Number(service.price))}
+              </p>
 
-            <p className="flex items-center gap-[2px] text-xs text-gray-400">
-              <Clock2 width={18} height={18} />
-              {service.duration}min
-            </p>
-
+              <p className="flex items-center gap-[2px] text-xs text-gray-400">
+                <Clock2 width={18} height={18} />
+                {service.duration}min
+              </p>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">

@@ -214,16 +214,18 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
             </p>
             {/* PREÇO, DURAÇÃO E BOTÃO  */}
             <div className="flex items-center justify-between">
-              <p className="font-bold text-sm text-primary">
-                {Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                }).format(Number(service.price))}
-              </p>
-              <p className="flex items-center gap-[2px] text-xs text-gray-400">
-                <Clock2 width={18} height={18} />
-                {service.duration}min
-              </p>
+              <div className="flex gap-2">
+                <p className="font-bold text-sm text-primary">
+                  {Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(Number(service.price))}
+                </p>
+                <p className="flex items-center gap-[2px] text-xs text-gray-400">
+                  <Clock2 width={18} height={18} />
+                  {service.duration}min
+                </p>
+              </div>
 
               <Sheet
                 open={bookingSheetIsOpen}
