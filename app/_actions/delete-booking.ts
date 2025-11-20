@@ -2,12 +2,37 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "../_lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "../_lib/auth"
+import { notifyBookingCancelled } from "../_lib/notifications/create-notification"
 
 export const deleteBooking = async (bookingId: string) => {
-    await db.booking.delete({
-        where: {
-            id: bookingId,
-        }
+    const session = await getServerSession(authOptions)
+    
+    const booking = await db.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+            user: true,
+            service: { include: { barbershop: true } },
+            barber: true,
+        },
     })
+
+    if (booking) {
+        let cancelledBy: "CLIENT" | "BARBER" | "ADMIN" = "CLIENT"
+        
+        if (session?.user.role === "ADMIN") {
+            cancelledBy = "ADMIN"
+        } else if (session?.user.role === "BARBER") {
+            cancelledBy = "BARBER"
+        }
+
+        await notifyBookingCancelled(booking, cancelledBy)
+    }
+
+    await db.booking.delete({
+        where: { id: bookingId },
+    })
+    
     revalidatePath("/bookings")
 }
