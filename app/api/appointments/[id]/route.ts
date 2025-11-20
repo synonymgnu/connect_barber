@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/app/_lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
+import { notifyBookingCancelled } from '@/app/_lib/notifications/create-notification'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -56,12 +57,19 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       where: { 
         id: params.id,
         service: { barbershopId: session.user.barbershopId! }
-      }
+      },
+      include: {
+        user: true,
+        service: { include: { barbershop: true } },
+        barber: true,
+      },
     })
 
     if (!existingBooking) {
       return new NextResponse('Not Found', { status: 404 })
     }
+
+    await notifyBookingCancelled(existingBooking, 'ADMIN')
 
     await db.booking.delete({
       where: { id: params.id }

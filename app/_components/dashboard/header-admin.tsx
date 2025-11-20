@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { Card, CardContent } from '../ui/card'
 import Image from 'next/image'
@@ -8,10 +10,12 @@ import {
   LogOutIcon,
   Scissors,
   User,
+  Bell,
 } from 'lucide-react'
 import { Sheet, SheetTrigger } from '../ui/sheet'
 import { Avatar, AvatarImage } from '../ui/avatar'
 import SidebarAdmin from './sidebar-admin'
+import { NotificationsDropdown } from '../notifications-dropdown'
 
 const HeaderAdmin = () => {
   return (
@@ -61,6 +65,15 @@ const HeaderAdmin = () => {
             Serviços
           </Link>
         </Button>
+
+        <div className="flex items-center">
+          <NotificationsDropdown />
+          <Button variant="ghost" className="gap-2 justify-start flex-1" asChild>
+            <Link href="/notifications">
+              Notificações
+            </Link>
+          </Button>
+        </div>
 
         <Button variant="ghost" className="gap-2 justify-start" asChild>
           <Link href="/dashboard/profile">

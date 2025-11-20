@@ -18,9 +18,9 @@ export async function PATCH(
   }
 
   try {
-    const { name, email, phone, imageUrl, speciality, bio, instagram, isActive } = await req.json()
+    const body = await req.json()
+    const { name, email, phone, speciality, bio, instagram, isActive } = body
 
-    // Buscar o barbeiro
     const barber = await db.barber.findUnique({
       where: { id: params.id },
       include: { user: true }
@@ -30,7 +30,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Barbeiro não encontrado" }, { status: 404 })
     }
 
-    // Verificar se o barbeiro pertence à barbearia do admin
     const barbershop = await db.barbershop.findFirst({
       where: { ownerId: session.user.id }
     })
@@ -39,7 +38,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 })
     }
 
-    // Verificar se o email já está em uso por outro usuário
     if (email && email !== barber.email) {
       const existingUser = await db.user.findUnique({
         where: { email }
@@ -53,35 +51,34 @@ export async function PATCH(
       }
     }
 
-    // Atualizar o usuário
-    await db.user.update({
-      where: { id: barber.userId },
-      data: {
-        name,
-        email,
-        image: imageUrl,
-      }
-    })
+    if (name || email) {
+      await db.user.update({
+        where: { id: barber.userId },
+        data: {
+          ...(name && { name }),
+          ...(email && { email }),
+        }
+      })
+    }
 
-    // Atualizar o barbeiro
     const updatedBarber = await db.barber.update({
       where: { id: params.id },
       data: {
-        name,
-        email,
-        phone: phone || null,
-        imageUrl: imageUrl || null,
-        speciality: speciality || null,
-        bio: bio || null,
-        instagram: instagram || null,
-        isActive: isActive !== undefined ? isActive : barber.isActive
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(phone !== undefined && { phone: phone || null }),
+        ...(speciality !== undefined && { speciality: speciality || null }),
+        ...(bio !== undefined && { bio: bio || null }),
+        ...(instagram !== undefined && { instagram: instagram || null }),
+        ...(isActive !== undefined && { isActive }),
       },
       include: {
         user: {
           select: {
             id: true,
             email: true,
-            role: true
+            role: true,
+            image: true
           }
         }
       }
