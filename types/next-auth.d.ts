@@ -12,6 +12,7 @@ declare module 'next-auth' {
       role: UserRole
       barberId?: string | null
       barbershopId?: string | null
+      phone?: string | null
     } & DefaultSession['user']
   }
 
@@ -23,6 +24,7 @@ declare module 'next-auth' {
     role: UserRole
     barberId?: string | null
     barbershopId?: string | null
+    phone?: string | null
   }
 }
 

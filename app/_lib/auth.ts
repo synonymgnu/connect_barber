@@ -15,16 +15,16 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       // Verificar se é login com Google
-      if (account?.provider === "google") {
+      if (account?.provider === 'google') {
         try {
           // Verificar se já existe um usuário com este email
           const existingUser = await db.user.findUnique({
             where: { email: user.email! },
             include: {
               barber: {
-                select: { id: true }
-              }
-            }
+                select: { id: true },
+              },
+            },
           })
 
           if (existingUser) {
@@ -32,8 +32,8 @@ export const authOptions: AuthOptions = {
             const existingAccount = await db.account.findFirst({
               where: {
                 userId: existingUser.id,
-                provider: "google",
-              }
+                provider: 'google',
+              },
             })
 
             if (!existingAccount) {
@@ -51,10 +51,10 @@ export const authOptions: AuthOptions = {
                   scope: account.scope,
                   id_token: account.id_token,
                   session_state: account.session_state as string,
-                }
+                },
               })
             }
-            
+
             const updateData: any = {}
             if (profile?.image) {
               updateData.image = profile.image
@@ -66,18 +66,17 @@ export const authOptions: AuthOptions = {
             if (Object.keys(updateData).length > 0) {
               await db.user.update({
                 where: { id: existingUser.id },
-                data: updateData
+                data: updateData,
               })
             }
 
             user.id = existingUser.id
             return true
           }
-          
+
           return true
-          
         } catch (error) {
-          console.error("Error in signIn callback:", error)
+          console.error('Error in signIn callback:', error)
           return false
         }
       }
@@ -87,26 +86,27 @@ export const authOptions: AuthOptions = {
     async session({ session, user, token }) {
       if (session.user) {
         const userId = user?.id || token.sub
-        
+
         if (userId) {
           const dbUser = await db.user.findUnique({
             where: { id: userId },
             include: {
               barber: {
-                select: { id: true }
+                select: { id: true },
               },
               ownedBarbershop: {
-                select: { id: true }
-              }
-            }
+                select: { id: true },
+              },
+            },
           })
-          
+
           if (dbUser) {
             session.user.id = dbUser.id
             session.user.role = dbUser.role
             session.user.name = dbUser.name
             session.user.email = dbUser.email
             session.user.image = dbUser.image
+            session.user.phone = dbUser.phone || null
             session.user.barberId = dbUser.barber?.id || null
             session.user.barbershopId = dbUser.ownedBarbershop?.id || null
           }
@@ -114,15 +114,16 @@ export const authOptions: AuthOptions = {
       }
       return session
     },
-    
+
     async jwt({ token, user, account, profile }) {
       if (user) {
         token.role = user.role
+        token.phone = (user as any).phone
         token.barberId = (user as any).barberId
         token.barbershopId = (user as any).barbershopId
       }
       return token
-    }
+    },
   },
   pages: {
     signIn: '/auth/signin',
