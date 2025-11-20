@@ -14,6 +14,7 @@ import Search from './search'
 
 import { quickSearchOptions } from '../_constants/search'
 import { ChevronDown, ChevronUp, LogOutIcon, CalendarIcon } from 'lucide-react'
+import { NotificationsDropdown } from './notifications-dropdown'
 import SignOutDialog from './sign-out-dialog'
 import {
   DropdownMenu,
@@ -58,7 +59,9 @@ const Header = ({ isHidden }: HeaderProps) => {
           <Search />
         </div>
 
-        <div className="hidden md:flex gap-6">
+        <div className="hidden md:flex gap-6 items-center">
+          {data?.user && <NotificationsDropdown />}
+          
           {data?.user ? (
             <Link href="/bookings">
               <Button

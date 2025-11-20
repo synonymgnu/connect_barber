@@ -16,6 +16,7 @@ import {
   LogInIcon,
   LogOutIcon,
   MenuIcon,
+  Bell,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import Image from 'next/image'
@@ -24,9 +25,32 @@ import { useSession } from 'next-auth/react'
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import SignInDialog from './sign-in-dialog'
 import SignOutDialog from './sign-out-dialog'
+import { useEffect, useState } from 'react'
+import { Badge } from './ui/badge'
 
 const SidebarSheet = () => {
   const { data } = useSession()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!data?.user) return
+    
+    const loadUnreadCount = async () => {
+      try {
+        const res = await fetch("/api/notifications")
+        if (res.ok) {
+          const notifData = await res.json()
+          setUnreadCount(notifData.unreadCount)
+        }
+      } catch (error) {
+        console.error("Erro ao carregar notificações:", error)
+      }
+    }
+    
+    loadUnreadCount()
+    const interval = setInterval(loadUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [data])
 
   return (
     <Sheet>
@@ -84,6 +108,21 @@ const SidebarSheet = () => {
                   <Link href="/bookings">
                     <CalendarIcon size={18} />
                     Agendamentos
+                  </Link>
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Link href="/notifications">
+                    <div className="relative">
+                      <Bell size={18} />
+                      {unreadCount > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </Badge>
+                      )}
+                    </div>
+                    Notificações
                   </Link>
                 </Button>
               </SheetClose>
