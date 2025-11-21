@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
+import { createAuditLog } from "@/app/_lib/audit"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -64,6 +65,14 @@ export async function POST() {
         imageUrl: "https://images.unsplash.com/photo-1562322140-8baeececf3df?ixlib=rb-4.0.3",
         ownerId: session.user.id
       }
+    })
+
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'CREATE_BARBERSHOP',
+      resource: 'barbershop',
+      resourceId: barbershop.id,
+      metadata: { name: barbershop.name }
     })
 
     return NextResponse.json({ 

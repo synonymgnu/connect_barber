@@ -3,6 +3,7 @@ import { db } from '@/app/_lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 import { notifyBookingCancelled } from '@/app/_lib/notifications/create-notification'
+import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -39,6 +40,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       }
     })
 
+    const clientInfo = getClientInfo(request)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'UPDATE_BOOKING',
+      resource: 'booking',
+      resourceId: params.id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { oldStatus: existingBooking.status, newStatus: data.status }
+    })
+
     return NextResponse.json(updatedBooking)
   } catch (error) {
     console.error('Error updating appointment:', error)
@@ -73,6 +85,17 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     await db.booking.delete({
       where: { id: params.id }
+    })
+
+    const clientInfo = getClientInfo(request)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'DELETE_BOOKING',
+      resource: 'booking',
+      resourceId: params.id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { userId: existingBooking.userId, serviceId: existingBooking.serviceId }
     })
 
     return new NextResponse(null, { status: 204 })

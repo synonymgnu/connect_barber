@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
+import { createAuditLog, getClientInfo } from "@/app/_lib/audit"
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -94,9 +95,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 })
     }
 
-    await db.booking.update({ 
+    const updated = await db.booking.update({ 
       where: { id }, 
       data: { status } 
+    })
+    
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'UPDATE_BOOKING_STATUS',
+      resource: 'booking',
+      resourceId: id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { oldStatus: booking.status, newStatus: status }
     })
     
     return NextResponse.json({ success: true })
