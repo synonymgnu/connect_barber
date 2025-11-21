@@ -24,6 +24,8 @@ model User {
   ratings         Rating[]
   sessions        Session[]
   notifications   Notification[]
+  consents        UserConsent[]
+  auditLogs       AuditLog[]
 }
 
 model Account {
@@ -214,4 +216,35 @@ enum NotificationType {
   BOOKING_CREATED
   BOOKING_CANCELLED
   BOOKING_CONFIRMED
+}
+
+model UserConsent {
+  id          String    @id @default(uuid())
+  userId      String
+  consentType String
+  accepted    Boolean   @default(false)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
 }
