@@ -5,6 +5,7 @@ import { db } from "../_lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../_lib/auth"
 import { notifyBookingCancelled } from "../_lib/notifications/create-notification"
+import { createAuditLog } from "../_lib/audit"
 
 export const deleteBooking = async (bookingId: string) => {
     const session = await getServerSession(authOptions)
@@ -33,6 +34,18 @@ export const deleteBooking = async (bookingId: string) => {
     await db.booking.delete({
         where: { id: bookingId },
     })
+    
+    if (session?.user) {
+        await createAuditLog({
+            userId: session.user.id,
+            action: 'CANCEL_BOOKING',
+            resource: 'booking',
+            resourceId: bookingId,
+            ipAddress: 'server-action',
+            userAgent: 'client-app',
+            metadata: { cancelledBy: session.user.role }
+        })
+    }
     
     revalidatePath("/bookings")
 }

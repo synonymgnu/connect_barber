@@ -5,6 +5,7 @@ import { db } from '../_lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../_lib/auth'
 import { notifyBookingCreated } from '../_lib/notifications/create-notification'
+import { createAuditLog } from '../_lib/audit'
 
 interface CreateBookingParams {
   serviceId: string
@@ -33,6 +34,16 @@ export const createBooking = async (params: CreateBookingParams) => {
   })
 
   await notifyBookingCreated(booking)
+  
+  await createAuditLog({
+    userId: (user.user as any).id,
+    action: 'CREATE_BOOKING',
+    resource: 'booking',
+    resourceId: booking.id,
+    ipAddress: 'server-action',
+    userAgent: 'client-app',
+    metadata: { serviceId: params.serviceId, barberId: params.barberId }
+  })
   
   revalidatePath('/barbershops/[id]')
   revalidatePath('/bookings')
