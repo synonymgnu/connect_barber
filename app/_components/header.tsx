@@ -20,7 +20,6 @@ import {
   UserCog,
   Bell,
 } from 'lucide-react'
-import { quickSearchOptions } from '../_constants/search'
 import { NotificationsDropdown } from './notifications-dropdown'
 import SignOutDialog from './sign-out-dialog'
 import {
@@ -196,7 +195,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                           variant="ghost"
                           asChild
                         >
-                          <Link href="/dashboard">
+                          <Link href="/notifications">
                             <Bell size={18} /> Notificações
                           </Link>
                         </Button>

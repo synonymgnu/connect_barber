@@ -17,6 +17,7 @@ import {
   LogOutIcon,
   MenuIcon,
   Bell,
+  UserCog,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import Image from 'next/image'
@@ -34,19 +35,19 @@ const SidebarSheet = () => {
 
   useEffect(() => {
     if (!data?.user) return
-    
+
     const loadUnreadCount = async () => {
       try {
-        const res = await fetch("/api/notifications")
+        const res = await fetch('/api/notifications')
         if (res.ok) {
           const notifData = await res.json()
           setUnreadCount(notifData.unreadCount)
         }
       } catch (error) {
-        console.error("Erro ao carregar notificações:", error)
+        console.error('Erro ao carregar notificações:', error)
       }
     }
-    
+
     loadUnreadCount()
     const interval = setInterval(loadUnreadCount, 30000)
     return () => clearInterval(interval)
@@ -68,7 +69,9 @@ const SidebarSheet = () => {
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src={data?.user?.image ?? ''} />
-                <AvatarFallback>{data.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {data.user.name?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-col ml-3">
                 <p className="font-bold">{data.user.name}</p>
@@ -103,6 +106,12 @@ const SidebarSheet = () => {
           </SheetClose>
           {data?.user ? (
             <>
+              <Button className="justify-start" variant="ghost" asChild>
+                <Link href="/account">
+                  <UserCog size={18} /> Minha conta
+                </Link>
+              </Button>
+
               <SheetClose asChild>
                 <Button className="justify-start gap-2" variant="ghost" asChild>
                   <Link href="/bookings">
@@ -118,7 +127,7 @@ const SidebarSheet = () => {
                       <Bell size={18} />
                       {unreadCount > 0 && (
                         <Badge className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs">
-                          {unreadCount > 9 ? "9+" : unreadCount}
+                          {unreadCount > 9 ? '9+' : unreadCount}
                         </Badge>
                       )}
                     </div>
@@ -128,7 +137,11 @@ const SidebarSheet = () => {
               </SheetClose>
               {data.user.role === 'BARBER' && (
                 <SheetClose asChild>
-                  <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Button
+                    className="justify-start gap-2"
+                    variant="ghost"
+                    asChild
+                  >
                     <Link href="/barber/schedule">
                       <CalendarIcon size={18} />
                       Minha Agenda
@@ -138,7 +151,11 @@ const SidebarSheet = () => {
               )}
               {data.user.role === 'ADMIN' && (
                 <SheetClose asChild>
-                  <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Button
+                    className="justify-start gap-2"
+                    variant="ghost"
+                    asChild
+                  >
                     <Link href="/dashboard">
                       <CalendarIcon size={18} />
                       Dashboard Admin
