@@ -83,44 +83,50 @@ export const authOptions: AuthOptions = {
       return true
     },
 
-    async session({ session, user, token }) {
-      if (session.user) {
-        const userId = user?.id || token.sub
-
-        if (userId) {
-          const dbUser = await db.user.findUnique({
-            where: { id: userId },
-            include: {
-              barber: {
-                select: { id: true },
-              },
-              ownedBarbershop: {
-                select: { id: true },
-              },
-            },
-          })
-
-          if (dbUser) {
-            session.user.id = dbUser.id
-            session.user.role = dbUser.role
-            session.user.name = dbUser.name
-            session.user.email = dbUser.email
-            session.user.image = dbUser.image
-            session.user.phone = dbUser.phone || null
-            session.user.barberId = dbUser.barber?.id || null
-            session.user.barbershopId = dbUser.ownedBarbershop?.id || null
-          }
-        }
+    async session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = token.sub as string
+        session.user.role = token.role as any
+        session.user.name = token.name as string
+        session.user.email = token.email as string
+        session.user.image = token.picture as string
+        session.user.phone = token.phone as string | null
+        session.user.barberId = token.barberId as string | null
+        session.user.barbershopId = token.barbershopId as string | null
       }
       return session
     },
 
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
-        token.role = user.role
-        token.phone = (user as any).phone
-        token.barberId = (user as any).barberId
-        token.barbershopId = (user as any).barbershopId
+        const dbUser = await db.user.findUnique({
+          where: { id: user.id },
+          include: {
+            barber: { select: { id: true } },
+            ownedBarbershop: { select: { id: true } },
+          },
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.phone = dbUser.phone
+          token.barberId = dbUser.barber?.id || null
+          token.barbershopId = dbUser.ownedBarbershop?.id || null
+        }
+      }
+      if (trigger === 'update') {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.sub },
+          include: {
+            barber: { select: { id: true } },
+            ownedBarbershop: { select: { id: true } },
+          },
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.phone = dbUser.phone
+          token.barberId = dbUser.barber?.id || null
+          token.barbershopId = dbUser.ownedBarbershop?.id || null
+        }
       }
       return token
     },

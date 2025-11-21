@@ -12,7 +12,8 @@ export async function GET() {
     }
 
     if (!session.user.barbershopId) {
-      return NextResponse.json({ error: 'Barbearia não encontrada' }, { status: 404 })
+      console.log('User session:', JSON.stringify(session.user, null, 2))
+      return NextResponse.json({ error: 'Barbearia não encontrada. Faça logout e login novamente.' }, { status: 404 })
     }
 
     const barbershopId = session.user.barbershopId

@@ -33,5 +33,6 @@ declare module 'next-auth/jwt' {
     role: UserRole
     barberId?: string | null
     barbershopId?: string | null
+    phone?: string | null
   }
 }
