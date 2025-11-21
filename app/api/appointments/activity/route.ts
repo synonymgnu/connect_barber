@@ -83,9 +83,7 @@ export async function GET(request: Request) {
         user: { 
           select: { 
             id: true, 
-            name: true, 
-            email: true, 
-            phone: true,
+            name: true,
             image: true
           } 
         },
@@ -105,7 +103,7 @@ export async function GET(request: Request) {
             where: { id: booking.id },
             data: { status: 'COMPLETED' },
             include: {
-              user: { select: { id: true, name: true, email: true, phone: true, image: true } },
+              user: { select: { id: true, name: true, image: true } },
               service: { select: { id: true, name: true, price: true, duration: true } },
               barber: { select: { id: true, name: true } }
             }
@@ -118,8 +116,8 @@ export async function GET(request: Request) {
     const formattedBookings = updatedBookings.map(booking => ({
       id: booking.id,
       customerName: booking.user.name || 'Cliente',
-      customerEmail: booking.user.email || '',
-      customerPhone: booking.user.phone || '',
+      customerEmail: '',
+      customerPhone: '',
       customerImageUrl: booking.user.image || null,
       type: booking.service.name,
       serviceId: booking.service.id,
