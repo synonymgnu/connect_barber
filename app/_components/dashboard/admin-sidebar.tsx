@@ -44,12 +44,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useSession } from 'next-auth/react'
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
 import { Button } from '../ui/button'
@@ -208,12 +203,28 @@ export function AdminSidebar() {
                         </div>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuGroup className="p-2">
+                    <DropdownMenuGroup>
                       <DropdownMenuItem>
-                        <UserCog /> Minha conta
+                        <Button
+                          className="justify-start px-2 w-full"
+                          variant="ghost"
+                          asChild
+                        >
+                          <Link href="/account">
+                            <UserCog size={18} /> Minha conta
+                          </Link>
+                        </Button>
                       </DropdownMenuItem>
                       <DropdownMenuItem>
-                        <Bell /> Notificações
+                        <Button
+                          className="justify-start px-2 w-full"
+                          variant="ghost"
+                          asChild
+                        >
+                          <Link href="/notifications">
+                            <Bell /> Notificações
+                          </Link>
+                        </Button>
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
