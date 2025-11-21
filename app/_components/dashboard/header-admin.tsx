@@ -11,6 +11,7 @@ import {
   Scissors,
   User,
   Bell,
+  FileText,
 } from 'lucide-react'
 import { Sheet, SheetTrigger } from '../ui/sheet'
 import { Avatar, AvatarImage } from '../ui/avatar'
@@ -66,14 +67,19 @@ const HeaderAdmin = () => {
           </Link>
         </Button>
 
-        <div className="flex items-center">
-          <NotificationsDropdown />
-          <Button variant="ghost" className="gap-2 justify-start flex-1" asChild>
-            <Link href="/notifications">
-              Notificações
-            </Link>
-          </Button>
-        </div>
+        <Button variant="ghost" className="gap-2 justify-start" asChild>
+          <Link href="/notifications">
+            <Bell size={18} />
+            Notificações
+          </Link>
+        </Button>
+
+        <Button variant="ghost" className="gap-2 justify-start" asChild>
+          <Link href="/audit-logs">
+            <FileText size={18} />
+            Logs de Auditoria
+          </Link>
+        </Button>
 
         <Button variant="ghost" className="gap-2 justify-start" asChild>
           <Link href="/dashboard/profile">

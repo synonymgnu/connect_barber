@@ -9,6 +9,7 @@ import {
   Scissors,
   User,
   Bell,
+  FileText,
 } from 'lucide-react'
 import {
   Sheet,
@@ -93,6 +94,15 @@ const SidebarAdmin = () => {
                   )}
                 </div>
                 Notificações
+              </Link>
+            </Button>
+          </SheetClose>
+
+          <SheetClose asChild>
+            <Button variant="ghost" className="justify-start" asChild>
+              <Link href="/audit-logs">
+                <FileText size={18} />
+                Logs de Auditoria
               </Link>
             </Button>
           </SheetClose>

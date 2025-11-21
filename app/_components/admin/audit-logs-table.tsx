@@ -69,10 +69,11 @@ export default function AuditLogsTable() {
             <SelectContent>
               <SelectItem value="all">Todas as ações</SelectItem>
               <SelectItem value="CREATE_BOOKING">Criar Agendamento</SelectItem>
+              <SelectItem value="CANCEL_BOOKING">Cancelar Agendamento</SelectItem>
               <SelectItem value="UPDATE_BOOKING">Atualizar Agendamento</SelectItem>
               <SelectItem value="DELETE_BOOKING">Excluir Agendamento</SelectItem>
-              <SelectItem value="CREATE_SERVICE">Criar Serviço</SelectItem>
-              <SelectItem value="LOGIN">Login</SelectItem>
+              <SelectItem value="UPDATE_BOOKING_STATUS">Mudar Status</SelectItem>
+              <SelectItem value="CREATE_BARBERSHOP">Criar Barbearia</SelectItem>
             </SelectContent>
           </Select>
         </div>

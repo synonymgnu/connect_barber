@@ -18,6 +18,7 @@ import {
   Home,
   Clock,
   BarChart3,
+  FileText,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -71,6 +72,7 @@ export function AdminSidebar() {
     { label: 'Equipe', href: '/dashboard/barbers', icon: Users },
     { label: 'Disponibilidade', href: '/dashboard/availability', icon: Clock },
     { label: 'Relatórios', href: '/dashboard/reports', icon: BarChart3 },
+    { label: 'Logs de Auditoria', href: '/audit-logs', icon: FileText },
     { label: 'Barbearia', href: '/dashboard/settings', icon: Store },
   ]
 
