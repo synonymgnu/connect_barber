@@ -3,7 +3,8 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, Brush } from "recharts";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { useEffect, useMemo, useState, memo, useCallback } from "react";
+import { useMemo, useState, memo } from "react";
+import { useAppointmentStats } from "@/app/_hooks/use-dashboard-metrics";
 
 interface AppointmentStatsData {
   time: string;
@@ -55,33 +56,7 @@ CustomTooltip.displayName = 'CustomTooltip';
 
 function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
   const [timeRange, setTimeRange] = useState<'1D' | '1W' | '1M' | '1Y'>('1W');
-  const [stats, setStats] = useState<AppointmentStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadStats = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
-      if (!response.ok) {
-        throw new Error('Erro ao carregar estatísticas');
-      }
-      
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      setError('Erro ao carregar estatísticas');
-      console.error('Error loading stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [timeRange]);
-
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+  const { data: stats, isLoading: loading, error } = useAppointmentStats(timeRange);
 
   // gráfico divergente
   const chartData = useMemo(() => {
@@ -125,7 +100,7 @@ function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center justify-center h-64">
-            <div className="text-rose-400">{error || 'Erro ao carregar dados'}</div>
+            <div className="text-rose-400">{error instanceof Error ? error.message : 'Erro ao carregar dados'}</div>
           </div>
         </CardContent>
       </Card>

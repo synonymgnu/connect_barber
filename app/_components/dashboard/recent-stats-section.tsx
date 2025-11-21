@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useCallback, memo } from "react"
+import { memo } from "react"
+import { useRecentStats } from "@/app/_hooks/use-dashboard-metrics"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { 
@@ -55,41 +56,11 @@ const COLORS = {
 }
 
 function RecentStatsSection() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
-
-  const fetchStats = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const response = await fetch('/api/dashboard/recent-stats')
-      if (!response.ok) throw new Error('Failed to fetch stats')
-      
-      const data = await response.json()
-      setStats(data)
-      setLastUpdate(new Date())
-    } catch (err) {
-      setError('Erro ao carregar estatísticas')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchStats()
-    
-    const interval = setInterval(fetchStats, 600000)
-    
-    return () => clearInterval(interval)
-  }, [fetchStats])
+  const { data: stats, isLoading: loading, error, refetch } = useRecentStats()
 
   const handleRefresh = async () => {
     toast.loading('Atualizando estatísticas...')
-    await fetchStats()
+    await refetch()
     toast.dismiss()
     toast.success('Estatísticas atualizadas!')
   }
@@ -267,11 +238,11 @@ function RecentStatsSection() {
       <Card className="bg-[#0c0c0c] border-[#1f1f1f]">
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-red-500 mb-4">{error}</p>
+            <p className="text-red-500 mb-4">{error instanceof Error ? error.message : 'Erro ao carregar'}</p>
             <Button 
               variant="outline" 
               size="sm"
-              onClick={fetchStats}
+              onClick={() => refetch()}
               className="text-slate-400 border-slate-700 hover:bg-slate-800/50"
             >
               Tentar novamente
@@ -295,7 +266,7 @@ function RecentStatsSection() {
               Estatísticas Recentes
             </CardTitle>
             <p className="text-xs text-slate-500 mt-1">
-              Últimos 7 dias • Atualizado {format(lastUpdate, "HH:mm", { locale: ptBR })}
+              Últimos 7 dias
             </p>
           </div>
           <div className="flex items-center gap-2">

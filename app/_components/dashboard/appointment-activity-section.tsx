@@ -12,7 +12,8 @@ import {
   Globe,
   Store
 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useAppointmentActivity } from "@/app/_hooks/use-dashboard-metrics";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -58,17 +59,12 @@ const sourceConfig = {
 }
 
 const AppointmentActivitySection = () => {
-  const [appointments, setAppointments] = useState<AppointmentProps[]>([]);
   const [selectedAppointmentIds, setSelectedAppointmentIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<keyof typeof statusConfig | 'all'>('all');
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
   const [dateFilter, setDateFilter] = useState<{ type: 'dia' | 'semana' | 'mes' | 'ano' | null; value: Date | null }>({
     type: null,
@@ -144,16 +140,15 @@ const AppointmentActivitySection = () => {
   }
 
   // salvar
-  const handleSaveAppointment = async (data: any) => {
+  const handleSaveAppointment = async (formData: any) => {
     try {
-      const response = await fetch(`/api/appointments/${data.id}`, {
+      const response = await fetch(`/api/appointments/${formData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(formData)
       })
       
       if (response.ok) {
-        fetchAppointments()
         setModalOpen(false)
         clearSelection()
       } else {
@@ -173,7 +168,6 @@ const AppointmentActivitySection = () => {
       })
       
       if (response.ok) {
-        fetchAppointments()
         clearSelection()
         setDeleteDialogOpen(false)
         setAppointmentToDelete(null)
@@ -205,64 +199,41 @@ const AppointmentActivitySection = () => {
     clearSelection();
   }, [currentPage, statusFilter, debouncedSearch, dateFilter]);
 
-  const fetchAppointments = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  const { data, isLoading: loading, error } = useAppointmentActivity({
+    page: currentPage,
+    pageSize: itemsPerPage,
+    search: debouncedSearch,
+    status: statusFilter,
+    dateFilterType: dateFilter.type || undefined,
+    dateFilterValue: dateFilter.value?.toISOString(),
+  })
 
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        pageSize: itemsPerPage.toString(),
-        ...(debouncedSearch && { search: debouncedSearch }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(dateFilter.type && dateFilter.value && {
-          dateFilterType: dateFilter.type,
-          dateFilterValue: dateFilter.value.toISOString()
-        })
-      })
-
-      const response = await fetch(`/api/appointments/activity?${params}`)
-      if (!response.ok) throw new Error('Erro ao carregar agendamentos')
-
-      const data = await response.json()
-      setAppointments(data.data || [])
-      setTotalPages(data.totalPages || 1)
-      setTotalCount(data.totalCount || 0)
-    } catch (err) {
-      setError('Erro ao carregar agendamentos')
-      console.error('Error fetching appointments:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [currentPage, itemsPerPage, debouncedSearch, statusFilter, dateFilter.type, dateFilter.value])
-
-  const fetchBarbershopData = useCallback(async () => {
-    try {
-      const [servicesRes, barbersRes] = await Promise.all([
-        fetch(`/api/barbershop/services`),
-        fetch(`/api/barbershop/barbers`)
-      ])
-      
-      if (servicesRes.ok && barbersRes.ok) {
-        const services = await servicesRes.json()
-        const barbersData = await barbersRes.json()
-        setBarbershopServices(services)
-        setBarbers(barbersData)
-      }
-    } catch (error) {
-      console.error('Error fetching barbershop data:', error)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchAppointments()
-  }, [fetchAppointments])
+  const appointments = data?.data || []
+  const totalPages = data?.totalPages || 1
+  const totalCount = data?.totalCount || 0
 
   useEffect(() => {
     if (modalOpen) {
-      fetchBarbershopData();
+      const fetchBarbershopData = async () => {
+        try {
+          const [servicesRes, barbersRes] = await Promise.all([
+            fetch(`/api/barbershop/services`),
+            fetch(`/api/barbershop/barbers`)
+          ])
+          
+          if (servicesRes.ok && barbersRes.ok) {
+            const services = await servicesRes.json()
+            const barbersData = await barbersRes.json()
+            setBarbershopServices(services)
+            setBarbers(barbersData)
+          }
+        } catch (error) {
+          console.error('Error fetching barbershop data:', error)
+        }
+      }
+      fetchBarbershopData()
     }
-  }, [modalOpen, fetchBarbershopData]);
+  }, [modalOpen]);
 
   const renderPaginationItems = useMemo(() => {
     if (loading) {

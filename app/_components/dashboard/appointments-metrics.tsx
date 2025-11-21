@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState, memo } from "react"
+import { memo } from "react"
 import { Calendar, CheckCircle, TrendingDown, TrendingUp, Users, XCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Skeleton } from "../ui/skeleton"
+import { useDashboardMetrics } from "@/app/_hooks/use-dashboard-metrics"
 
 interface Metric {
   title: string
@@ -79,79 +80,46 @@ const MetricCard = memo(({ metric, index }: { metric: Metric; index: number }) =
 MetricCard.displayName = 'MetricCard'
 
 function AppointmentsMetrics() {
-  const [metrics, setMetrics] = useState<Metric[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data, isLoading: loading, error } = useDashboardMetrics()
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/appointments/metrics')
-        
-        if (!response.ok) {
-          throw new Error('Erro ao carregar métricas')
-        }
-        
-        const data = await response.json()
-        
-        if (data.error) {
-          throw new Error(data.error)
-        }
-
-        const formattedMetrics: Metric[] = [
-          {
-            title: "Próximos agendamentos",
-            value: data.metrics.upcoming.value,
-            change: data.metrics.upcoming.change,
-            percentage: "12%",
-            icon: <Calendar className="h-4 w-4" />,
-            trend: data.metrics.upcoming.trend,
-            color: "#10b981"
-          },
-          {
-            title: "Agendamentos concluídos",
-            value: data.metrics.completed.value,
-            change: data.metrics.completed.change,
-            percentage: "11%",
-            icon: <CheckCircle className="h-4 w-4" />,
-            trend: data.metrics.completed.trend,
-            color: "#B400E0"
-          },
-          {
-            title: "Agendamentos cancelados",
-            value: data.metrics.cancelled.value,
-            change: data.metrics.cancelled.change,
-            percentage: "15%",
-            icon: <XCircle className="h-4 w-4" />,
-            trend: "down",
-            color: "#FF8E00"
-          },
-          {
-            title: "Total de clientes",
-            value: data.metrics.customers.value,
-            change: data.metrics.customers.change,
-            percentage: "35%",
-            icon: <Users className="h-4 w-4" />,
-            trend: data.metrics.customers.trend,
-            color: "#008DD2"
-          }
-        ]
-
-        setMetrics(formattedMetrics)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro desconhecido')
-        console.error('Error fetching metrics:', err)
-      } finally {
-        setLoading(false)
-      }
+  const metrics: Metric[] = data ? [
+    {
+      title: "Próximos agendamentos",
+      value: data.metrics.upcoming.value,
+      change: data.metrics.upcoming.change,
+      percentage: "12%",
+      icon: <Calendar className="h-4 w-4" />,
+      trend: data.metrics.upcoming.trend,
+      color: "#10b981"
+    },
+    {
+      title: "Agendamentos concluídos",
+      value: data.metrics.completed.value,
+      change: data.metrics.completed.change,
+      percentage: "11%",
+      icon: <CheckCircle className="h-4 w-4" />,
+      trend: data.metrics.completed.trend,
+      color: "#B400E0"
+    },
+    {
+      title: "Agendamentos cancelados",
+      value: data.metrics.cancelled.value,
+      change: data.metrics.cancelled.change,
+      percentage: "15%",
+      icon: <XCircle className="h-4 w-4" />,
+      trend: data.metrics.cancelled.trend,
+      color: "#FF8E00"
+    },
+    {
+      title: "Total de clientes",
+      value: data.metrics.customers.value,
+      change: data.metrics.customers.change,
+      percentage: "35%",
+      icon: <Users className="h-4 w-4" />,
+      trend: data.metrics.customers.trend,
+      color: "#008DD2"
     }
-
-    fetchMetrics()
-    const interval = setInterval(fetchMetrics, 600000)
-    
-    return () => clearInterval(interval)
-  }, [])
+  ] : []
 
   if (loading) {
     return (
@@ -179,7 +147,7 @@ function AppointmentsMetrics() {
           <Card key={title} className="bg-[#15141b] border-[#1f1f1f]">
             <CardContent className="p-6">
               <div className="flex flex-col items-center justify-center h-32">
-                <p className="text-red-500 text-sm">{error}</p>
+                <p className="text-red-500 text-sm">{error instanceof Error ? error.message : 'Erro ao carregar'}</p>
               </div>
             </CardContent>
           </Card>
