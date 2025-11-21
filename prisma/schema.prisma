@@ -18,14 +18,14 @@ model User {
   role            UserRole       @default(CLIENT)
   phone           String?
   accounts        Account[]
+  auditLogs       AuditLog[]
   barber          Barber?
   ownedBarbershop Barbershop?
   bookings        Booking[]
+  notifications   Notification[]
   ratings         Rating[]
   sessions        Session[]
-  notifications   Notification[]
   consents        UserConsent[]
-  auditLogs       AuditLog[]
 }
 
 model Account {
@@ -174,29 +174,6 @@ model Rating {
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum UserRole {
-  CLIENT
-  BARBER
-  ADMIN
-}
-
-enum AbsenceType {
-  BARBER_ABSENCE
-  SHOP_CLOSURE
-}
-
-enum BookingSource {
-  PRESENCIAL
-  ONLINE
-}
-
-enum BookingStatus {
-  CONFIRMED
-  COMPLETED
-  CANCELLED
-  PENDING
-}
-
 model Notification {
   id        String           @id @default(uuid())
   userId    String
@@ -210,12 +187,6 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
-}
-
-enum NotificationType {
-  BOOKING_CREATED
-  BOOKING_CANCELLED
-  BOOKING_CONFIRMED
 }
 
 model UserConsent {
@@ -242,9 +213,38 @@ model AuditLog {
   userAgent  String?
   metadata   Json?
   createdAt  DateTime @default(now())
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([createdAt])
   @@index([action])
+}
+
+enum UserRole {
+  CLIENT
+  BARBER
+  ADMIN
+}
+
+enum AbsenceType {
+  BARBER_ABSENCE
+  SHOP_CLOSURE
+}
+
+enum BookingSource {
+  PRESENCIAL
+  ONLINE
+}
+
+enum BookingStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  PENDING
+}
+
+enum NotificationType {
+  BOOKING_CREATED
+  BOOKING_CANCELLED
+  BOOKING_CONFIRMED
 }
