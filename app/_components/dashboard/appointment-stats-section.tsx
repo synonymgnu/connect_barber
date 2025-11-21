@@ -3,7 +3,7 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, Brush } from "recharts";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, memo, useCallback } from "react";
 
 interface AppointmentStatsData {
   time: string;
@@ -25,35 +25,63 @@ interface AppointmentStatsSectionProps {
   className?: string;
 }
 
-export default function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
+const CustomTooltip = memo(({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const offlineValue = payload.find((p: any) => p.dataKey === 'offline')?.value || 0;
+    const onlineValue = Math.abs(payload.find((p: any) => p.dataKey === 'online')?.value || 0);
+    return (
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 shadow-lg">
+        <p className="text-white font-semibold text-sm">{label}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="w-3 h-3 bg-purple-500 rounded-full" />
+          <span className="text-white text-sm">Offline: {offlineValue}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <div className="w-3 h-3 bg-orange-500 rounded-full" />
+          <span className="text-white text-sm">Online: {onlineValue}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#2a2a2a]">
+          <span className="text-emerald-400 text-sm font-semibold">
+            Total: {offlineValue + onlineValue}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+});
+
+CustomTooltip.displayName = 'CustomTooltip';
+
+function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
   const [timeRange, setTimeRange] = useState<'1D' | '1W' | '1M' | '1Y'>('1W');
   const [stats, setStats] = useState<AppointmentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
-        if (!response.ok) {
-          throw new Error('Erro ao carregar estatísticas');
-        }
-        
-        const data = await response.json();
-        setStats(data);
-      } catch (error) {
-        setError('Erro ao carregar estatísticas');
-        console.error('Error loading stats:', error);
-      } finally {
-        setLoading(false);
+  const loadStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/appointments/stats?range=${timeRange}`);
+      if (!response.ok) {
+        throw new Error('Erro ao carregar estatísticas');
       }
-    };
-
-    loadStats();
+      
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      setError('Erro ao carregar estatísticas');
+      console.error('Error loading stats:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [timeRange]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   // gráfico divergente
   const chartData = useMemo(() => {
@@ -65,42 +93,7 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
     }));
   }, [stats]);
 
-  interface TooltipPayload {
-    dataKey: string;
-    value: number;
-  }
 
-  interface TooltipProps {
-    active?: boolean;
-    payload?: TooltipPayload[];
-    label?: string;
-  }
-
-  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-    if (active && payload && payload.length) {
-      const offlineValue = payload.find((p) => p.dataKey === 'offline')?.value || 0;
-      const onlineValue = Math.abs(payload.find((p) => p.dataKey === 'online')?.value || 0);
-      return (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 shadow-lg">
-          <p className="text-white font-semibold text-sm">{label}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <div className="w-3 h-3 bg-purple-500 rounded-full" />
-            <span className="text-white text-sm">Offline: {offlineValue}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-3 h-3 bg-orange-500 rounded-full" />
-            <span className="text-white text-sm">Online: {onlineValue}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#2a2a2a]">
-            <span className="text-emerald-400 text-sm font-semibold">
-              Total: {offlineValue + onlineValue}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return (
@@ -271,3 +264,5 @@ export default function AppointmentStatsSection({ className }: AppointmentStatsS
     </Card>
   );
 }
+
+export default memo(AppointmentStatsSection)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, memo } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { 
@@ -54,7 +54,7 @@ const COLORS = {
   barbers: '#ec4899'
 }
 
-export default function RecentStatsSection() {
+function RecentStatsSection() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -82,8 +82,7 @@ export default function RecentStatsSection() {
   useEffect(() => {
     fetchStats()
     
-    // Atualizar a cada 5 minutos
-    const interval = setInterval(fetchStats, 300000)
+    const interval = setInterval(fetchStats, 600000)
     
     return () => clearInterval(interval)
   }, [fetchStats])
@@ -410,3 +409,5 @@ export default function RecentStatsSection() {
     </Card>
   )
 }
+
+export default memo(RecentStatsSection)

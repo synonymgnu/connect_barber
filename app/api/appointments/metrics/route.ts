@@ -72,6 +72,20 @@ export async function GET() {
       }
     })
 
+    // Cancelados período anterior (30-60 dias atrás)
+    const previousCancelledBookings = await db.booking.count({
+      where: {
+        date: {
+          gte: sixtyDaysAgo,
+          lt: thirtyDaysAgo
+        },
+        status: 'CANCELLED',
+        service: {
+          barbershopId: barbershopId
+        }
+      }
+    })
+
     // Total de clientes únicos
     const totalCustomers = await db.booking.findMany({
       where: {
@@ -122,6 +136,7 @@ export async function GET() {
 
     const completedChange = calculatePercentage(completedBookings, previousCompletedBookings)
     const customersChange = calculatePercentage(totalCustomers.length, previousCustomers.length)
+    const cancelledChange = calculatePercentage(cancelledBookings, previousCancelledBookings)
 
     return NextResponse.json({
       metrics: {
@@ -139,9 +154,9 @@ export async function GET() {
         },
         cancelled: {
           value: cancelledBookings.toString(),
-          change: 0.5,
+          change: Math.round(cancelledChange),
           percentage: "15%",
-          trend: "up"
+          trend: cancelledChange > 0 ? "up" : "down"
         },
         customers: {
           value: totalCustomers.length.toString(),

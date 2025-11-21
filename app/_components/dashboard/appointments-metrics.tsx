@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, memo } from "react"
 import { Calendar, CheckCircle, TrendingDown, TrendingUp, Users, XCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Skeleton } from "../ui/skeleton"
@@ -15,7 +15,70 @@ interface Metric {
   color: string
 }
 
-export default function AppointmentsMetrics() {
+const MetricCard = memo(({ metric, index }: { metric: Metric; index: number }) => {
+  const TrendIcon = metric.trend === "up" ? TrendingUp : TrendingDown
+  const trendColor = metric.trend === "up" ? "text-green-500" : "text-red-500"
+
+  return (
+    <Card className="bg-[#15141b] border-[#1f1f1f] hover:bg-[#0c0c0c] transition-colors">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-white">
+          {metric.title}
+        </CardTitle>
+        <div className="text-slate-400">
+          {metric.icon}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl lg:text-3xl font-bold text-white mb-2">
+          {metric.value}
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1">
+            <div className="bg-slate-800 rounded-2xl p-2">
+              <TrendIcon className={`h-3 w-3 ${trendColor}`} />
+            </div>
+            <span className={`text-sm font-medium ${trendColor}`}>
+              {metric.change > 0 ? '+' : ''}{metric.change}%
+            </span>
+          </div>
+          <div className="relative w-12 h-12">
+            <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
+              <circle
+                cx="18"
+                cy="18"
+                r="16"
+                fill="none"
+                stroke="#374151"
+                strokeWidth="2"
+              />
+              <circle
+                cx="18"
+                cy="18"
+                r="16"
+                fill="none"
+                stroke={metric.trend === "up" ? metric.color : "#ef4444"}
+                strokeWidth="2"
+                strokeDasharray="100"
+                strokeDashoffset={100 - parseInt(metric.percentage)}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-bold text-white">
+                {metric.percentage}
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+})
+
+MetricCard.displayName = 'MetricCard'
+
+function AppointmentsMetrics() {
   const [metrics, setMetrics] = useState<Metric[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +148,7 @@ export default function AppointmentsMetrics() {
     }
 
     fetchMetrics()
-    const interval = setInterval(fetchMetrics, 300000)
+    const interval = setInterval(fetchMetrics, 600000)
     
     return () => clearInterval(interval)
   }, [])
@@ -127,66 +190,11 @@ export default function AppointmentsMetrics() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {metrics.map((metric, index) => {
-        const TrendIcon = metric.trend === "up" ? TrendingUp : TrendingDown
-        const trendColor = metric.trend === "up" ? "text-green-500" : "text-red-500"
-
-        return (
-          <Card key={index} className="bg-[#15141b] border-[#1f1f1f] hover:bg-[#0c0c0c] transition-colors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">
-                {metric.title}
-              </CardTitle>
-              <div className="text-slate-400">
-                {metric.icon}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl lg:text-3xl font-bold text-white mb-2">
-                {metric.value}
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  <div className="bg-slate-800 rounded-2xl p-2">
-                    <TrendIcon className={`h-3 w-3 ${trendColor}`} />
-                  </div>
-                  <span className={`text-sm font-medium ${trendColor}`}>
-                    {metric.change > 0 ? '+' : ''}{metric.change}%
-                  </span>
-                </div>
-                <div className="relative w-12 h-12">
-                  <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="16"
-                      fill="none"
-                      stroke="#374151"
-                      strokeWidth="2"
-                    />
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="16"
-                      fill="none"
-                      stroke={metric.trend === "up" ? metric.color : "#ef4444"}
-                      strokeWidth="2"
-                      strokeDasharray="100"
-                      strokeDashoffset={100 - parseInt(metric.percentage)}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
-                      {metric.percentage}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+      {metrics.map((metric, index) => (
+        <MetricCard key={index} metric={metric} index={index} />
+      ))}
     </div>
   )
 }
+
+export default memo(AppointmentsMetrics)

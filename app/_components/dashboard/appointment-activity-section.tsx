@@ -12,7 +12,7 @@ import {
   Globe,
   Store
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -61,6 +61,7 @@ const AppointmentActivitySection = () => {
   const [appointments, setAppointments] = useState<AppointmentProps[]>([]);
   const [selectedAppointmentIds, setSelectedAppointmentIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<keyof typeof statusConfig | 'all'>('all');
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -194,8 +195,15 @@ const AppointmentActivitySection = () => {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
     clearSelection();
-  }, [currentPage, statusFilter, searchTerm, dateFilter]);
+  }, [currentPage, statusFilter, debouncedSearch, dateFilter]);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -205,7 +213,7 @@ const AppointmentActivitySection = () => {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         pageSize: itemsPerPage.toString(),
-        ...(searchTerm && { search: searchTerm }),
+        ...(debouncedSearch && { search: debouncedSearch }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(dateFilter.type && dateFilter.value && {
           dateFilterType: dateFilter.type,
@@ -226,7 +234,7 @@ const AppointmentActivitySection = () => {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, itemsPerPage, searchTerm, statusFilter, dateFilter.type, dateFilter.value])
+  }, [currentPage, itemsPerPage, debouncedSearch, statusFilter, dateFilter.type, dateFilter.value])
 
   const fetchBarbershopData = useCallback(async () => {
     try {
@@ -256,7 +264,7 @@ const AppointmentActivitySection = () => {
     }
   }, [modalOpen, fetchBarbershopData]);
 
-  const renderPaginationItems = () => {
+  const renderPaginationItems = useMemo(() => {
     if (loading) {
       return (
         <div className="flex items-center gap-2">
@@ -331,7 +339,7 @@ const AppointmentActivitySection = () => {
     );
 
     return items;
-  };
+  }, [currentPage, totalPages, loading]);
 
   return (
     <>
@@ -532,7 +540,7 @@ const AppointmentActivitySection = () => {
               </span>
             </div>
             <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-end">
-              {renderPaginationItems()}
+              {renderPaginationItems}
             </div>
           </div>
         </CardContent>
