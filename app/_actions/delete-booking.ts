@@ -35,7 +35,7 @@ export const deleteBooking = async (bookingId: string) => {
         where: { id: bookingId },
     })
     
-    if (session?.user) {
+    if (session?.user && booking) {
         await createAuditLog({
             userId: session.user.id,
             action: 'CANCEL_BOOKING',
@@ -43,7 +43,10 @@ export const deleteBooking = async (bookingId: string) => {
             resourceId: bookingId,
             ipAddress: 'server-action',
             userAgent: 'client-app',
-            metadata: { cancelledBy: session.user.role }
+            metadata: { 
+                cancelledBy: session.user.role,
+                barbershopId: booking.service.barbershop.id
+            }
         })
     }
     

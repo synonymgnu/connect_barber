@@ -42,7 +42,11 @@ export const createBooking = async (params: CreateBookingParams) => {
     resourceId: booking.id,
     ipAddress: 'server-action',
     userAgent: 'client-app',
-    metadata: { serviceId: params.serviceId, barberId: params.barberId }
+    metadata: { 
+      serviceId: params.serviceId, 
+      barberId: params.barberId,
+      barbershopId: booking.service.barbershop.id
+    }
   })
   
   revalidatePath('/barbershops/[id]')

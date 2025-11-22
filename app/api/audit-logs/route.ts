@@ -19,24 +19,47 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '50')
   const action = searchParams.get('action')
 
-  // Buscar todos os logs relacionados à barbearia
-  // Incluir: admin, barbeiros e clientes que fizeram agendamentos
-  const barbershopUsers = await db.user.findMany({
+  // Buscar apenas logs de ações na barbearia específica
+  // 1. Ações do admin/barbeiros da barbearia
+  // 2. Ações de clientes em bookings DESTA barbearia
+  
+  const barbershopStaff = await db.user.findMany({
     where: {
       OR: [
         { ownedBarbershop: { id: session.user.barbershopId } },
-        { barber: { barbershopId: session.user.barbershopId } },
-        { bookings: { some: { service: { barbershopId: session.user.barbershopId } } } }
+        { barber: { barbershopId: session.user.barbershopId } }
       ]
     },
     select: { id: true }
   })
 
-  const userIds = barbershopUsers.map(u => u.id)
+  const staffIds = barbershopStaff.map(u => u.id)
+
+  // Filtrar logs por metadata.barbershopId ou por userId de staff
+  const allLogs = await db.auditLog.findMany({
+    orderBy: { createdAt: 'desc' }
+  })
+
+  // Filtrar logs que pertencem a esta barbearia
+  const validLogIds = allLogs
+    .filter(log => {
+      // Logs de staff sempre são válidos
+      if (staffIds.includes(log.userId || '')) return true
+      
+      // Logs com barbershopId no metadata
+      if (log.metadata && typeof log.metadata === 'object') {
+        const metadata = log.metadata as any
+        if (metadata.barbershopId === session.user.barbershopId) return true
+      }
+      
+      return false
+    })
+    .map(log => log.id)
 
   const where: any = {
-    userId: { in: userIds }
+    id: { in: validLogIds }
   }
+  
   if (action) where.action = action
 
   const logs = await db.auditLog.findMany({

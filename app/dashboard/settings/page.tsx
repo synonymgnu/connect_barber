@@ -28,7 +28,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 export default function SettingsPage() {
-  const { data: session } = useSession()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
