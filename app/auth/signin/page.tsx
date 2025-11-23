@@ -1,19 +1,15 @@
 'use client'
 
 import { signIn, getSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/app/_components/ui/button'
 import Image from 'next/image'
-import Link from 'next/link'
-import { Checkbox } from '@/app/_components/ui/checkbox'
-import { Label } from '@/app/_components/ui/label'
 
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
-  const [isAccepted, setIsAccepted] = useState(false)
 
   useEffect(() => {
     // Verificar se já está autenticado
@@ -60,32 +56,13 @@ export default function SignInPage() {
 
             <Button
               onClick={handleGoogleSignIn}
-              variant="default"
-              className="w-full  text-white font-semibold py-3 px-4 rounded-lg border border-gray-300 transition-all duration-200 flex items-center justify-center gap-3"
+              variant="outline"
+              className="hover:bg-primary w-full  text-white font-semibold py-3 px-4 rounded-lg border border-gray-300 transition-all duration-200 flex items-center justify-center gap-3"
               size="lg"
-              disabled={!isAccepted}
             >
               <Image src="/google.svg" alt="Google" width={20} height={20} />
               Continuar com Google
             </Button>
-
-            <div className="text-center text-xs text-gray-500 mt-0">
-              Para acessar os serviços do Connect Barber, você precisa concordar
-              com os nossos
-              <Button variant="link" className="text-xs px-1">
-                <Link href="/consent">Termos de Serviço</Link>
-              </Button>
-              <div className="flex items-center gap-3 mt-5">
-                <Checkbox
-                  id="terms"
-                  checked={isAccepted}
-                  onCheckedChange={(checked) => setIsAccepted(!!checked)}
-                />
-                <Label htmlFor="terms" className="text-xs">
-                  Li e aceito os termos e condições
-                </Label>
-              </div>
-            </div>
           </div>
         </div>
       </div>
