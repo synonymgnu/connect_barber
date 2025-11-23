@@ -8,12 +8,11 @@ import { Input } from "@/app/_components/ui/input"
 import { Textarea } from "@/app/_components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Info, Loader2, MapPin, Phone, Plus, Store, X } from "lucide-react"
-import { useSession } from "next-auth/react"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useCallback } from "react"
 import { useForm } from "react-hook-form"
-import { toast } from "sonner"
 import z from "zod"
+import { useBarbershopSettings, useUpdateBarbershopSettings } from "@/app/_hooks/use-barbershop-settings"
 
 const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/
 
@@ -28,8 +27,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const { data: barbershop, isLoading: loading } = useBarbershopSettings()
+  const { mutate: updateSettings, isPending: saving } = useUpdateBarbershopSettings()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,74 +42,65 @@ export default function SettingsPage() {
   })
 
   const watchValues = form.watch()
+  const { name, address, description, imageUrl, phones } = watchValues
 
   useEffect(() => {
-    async function loadBarbershop() {
-      try {
-        const response = await fetch("/api/barbershop/settings")
-        if (response.ok) {
-          const data = await response.json()
-          form.reset({
-            name: data.name,
-            address: data.address,
-            description: data.description,
-            imageUrl: data.imageUrl,
-            phones: data.phone.length > 0 ? data.phone : [""],
-          })
-        }
-      } catch (error) {
-        toast.error("Erro ao carregar dados da barbearia")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadBarbershop()
-  }, [form])
-
-  async function onSubmit(values: FormValues) {
-    try {
-      setSaving(true)
-      const method = await getInitialMethod()
-      const response = await fetch("/api/barbershop/settings", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+    if (barbershop) {
+      form.reset({
+        name: barbershop.name,
+        address: barbershop.address,
+        description: barbershop.description,
+        imageUrl: barbershop.imageUrl,
+        phones: barbershop.phone.length > 0 ? barbershop.phone : [""],
       })
-
-      if (response.ok) {
-        toast.success(method === "POST" ? "Barbearia criada com sucesso!" : "Configurações salvas com sucesso!")
-      } else {
-        toast.error("Erro ao salvar configurações")
-      }
-    } catch (error) {
-      toast.error("Erro ao conectar com o servidor")
-    } finally {
-      setSaving(false)
     }
-  }
+  }, [barbershop, form])
 
-  async function getInitialMethod() {
-    try {
-      const response = await fetch("/api/barbershop/settings")
-      if (response.status === 404) return "POST"
-      return "PATCH"
-    } catch {
-      return "POST"
-    }
-  }
+  const onSubmit = useCallback((values: FormValues) => {
+    updateSettings({
+      name: values.name,
+      address: values.address,
+      description: values.description,
+      imageUrl: values.imageUrl,
+      phone: values.phones,
+    })
+  }, [updateSettings])
 
-  const addPhone = () => {
+  const addPhone = useCallback(() => {
     const phones = form.getValues("phones")
     form.setValue("phones", [...phones, ""], { shouldValidate: true })
-  }
+  }, [form])
 
-  const removePhone = (index: number) => {
+  const removePhone = useCallback((index: number) => {
     const phones = form.getValues("phones")
     if (phones.length > 1) {
       form.setValue("phones", phones.filter((_, i) => i !== index), { shouldValidate: true })
     }
-  }
+  }, [form])
+
+  const previewImage = useMemo(() => {
+    if (!imageUrl) {
+      return (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2b2c2e] to-[#1f2022] flex items-center justify-center">
+          <div className="text-center">
+            <Store className="h-12 w-12 mx-auto text-zinc-600 mb-2" />
+            <p className="text-zinc-500 text-sm">Nenhuma imagem</p>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <Image
+        src={imageUrl}
+        alt={name || 'Barbearia'}
+        fill
+        className="object-cover"
+        priority
+        sizes="(max-width: 768px) 100vw, 33vw"
+        quality={85}
+      />
+    )
+  }, [imageUrl, name])
 
   if (loading) {
     return (
@@ -145,22 +135,7 @@ export default function SettingsPage() {
           <div className="lg:col-span-1">
             <Card className="border border-[#1f2022] bg-[#1a1b1d] rounded-2xl overflow-hidden sticky top-8">
               <div className="relative h-[280px] w-full">
-                {watchValues.imageUrl ? (
-                  <Image
-                    src={watchValues.imageUrl}
-                    alt={watchValues.name || 'Barbearia'}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#2b2c2e] to-[#1f2022] flex items-center justify-center">
-                    <div className="text-center">
-                      <Store className="h-12 w-12 mx-auto text-zinc-600 mb-2" />
-                      <p className="text-zinc-500 text-sm">Nenhuma imagem</p>
-                    </div>
-                  </div>
-                )}
+                {previewImage}
                 <div className="absolute top-4 right-4">
                   <div className="bg-violet-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                     PREVIEW
@@ -171,21 +146,21 @@ export default function SettingsPage() {
               <CardContent className="p-6 space-y-4">
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">
-                    {watchValues.name || 'Nome da Barbearia'}
+                    {name || 'Nome da Barbearia'}
                   </h3>
                   <p className="text-zinc-400 text-sm flex items-start gap-2">
                     <MapPin className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
                     <span className="line-clamp-2">
-                      {watchValues.address || 'Endereço não informado'}
+                      {address || 'Endereço não informado'}
                     </span>
                   </p>
                 </div>
 
-                {watchValues.phones?.some(p => p) && (
+                {phones?.some(p => p) && (
                   <div className="flex items-start gap-2">
                     <Phone className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
                     <div className="flex flex-wrap gap-2">
-                      {watchValues.phones.filter(Boolean).map((phone, i) => (
+                      {phones.filter(Boolean).map((phone, i) => (
                         <span key={i} className="text-xs bg-[#2b2c2e] text-zinc-300 px-2 py-1 rounded-md">
                           {phone}
                         </span>
@@ -194,10 +169,10 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {watchValues.description && (
+                {description && (
                   <div className="pt-4 border-t border-[#1f2022]">
                     <p className="text-sm text-zinc-300 line-clamp-4">
-                      {watchValues.description}
+                      {description}
                     </p>
                   </div>
                 )}

@@ -2,6 +2,7 @@ import { Button } from './_components/ui/button'
 import Image from 'next/image'
 import { db } from './_lib/prisma'
 import { quickSearchOptions } from './_constants/search'
+import { serializeDecimal } from './_lib/prisma-helpers'
 import Search from './_components/search'
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
@@ -36,21 +37,21 @@ const Home = async () => {
   const barbershopsData = await db.barbershop.findMany({
     include: { ratings: { select: { value: true } } },
   })
-  const barbershops = attachAverageRating(barbershopsData)
+  const barbershops = serializeDecimal(attachAverageRating(barbershopsData))
 
   const popularBarbershopsData = await db.barbershop.findMany({
     orderBy: { name: 'desc' },
     distinct: ['id'],
     include: { ratings: { select: { value: true } } },
   })
-  const popularBarbershops = attachAverageRating(popularBarbershopsData)
+  const popularBarbershops = serializeDecimal(attachAverageRating(popularBarbershopsData))
 
   const mostVisitedBarbershopsData = await db.barbershop.findMany({
     orderBy: { name: 'asc' },
     distinct: ['id'],
     include: { ratings: { select: { value: true } } },
   })
-  const mostVisitedBarbershops = attachAverageRating(mostVisitedBarbershopsData)
+  const mostVisitedBarbershops = serializeDecimal(attachAverageRating(mostVisitedBarbershopsData))
 
   const confirmedBookings = await getConfirmedBookings()
 

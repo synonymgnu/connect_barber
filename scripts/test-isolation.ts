@@ -18,7 +18,7 @@ async function testIsolation() {
       address: 'Endereço 2',
       phone: ['123'],
       description: 'Teste',
-      imageUrl: 'test.jpg',
+      imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?ixlib=rb-4.0.3',
       ownerId: admin2.id
     }
   })

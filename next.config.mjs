@@ -2,7 +2,16 @@
 const nextConfig = {
   images: {
     unoptimized: true,
-    domains: ['utfs.io'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'utfs.io',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
   },
 }
 
