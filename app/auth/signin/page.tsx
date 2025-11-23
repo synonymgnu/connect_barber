@@ -38,7 +38,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A]">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br  to-[#1A1A1A]">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Connect Barber</h1>
