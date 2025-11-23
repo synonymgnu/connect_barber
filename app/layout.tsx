@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 import Footer from './_components/footer'
 import AuthProvider from './_providers/auth'
 import { Providers } from './_components/providers'
+import QueryProvider from './_providers/query-provider'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -32,14 +33,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <Providers>
-            <div className="flex flex-col h-full">
-              <div className="flex-1">{children}</div>
-              <Footer />
-            </div>
-          </Providers>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Providers>
+              <div className="flex flex-col h-full">
+                <div className="flex-1">{children}</div>
+                <Footer />
+              </div>
+            </Providers>
+          </AuthProvider>
+        </QueryProvider>
         <Toaster />
       </body>
     </html>
