@@ -18,6 +18,7 @@ import {
   MenuIcon,
   Bell,
   UserCog,
+  ReceiptText,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import Image from 'next/image'
@@ -132,6 +133,14 @@ const SidebarSheet = () => {
                       )}
                     </div>
                     Notificações
+                  </Link>
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button className="justify-start" variant="ghost" asChild>
+                  <Link href="/consent">
+                    <ReceiptText size={18} />
+                    Termos e Condições
                   </Link>
                 </Button>
               </SheetClose>

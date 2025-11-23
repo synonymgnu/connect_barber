@@ -19,6 +19,7 @@ import {
   CalendarIcon,
   UserCog,
   Bell,
+  ReceiptText,
 } from 'lucide-react'
 import { NotificationsDropdown } from './notifications-dropdown'
 import SignOutDialog from './sign-out-dialog'
@@ -197,6 +198,20 @@ const Header = ({ isHidden }: HeaderProps) => {
                         >
                           <Link href="/notifications">
                             <Bell size={18} /> Notificações
+                          </Link>
+                        </Button>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <div className="flex flex-col  w-full">
+                        <Button
+                          className="justify-start"
+                          variant="ghost"
+                          asChild
+                        >
+                          <Link href="/consent">
+                            <ReceiptText size={18} />
+                            Termos e Condições
                           </Link>
                         </Button>
                       </div>
