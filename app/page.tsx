@@ -14,6 +14,8 @@ import Header from './_components/header'
 import BarbershopCarousel from './_components/barbershop-carousel'
 import BookingList from './_components/booking-list'
 
+export const revalidate = 300 // ISR: revalidar a cada 5 minutos
+
 function attachAverageRating(barbershops: any[]) {
   return barbershops.map((barbershop) => {
     const avg =
