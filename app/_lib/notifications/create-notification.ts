@@ -31,6 +31,16 @@ export async function createNotification({
 }
 
 export async function notifyBookingCreated(booking: any) {
+  // Notificar cliente
+  await createNotification({
+    userId: booking.userId,
+    type: "BOOKING_CREATED",
+    title: "Agendamento criado",
+    message: `Seu agendamento de ${booking.service.name} foi criado com sucesso!`,
+    bookingId: booking.id,
+  })
+
+  // Notificar admin
   const barbershop = await db.barbershop.findUnique({
     where: { id: booking.service.barbershopId },
     include: { owner: true }
@@ -46,6 +56,7 @@ export async function notifyBookingCreated(booking: any) {
     })
   }
 
+  // Notificar barbeiro
   if (booking.barber) {
     await createNotification({
       userId: booking.barber.userId,
@@ -53,6 +64,39 @@ export async function notifyBookingCreated(booking: any) {
       title: "Novo agendamento",
       message: `${booking.user.name} agendou ${booking.service.name} com você`,
       bookingId: booking.id,
+    })
+  }
+}
+
+export async function notifyBookingConfirmed(bookingId: string, userId: string, serviceName: string) {
+  // Notificar cliente
+  await createNotification({
+    userId,
+    type: "BOOKING_CONFIRMED",
+    title: "Agendamento confirmado",
+    message: `Seu agendamento de ${serviceName} foi confirmado!`,
+    bookingId,
+  })
+}
+
+export async function notifyBookingUpdated(bookingId: string, userId: string, serviceName: string, userName: string, barberUserId?: string) {
+  // Notificar cliente sobre reagendamento
+  await createNotification({
+    userId,
+    type: "BOOKING_CONFIRMED",
+    title: "Agendamento reagendado",
+    message: `Seu agendamento de ${serviceName} foi reagendado`,
+    bookingId,
+  })
+
+  // Notificar barbeiro se houver
+  if (barberUserId) {
+    await createNotification({
+      userId: barberUserId,
+      type: "BOOKING_CONFIRMED",
+      title: "Agendamento reagendado",
+      message: `O agendamento de ${userName} foi reagendado`,
+      bookingId,
     })
   }
 }

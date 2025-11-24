@@ -74,19 +74,18 @@ export default function UnifiedCalendar({
     return date instanceof Date && !isNaN(date.getTime())
   }
 
+  const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() })
+
   const { data: calendarData, isLoading } = useQuery({
-    queryKey: ['calendar-appointments', selectedDate],
+    queryKey: ['calendar-appointments', dateRange],
     queryFn: async () => {
-      const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
-      const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
-      
       const response = await fetch(
-        `/api/appointments/calendar?start=${start.toISOString()}&end=${end.toISOString()}`
+        `/api/appointments/calendar?start=${dateRange.start.toISOString()}&end=${dateRange.end.toISOString()}`
       )
       if (!response.ok) throw new Error('Erro ao carregar agendamentos')
       return response.json()
     },
-    enabled: !!session,
+    enabled: !!session && !!dateRange.start,
   })
 
   const { data: services } = useQuery({
@@ -331,7 +330,11 @@ export default function UnifiedCalendar({
                 week: 'Semana',
                 day: 'Dia',
             }}
-            loading={(loading) => {
+            datesSet={(dateInfo) => {
+              setDateRange({
+                start: dateInfo.start,
+                end: dateInfo.end,
+              })
             }}
             />
         </div>

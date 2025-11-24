@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
+import { notifyBookingConfirmed, notifyBookingUpdated } from "@/app/_lib/notifications/create-notification"
 
 export async function PUT(
   req: NextRequest,
@@ -105,7 +106,7 @@ export async function PUT(
           include: {
             user: { select: { id: true, name: true, email: true, phone: true } },
             service: { select: { id: true, name: true, price: true, duration: true } },
-            barber: { select: { id: true, name: true } },
+            barber: { select: { id: true, name: true, userId: true } },
           },
         })
       : await db.booking.findUnique({
@@ -113,9 +114,28 @@ export async function PUT(
           include: {
             user: { select: { id: true, name: true, email: true, phone: true } },
             service: { select: { id: true, name: true, price: true, duration: true } },
-            barber: { select: { id: true, name: true } },
+            barber: { select: { id: true, name: true, userId: true } },
           },
         })
+
+    // Notificar cliente sobre mudanças
+    if (updateData.status && existingBooking.status !== data.status && data.status === 'CONFIRMED') {
+      await notifyBookingConfirmed(
+        updatedBooking.id,
+        updatedBooking.user.id,
+        updatedBooking.service.name
+      )
+    }
+    
+    if (updateData.date && existingBooking.date.getTime() !== new Date(data.date).getTime()) {
+      await notifyBookingUpdated(
+        updatedBooking.id,
+        updatedBooking.user.id,
+        updatedBooking.service.name,
+        updatedBooking.user.name || 'Cliente',
+        updatedBooking.barber?.userId
+      )
+    }
 
     return NextResponse.json(updatedBooking)
   } catch (error) {

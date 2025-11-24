@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/app/_lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
-import { notifyBookingCancelled } from '@/app/_lib/notifications/create-notification'
+import { notifyBookingCancelled, notifyBookingConfirmed, notifyBookingUpdated } from '@/app/_lib/notifications/create-notification'
 import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
@@ -36,9 +36,28 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         service: { select: { id: true, name: true, price: true } },
-        barber: { select: { id: true, name: true } }
+        barber: { select: { id: true, name: true, userId: true } }
       }
     })
+
+    // Notificar cliente sobre mudanças
+    if (existingBooking.status !== data.status && data.status === 'CONFIRMED') {
+      await notifyBookingConfirmed(
+        updatedBooking.id,
+        updatedBooking.user.id,
+        updatedBooking.service.name
+      )
+    }
+    
+    if (existingBooking.date.getTime() !== new Date(data.date).getTime()) {
+      await notifyBookingUpdated(
+        updatedBooking.id,
+        updatedBooking.user.id,
+        updatedBooking.service.name,
+        updatedBooking.user.name || 'Cliente',
+        updatedBooking.barber?.userId
+      )
+    }
 
     const clientInfo = getClientInfo(request)
     await createAuditLog({
