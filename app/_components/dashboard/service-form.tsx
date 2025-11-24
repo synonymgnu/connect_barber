@@ -86,7 +86,7 @@ export function ServiceForm({ onSubmit, initialData }: any) {
           duration: Number(formData.duration), // <-- AGORA VAI
         })
       }}
-      className="gap-5  flex flex-col"
+      className="flex flex-col"
     >
       <div>
         <Label htmlFor="name">Nome</Label>
@@ -181,7 +181,7 @@ export function ServiceForm({ onSubmit, initialData }: any) {
 
           {/* Upload no CENTRO */}
           {formData.imageUrl ? (
-            <div className="relative w-full h-full rounded-lg overflow-hidden border">
+            <div className="relative w-28 h-28 lg:w-32 lg:h-32 rounded-lg overflow-hidden border">
               <img
                 src={formData.imageUrl}
                 alt="Preview"
