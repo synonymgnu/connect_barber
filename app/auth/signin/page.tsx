@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { signIn, getSession } from 'next-auth/react'
 import { useEffect } from 'react'
@@ -26,7 +26,7 @@ export default function SignInPage() {
     try {
       const result = await signIn('google', {
         callbackUrl,
-        redirect: true
+        redirect: true,
       })
     } catch (error) {
       console.error('Sign in error:', error)
@@ -34,17 +34,15 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A]">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br  to-[#1A1A1A]">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Connect Barber
-          </h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Connect Barber</h1>
           <p className="text-gray-400 mb-8">
             Faça login para acessar sua conta
           </p>
         </div>
-        
+
         <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-6 shadow-2xl">
           <div className="space-y-4">
             <div className="text-center mb-6">
@@ -59,21 +57,12 @@ export default function SignInPage() {
             <Button
               onClick={handleGoogleSignIn}
               variant="outline"
-              className="w-full hover:bg-[#8161FF] text-white font-semibold py-3 px-4 rounded-lg border border-gray-300 transition-all duration-200 flex items-center justify-center gap-3"
+              className="hover:bg-primary w-full  text-white font-semibold py-3 px-4 rounded-lg border border-gray-300 transition-all duration-200 flex items-center justify-center gap-3"
               size="lg"
             >
-              <Image
-                src="/google.svg"
-                alt="Google"
-                width={20}
-                height={20}
-              />
+              <Image src="/google.svg" alt="Google" width={20} height={20} />
               Continuar com Google
             </Button>
-
-            <div className="text-center text-xs text-gray-500 mt-6">
-              Ao continuar, você concorda com nossos Termos de Serviço
-            </div>
           </div>
         </div>
       </div>

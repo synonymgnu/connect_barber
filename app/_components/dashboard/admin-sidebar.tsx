@@ -19,6 +19,7 @@ import {
   Clock,
   BarChart3,
   FileText,
+  ReceiptText,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -225,6 +226,18 @@ export function AdminSidebar() {
                         >
                           <Link href="/notifications">
                             <Bell /> Notificações
+                          </Link>
+                        </Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Button
+                          className="justify-start px-2 w-full"
+                          variant="ghost"
+                          asChild
+                        >
+                          <Link href="/consent">
+                            <ReceiptText size={18} />
+                            Termos e Condições
                           </Link>
                         </Button>
                       </DropdownMenuItem>

@@ -20,15 +20,14 @@ const SignInDialog = ({ callbackUrl }: SignInDialogProps) => {
   return (
     <>
       <DialogHeader className="md:items-center">
-        <DialogTitle>Faça login na plataforma</DialogTitle>
+        <DialogTitle>Faça login ou cadastre-se na plataforma</DialogTitle>
         <DialogDescription>
           Conecte-se usando sua conta do Google.
         </DialogDescription>
       </DialogHeader>
-
       <Button
         variant="outline"
-        className="gap-1 font-bold"
+        className="gap-1 font-bold hover:bg-primary"
         onClick={handLeLoginWithGoogleClick}
       >
         <Image
