@@ -36,7 +36,11 @@ export async function GET() {
       orderBy: { name: "asc" },
     })
 
-    return NextResponse.json(services)
+    return NextResponse.json(services, {
+      headers: {
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=150',
+      }
+    })
   } catch (error) {
     console.error("Error fetching services:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

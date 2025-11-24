@@ -24,7 +24,11 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    return NextResponse.json({ notifications, unreadCount })
+    return NextResponse.json({ notifications, unreadCount }, {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=15',
+      }
+    })
   } catch (error) {
     console.error("Erro ao buscar notificações:", error)
     return NextResponse.json({ error: "Erro interno" }, { status: 500 })

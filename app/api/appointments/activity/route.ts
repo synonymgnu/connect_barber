@@ -95,25 +95,9 @@ export async function GET(request: Request) {
       take: pageSize
     })
 
-    const now = new Date()
-    const updatedBookings = await Promise.all(
-      bookings.map(async (booking) => {
-        if (booking.date < now && booking.status === 'CONFIRMED') {
-          return await db.booking.update({
-            where: { id: booking.id },
-            data: { status: 'COMPLETED' },
-            include: {
-              user: { select: { id: true, name: true, image: true } },
-              service: { select: { id: true, name: true, price: true, duration: true } },
-              barber: { select: { id: true, name: true } }
-            }
-          })
-        }
-        return booking
-      })
-    )
+    // Removido auto-update inline - usar cron job separado para melhor performance
 
-    const formattedBookings = updatedBookings.map(booking => ({
+    const formattedBookings = bookings.map(booking => ({
       id: booking.id,
       customerName: booking.user.name || 'Cliente',
       customerEmail: '',

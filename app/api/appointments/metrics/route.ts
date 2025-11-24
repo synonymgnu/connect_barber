@@ -11,6 +11,10 @@ export async function GET() {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
+    const headers = {
+      'Cache-Control': 'private, max-age=600, stale-while-revalidate=300',
+    }
+
     if (!session.user.barbershopId) {
       console.log('User session:', JSON.stringify(session.user, null, 2))
       return NextResponse.json({ error: 'Barbearia não encontrada. Faça logout e login novamente.' }, { status: 404 })
@@ -167,7 +171,7 @@ export async function GET() {
         }
       },
       totalAppointments: completedBookings + upcomingBookings
-    })
+    }, { headers })
 
   } catch (error) {
     console.error('Error fetching appointment metrics:', error)

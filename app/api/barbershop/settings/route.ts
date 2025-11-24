@@ -22,7 +22,11 @@ export async function GET() {
       return NextResponse.json({ error: "Barbearia não encontrada" }, { status: 404 })
     }
 
-    return NextResponse.json(barbershop)
+    return NextResponse.json(barbershop, {
+      headers: {
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=150',
+      }
+    })
   } catch (error) {
     console.error("[BARBERSHOP_SETTINGS_ERROR]", error)
     return NextResponse.json(

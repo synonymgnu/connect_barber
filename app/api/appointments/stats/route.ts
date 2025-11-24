@@ -222,6 +222,10 @@ export async function GET(request: Request) {
       conversionRate,
       peakHour,
       chartData: sortedChartData
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=150',
+      }
     })
 
   } catch (error) {
