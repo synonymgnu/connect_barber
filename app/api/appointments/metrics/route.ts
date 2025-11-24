@@ -11,10 +11,6 @@ export async function GET() {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const headers = {
-      'Cache-Control': 'private, max-age=600, stale-while-revalidate=300',
-    }
-
     if (!session.user.barbershopId) {
       console.log('User session:', JSON.stringify(session.user, null, 2))
       return NextResponse.json({ error: 'Barbearia não encontrada. Faça logout e login novamente.' }, { status: 404 })
@@ -63,12 +59,21 @@ export async function GET() {
       }
     })
 
-    // Cancelados (últimos 30 dias)
+    // Cancelados (total)
     const cancelledBookings = await db.booking.count({
       where: {
+        status: 'CANCELLED',
+        service: {
+          barbershopId: barbershopId
+        }
+      }
+    })
+
+    // Cancelados últimos 30 dias (para comparação)
+    const last30DaysCancelled = await db.booking.count({
+      where: {
         date: {
-          gte: thirtyDaysAgo,
-          lt: today
+          gte: thirtyDaysAgo
         },
         status: 'CANCELLED',
         service: {
@@ -77,7 +82,6 @@ export async function GET() {
       }
     })
 
-    // Cancelados período anterior (30-60 dias atrás)
     const previousCancelledBookings = await db.booking.count({
       where: {
         date: {
@@ -141,7 +145,7 @@ export async function GET() {
 
     const completedChange = calculatePercentage(completedBookings, previousCompletedBookings)
     const customersChange = calculatePercentage(totalCustomers.length, previousCustomers.length)
-    const cancelledChange = calculatePercentage(cancelledBookings, previousCancelledBookings)
+    const cancelledChange = calculatePercentage(last30DaysCancelled, previousCancelledBookings)
 
     return NextResponse.json({
       metrics: {
@@ -171,7 +175,11 @@ export async function GET() {
         }
       },
       totalAppointments: completedBookings + upcomingBookings
-    }, { headers })
+    }, { 
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
+      }
+    })
 
   } catch (error) {
     console.error('Error fetching appointment metrics:', error)

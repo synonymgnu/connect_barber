@@ -4,11 +4,13 @@ export const useDashboardMetrics = () => {
   return useQuery({
     queryKey: ['dashboard', 'metrics'],
     queryFn: async () => {
-      const res = await fetch('/api/appointments/metrics')
+      const res = await fetch('/api/appointments/metrics', {
+        cache: 'no-store'
+      })
       if (!res.ok) throw new Error('Erro ao carregar métricas')
       return res.json()
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 0,
   })
 }
 

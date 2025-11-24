@@ -27,6 +27,7 @@ import AppointmentFilterControls from "./appointment-filter-controls";
 import { Skeleton } from "../ui/skeleton";
 import { AppointmentModal } from "./appointment-modal";
 import DeleteConfirmationDialog from "./delete-confirmation-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface AppointmentProps {
   id: string;
@@ -59,6 +60,7 @@ const sourceConfig = {
 }
 
 const AppointmentActivitySection = () => {
+  const queryClient = useQueryClient();
   const [selectedAppointmentIds, setSelectedAppointmentIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -149,6 +151,10 @@ const AppointmentActivitySection = () => {
       })
       
       if (response.ok) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['appointments', 'activity'] }),
+          queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
+        ])
         setModalOpen(false)
         clearSelection()
       } else {
@@ -168,6 +174,7 @@ const AppointmentActivitySection = () => {
       })
       
       if (response.ok) {
+        await queryClient.invalidateQueries({ queryKey: ['appointments', 'activity'] })
         clearSelection()
         setDeleteDialogOpen(false)
         setAppointmentToDelete(null)
