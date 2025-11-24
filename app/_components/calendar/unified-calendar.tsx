@@ -180,16 +180,25 @@ export default function UnifiedCalendar({
       source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
       notes: '',
     })
+    setSelectedAppointment(null)
+    setModalMode('create')
   }
 
   const handleDateClick = (arg: any) => {
-    setModalMode('create')
-    setSelectedAppointment(null)
+    resetForm()
     const clickedDate = arg.date instanceof Date ? arg.date : new Date(arg.date)
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
+      userId: '',
+      userName: '',
+      userEmail: '',
+      userPhone: '',
+      serviceId: '',
+      barberId: role === 'BARBER' ? session?.user?.barberId || '' : '',
       date: clickedDate,
-    }))
+      status: 'PENDING',
+      source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
+      notes: '',
+    })
     setModalOpen(true)
   }
 
@@ -340,7 +349,12 @@ export default function UnifiedCalendar({
         </div>
 
         {/* Modal */}
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <Dialog open={modalOpen} onOpenChange={(open) => {
+          if (!open) {
+            resetForm()
+          }
+          setModalOpen(open)
+        }}>
             <DialogContent className="sm:max-w-[600px] bg-[#0c0c0c] border-[#1f1f1f] text-white">
             <DialogHeader>
                 <DialogTitle className="text-xl font-semibold">
@@ -368,6 +382,7 @@ export default function UnifiedCalendar({
                     value={formData.userEmail}
                     onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    disabled={modalMode === 'edit'}
                     />
                     <Input
                     placeholder="Telefone (opcional)"
