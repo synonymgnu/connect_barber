@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { Card, CardContent } from './ui/card'
-import { Avatar, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import PhoneItem from './phone-item'
 import { Badge } from './ui/badge'
 import {
@@ -62,6 +62,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             <CardContent className="flex px-5 py-3 items-center gap-3">
               <Avatar>
                 <AvatarImage src={barbershop.imageUrl} />
+                <AvatarFallback>{barbershop.name[0]}</AvatarFallback>
               </Avatar>
               <div>
                 <h3 className="font-bold">{barbershop.name}</h3>

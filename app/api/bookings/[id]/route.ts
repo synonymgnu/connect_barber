@@ -45,7 +45,7 @@ export async function DELETE(
 
     await PrismaClient.booking.update({
       where: { id: params.id },
-       { status: "CANCELLED" },
+      data: { status: "CANCELLED" },
     });
 
     return Response.json({ success: true });

@@ -1,7 +1,7 @@
 'use client'
 
 import { Prisma } from '@prisma/client'
-import { Avatar, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
 import { format, isFuture } from 'date-fns'
@@ -130,6 +130,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={booking.service.barbershop.imageUrl} />
+                <AvatarFallback>{booking.service.barbershop.name[0]}</AvatarFallback>
               </Avatar>
               <p className="text-sm">{booking.service.barbershop.name}</p>
             </div>
@@ -141,6 +142,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                     `https://ui-avatars.com/api/?name=${booking.barber?.name}&background=bc130d&color=fff`
                   }
                 />
+                <AvatarFallback>{booking.barber?.name?.[0]}</AvatarFallback>
               </Avatar>
               <p className="text-sm">{booking.barber?.name}</p>
             </div>
@@ -181,6 +183,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 <CardContent className="flex px-5 py-3 items-center gap-3">
                   <Avatar>
                     <AvatarImage src={barbershop.imageUrl} />
+                    <AvatarFallback>{barbershop.name[0]}</AvatarFallback>
                   </Avatar>
                   <div>
                     <h3 className="font-bold">{barbershop.name}</h3>

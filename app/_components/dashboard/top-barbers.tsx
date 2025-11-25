@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Skeleton } from "../ui/skeleton"
-import { Avatar, AvatarImage } from "../ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 
 interface BarberData {
   id: string
@@ -63,6 +63,7 @@ export default function TopBarbers() {
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={barber.imageUrl || '/user-img.svg'} />
+                <AvatarFallback>{barber.name[0]}</AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium text-white">{barber.name}</p>
