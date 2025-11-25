@@ -16,7 +16,7 @@ export async function DELETE(
   try {
     const booking = await db.booking.findUnique({
       where: { id: params.id },
-      include: { barber: true, user: true },
+      include: { barber: true, user: true, service: true },
     });
 
     if (!booking) {
