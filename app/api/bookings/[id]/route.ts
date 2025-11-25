@@ -1,19 +1,20 @@
 // app/api/bookings/[id]/route.ts
-import { auth } from "@/app/_lib/auth";
+import { authOptions } from "@/app/_lib/auth";
+import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import PrismaClient from "@/app/_lib/prisma";
+import { db } from "@/app/_lib/prisma";
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user) {
     return Response.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    const booking = await PrismaClient.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id: params.id },
       include: { barber: true, user: true },
     });
@@ -43,7 +44,7 @@ export async function DELETE(
       return Response.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    await PrismaClient.booking.update({
+    await db.booking.update({
       where: { id: params.id },
       data: { status: "CANCELLED" },
     });
