@@ -36,7 +36,7 @@ export async function DELETE(
       allowed = booking.service.barbershopId === session.user.barbershopId;
     } else if (role === "BARBER") {
       allowed = booking.barberId === userId;
-    } else if (role === "USER") {
+    } else if (role === "CLIENT") {
       allowed = booking.userId === userId;
     }
 
