@@ -86,7 +86,7 @@ const AppointmentActivitySection = () => {
     if (selectedAppointmentIds.size === appointments.length && appointments.length > 0) {
       setSelectedAppointmentIds(new Set());
     } else {
-      const allFilteredIds = new Set(appointments.map((appointment: AppointmentProps) => appointment.id));
+      const allFilteredIds = new Set<string>(appointments.map((appointment: AppointmentProps) => appointment.id));
       setSelectedAppointmentIds(allFilteredIds);
     }
   };
