@@ -69,3 +69,33 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  
+  if (!session) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+  }
+
+  try {
+    const { notificationId, clearAll } = await req.json()
+
+    if (clearAll) {
+      await db.notification.deleteMany({
+        where: { userId: session.user.id }
+      })
+    } else if (notificationId) {
+      await db.notification.delete({
+        where: { 
+          id: notificationId,
+          userId: session.user.id 
+        }
+      })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Erro ao excluir notificação:", error)
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 })
+  }
+}

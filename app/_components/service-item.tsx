@@ -105,17 +105,22 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
   const [selectedBarber, setSelectedBarber] = useState<any>(null)
   const [barbers, setBarbers] = useState<any[]>([])
+  const [availability, setAvailability] = useState<any>(null)
 
   useEffect(() => {
-    const fetchBarbers = async () => {
-      const res = await fetch(
-        `/api/barbers/active?barbershopId=${barbershop.id}`
-      )
+    const fetchData = async () => {
+      const [barbersRes, availabilityRes] = await Promise.all([
+        fetch(`/api/barbers/active?barbershopId=${barbershop.id}`),
+        fetch(`/api/barbershop/${barbershop.id}/availability`)
+      ])
 
-      const data = await res.json()
-      setBarbers(data)
+      const barbersData = await barbersRes.json()
+      const availabilityData = await availabilityRes.json()
+      
+      setBarbers(barbersData)
+      setAvailability(availabilityData)
     }
-    fetchBarbers()
+    fetchData()
   }, [])
 
   const selectedDate = useMemo(() => {
@@ -148,12 +153,48 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
     if (!date) return
 
-    // 🔥 Carregar agendamentos do dia
     const bookings = await getBookings({
       date,
       serviceId: service.id,
     })
     setDayBookings(bookings)
+  }
+
+  const isDateDisabled = (date: Date) => {
+    if (!availability) return false
+    
+    const dateStr = date.toISOString().split('T')[0]
+    return availability.shopClosures?.some((closure: any) => {
+      const closureDate = new Date(closure.date).toISOString().split('T')[0]
+      return closureDate === dateStr
+    })
+  }
+
+  const getAvailableBarbers = () => {
+    if (!selectedDay || !availability) return barbers
+    
+    const dateStr = selectedDay.toISOString().split('T')[0]
+    const dayOfWeek = selectedDay.getDay()
+    
+    return barbers.filter((barber: any) => {
+      const barberData = availability.barbers.find((b: any) => b.id === barber.id)
+      if (!barberData) return true
+      
+      const hasAbsence = barberData.absences?.some((absence: any) => {
+        const absenceDate = new Date(absence.date).toISOString().split('T')[0]
+        return absenceDate === dateStr
+      })
+      
+      if (hasAbsence) return false
+      
+      if (barberData.workSchedule?.length === 0) return true
+      
+      const hasSchedule = barberData.workSchedule?.some((schedule: any) => 
+        schedule.dayOfWeek === dayOfWeek && schedule.isActive
+      )
+      
+      return hasSchedule
+    })
   }
 
   const handleTimeSelect = (time: string) => {
@@ -251,7 +292,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                         locale={ptBR}
                         selected={selectedDay}
                         onSelect={handleDateSelect}
-                        disabled={{ before: new Date() }}
+                        disabled={(date) => isPast(date) && !isToday(date) || isDateDisabled(date)}
                         styles={{
                           head_cell: {
                             width: '100%',
@@ -320,7 +361,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                             window.addEventListener('mouseup', handleMouseUp)
                           }}
                         >
-                          {barbers.map((barber) => (
+                          {getAvailableBarbers().length > 0 ? getAvailableBarbers().map((barber) => (
                             <button
                               key={barber.id}
                               onClick={(e) => {
@@ -350,7 +391,11 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 {barber.name}
                               </span>
                             </button>
-                          ))}
+                          )) : (
+                            <p className="text-sm text-gray-400 px-5">
+                              Nenhum barbeiro disponível neste dia.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
