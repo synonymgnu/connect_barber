@@ -119,7 +119,7 @@ export async function PUT(
         })
 
     // Notificar cliente sobre mudanças
-    if (updateData.status && existingBooking.status !== data.status && data.status === 'CONFIRMED') {
+    if (updatedBooking && updateData.status && existingBooking.status !== data.status && data.status === 'CONFIRMED') {
       await notifyBookingConfirmed(
         updatedBooking.id,
         updatedBooking.user.id,
@@ -127,7 +127,7 @@ export async function PUT(
       )
     }
     
-    if (updateData.date && existingBooking.date.getTime() !== new Date(data.date).getTime()) {
+    if (updatedBooking && updateData.date && existingBooking.date.getTime() !== new Date(data.date).getTime()) {
       await notifyBookingUpdated(
         updatedBooking.id,
         updatedBooking.user.id,
