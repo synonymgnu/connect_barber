@@ -189,7 +189,7 @@ const extendedPrisma = prisma.$extends({
       },
       
       async findUnique({ args, query }) {
-        const result = await query(args)
+        const result = await query(args) as any
         if (result) {
           if (result.notes) result.notes = decrypt(result.notes)
           if (result.user?.email) result.user.email = decrypt(result.user.email)
@@ -205,7 +205,7 @@ const extendedPrisma = prisma.$extends({
       },
       
       async findFirst({ args, query }) {
-        const result = await query(args)
+        const result = await query(args) as any
         if (result) {
           if (result.notes) result.notes = decrypt(result.notes)
           if (result.user?.email) result.user.email = decrypt(result.user.email)
@@ -221,7 +221,7 @@ const extendedPrisma = prisma.$extends({
       },
       
       async findMany({ args, query }) {
-        const results = await query(args)
+        const results = await query(args) as any[]
         return results.map(r => {
           if (r.notes) r.notes = decrypt(r.notes)
           if (r.user?.email) r.user.email = decrypt(r.user.email)
