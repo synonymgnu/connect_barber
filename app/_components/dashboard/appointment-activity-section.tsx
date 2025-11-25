@@ -458,7 +458,7 @@ const AppointmentActivitySection = () => {
               </div>
             ) : (
               <div className="divide-y divide-[#1f1f1f]">
-                {appointments.map((appointment) => (
+                {appointments.map((appointment: AppointmentProps) => (
                   <DesktopAppointmentItem
                     key={appointment.id}
                     appointment={appointment}
