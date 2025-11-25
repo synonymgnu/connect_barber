@@ -1,10 +1,11 @@
 import { encrypt, decrypt } from './encryption'
 
 const ENCRYPTED_FIELDS = {
-  User: ['phone'],
+  User: ['phone', 'email'],
   Account: ['access_token', 'refresh_token', 'id_token'],
   Booking: ['notes'],
-  Barber: ['phone'],
+  Barbershop: ['phone', 'address'],
+  Barber: ['phone', 'email'],
 } as const
 
 type MiddlewareParams = {
