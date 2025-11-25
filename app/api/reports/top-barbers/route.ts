@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
             service: {
               select: {
                 price: true,
-                //duration: true
+                duration: true
               }
             }
           }
