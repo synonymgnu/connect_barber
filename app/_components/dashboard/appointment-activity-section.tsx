@@ -129,7 +129,7 @@ const AppointmentActivitySection = () => {
 
   // ações menu
   const handleAction = (action: string, id: string) => {
-    const appointment = appointments.find(appt => appt.id === id)
+    const appointment = appointments.find((appt: AppointmentProps) => appt.id === id)
     
     if (action === 'view' || action === 'edit') {
       setSelectedAppointment(appointment)
