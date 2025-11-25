@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "asc" },
     })
 
+    console.log('[CALENDAR API] Sample booking user data:', bookings[0]?.user)
+
     const events = bookings.map(booking => ({
       id: booking.id,
       title: `${booking.user.name} - ${booking.service.name}`,
@@ -67,10 +69,27 @@ export async function GET(req: NextRequest) {
       backgroundColor: getEventColorByStatus(booking.status),
       borderColor: getEventColorByStatus(booking.status),
       extendedProps: {
-        ...booking,
+        id: booking.id,
+        date: booking.date,
         status: booking.status.toLowerCase(),
-        serviceId: booking.service.id,
-        employeeId: booking.barber?.id,
+        source: booking.source,
+        notes: booking.notes,
+        user: {
+          id: booking.user.id,
+          name: booking.user.name,
+          email: booking.user.email,
+          phone: booking.user.phone,
+        },
+        service: {
+          id: booking.service.id,
+          name: booking.service.name,
+          price: booking.service.price,
+          duration: booking.service.duration,
+        },
+        barber: booking.barber ? {
+          id: booking.barber.id,
+          name: booking.barber.name,
+        } : null,
       },
     }))
 

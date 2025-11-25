@@ -1,17 +1,16 @@
-// app/api/customers/route.ts
 import { NextRequest } from "next/server";
-import prisma from "@/app/_lib/prisma";
+import { db } from "@/app/_lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
     const { name, phone } = await req.json();
 
     // Cria cliente SEM autenticação
-    const customer = await prisma.user.create({
+    const customer = await db.user.create({
         data: {
         name,
         email: "", // ou gere um email temporário
-        role: "USER",
+        role: "CLIENT",
         // não use barberId, barbershopId, etc.
       },
     });

@@ -108,6 +108,7 @@ export const authOptions: AuthOptions = {
         })
         if (dbUser) {
           token.role = dbUser.role
+          token.email = dbUser.email
           token.phone = dbUser.phone
           token.barberId = dbUser.barber?.id || null
           token.barbershopId = dbUser.ownedBarbershop?.id || null
@@ -123,6 +124,7 @@ export const authOptions: AuthOptions = {
         })
         if (dbUser) {
           token.role = dbUser.role
+          token.email = dbUser.email
           token.phone = dbUser.phone
           token.barberId = dbUser.barber?.id || null
           token.barbershopId = dbUser.ownedBarbershop?.id || null

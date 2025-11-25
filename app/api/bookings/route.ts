@@ -1,10 +1,11 @@
 // app/api/bookings/route.ts
-import { auth } from "@/app/_lib/auth";
+import { authOptions } from "@/app/_lib/auth";
 import { NextRequest } from "next/server";
-import prisma from "@/app/_lib/prisma";
+import { db } from '@/app/_lib/prisma';
+import { getServerSession } from "next-auth";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user) {
     return Response.json({ error: "Não autorizado" }, { status: 401 });
   }
@@ -24,10 +25,10 @@ export async function GET(req: NextRequest) {
     let bookings;
 
     if (session.user.role === "ADMIN") {
-      bookings = await prisma.booking.findMany({
+      bookings = await db.booking.findMany({
         where: {
           service: {
-            barbershopId: session.user.barbershopId,
+            barbershopId: session.user.barbershopId || undefined,
           },
           date: {
             gte: start,
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
         },
       });
     } else if (session.user.role === "BARBER") {
-      bookings = await prisma.booking.findMany({
+      bookings = await db.booking.findMany({
         where: {
           barberId: session.user.id,
           date: {
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
       });
     } else {
       // Cliente
-      bookings = await prisma.booking.findMany({
+      bookings = await db.booking.findMany({
         where: {
           userId: session.user.id,
           date: {
@@ -78,9 +79,8 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ✅ CRIAR novo agendamento
 export async function POST(req: NextRequest) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "BARBER") {
     return Response.json({ error: "Acesso negado" }, { status: 403 });
   }
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Dados incompletos" }, { status: 400 });
     }
 
-    const existing = await prisma.booking.findFirst({
+    const existing = await db.booking.findFirst({
       where: {
         barberId: session.user.id,
         date: new Date(date),
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Horário já ocupado" }, { status: 409 });
     }
 
-    const booking = await prisma.booking.create({
+    const booking = await db.booking.create({
       data: {
         date: new Date(date),
         duration: duration || 30,
