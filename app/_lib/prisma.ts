@@ -194,6 +194,12 @@ const extendedPrisma = prisma.$extends({
           if (result.notes) result.notes = decrypt(result.notes)
           if (result.user?.email) result.user.email = decrypt(result.user.email)
           if (result.user?.phone) result.user.phone = decrypt(result.user.phone)
+          if (result.barber?.email) result.barber.email = decrypt(result.barber.email)
+          if (result.barber?.phone) result.barber.phone = decrypt(result.barber.phone)
+          if (result.service?.barbershop?.address) result.service.barbershop.address = decrypt(result.service.barbershop.address)
+          if (result.service?.barbershop?.phone && Array.isArray(result.service.barbershop.phone)) {
+            result.service.barbershop.phone = result.service.barbershop.phone.map((p: string) => decrypt(p))
+          }
         }
         return result
       },
@@ -204,6 +210,12 @@ const extendedPrisma = prisma.$extends({
           if (result.notes) result.notes = decrypt(result.notes)
           if (result.user?.email) result.user.email = decrypt(result.user.email)
           if (result.user?.phone) result.user.phone = decrypt(result.user.phone)
+          if (result.barber?.email) result.barber.email = decrypt(result.barber.email)
+          if (result.barber?.phone) result.barber.phone = decrypt(result.barber.phone)
+          if (result.service?.barbershop?.address) result.service.barbershop.address = decrypt(result.service.barbershop.address)
+          if (result.service?.barbershop?.phone && Array.isArray(result.service.barbershop.phone)) {
+            result.service.barbershop.phone = result.service.barbershop.phone.map((p: string) => decrypt(p))
+          }
         }
         return result
       },
@@ -214,6 +226,12 @@ const extendedPrisma = prisma.$extends({
           if (r.notes) r.notes = decrypt(r.notes)
           if (r.user?.email) r.user.email = decrypt(r.user.email)
           if (r.user?.phone) r.user.phone = decrypt(r.user.phone)
+          if (r.barber?.email) r.barber.email = decrypt(r.barber.email)
+          if (r.barber?.phone) r.barber.phone = decrypt(r.barber.phone)
+          if (r.service?.barbershop?.address) r.service.barbershop.address = decrypt(r.service.barbershop.address)
+          if (r.service?.barbershop?.phone && Array.isArray(r.service.barbershop.phone)) {
+            r.service.barbershop.phone = r.service.barbershop.phone.map((p: string) => decrypt(p))
+          }
           return r
         })
       },
