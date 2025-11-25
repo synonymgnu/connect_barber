@@ -193,7 +193,7 @@ function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
                 stackId="stack"
                 maxBarSize={20}
               >
-                {chartData.map((entry, index) => (
+                {chartData.map((_entry, index) => (
                   <Cell key={`online-${index}`} fill="#f97316" />
                 ))}
               </Bar>
@@ -204,7 +204,7 @@ function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
                 stackId="stack"
                 maxBarSize={20}
               >
-                {chartData.map((entry, index) => (
+                {chartData.map((_entry, index) => (
                   <Cell key={`offline-${index}`} fill="#8b5cf6" />
                 ))}
               </Bar>
