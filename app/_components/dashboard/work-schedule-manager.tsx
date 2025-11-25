@@ -33,6 +33,7 @@ export function WorkScheduleManager() {
   const [schedules, setSchedules] = useState<WorkSchedule[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [barbershopSchedule, setBarbershopSchedule] = useState<WorkSchedule[]>([])
 
   const fetchSchedules = useCallback(async () => {
     try {
@@ -41,13 +42,18 @@ export function WorkScheduleManager() {
       if (!response.ok) throw new Error('Erro ao carregar horários')
       
       const data = await response.json()
-      // Organiza por dia da semana
+      
+      const shopSchedule = data.filter((s: any) => !s.barberId)
+      setBarbershopSchedule(shopSchedule)
+      
       const organized = daysOfWeek.map(day => {
         const existing = data.find((s: WorkSchedule) => s.dayOfWeek === day.id)
+        const shopDay = shopSchedule.find((s: WorkSchedule) => s.dayOfWeek === day.id)
+        
         return existing || {
           dayOfWeek: day.id,
-          startTime: '09:00',
-          endTime: '18:00',
+          startTime: shopDay?.startTime || '09:00',
+          endTime: shopDay?.endTime || '18:00',
           isActive: false
         }
       })
@@ -71,6 +77,14 @@ export function WorkScheduleManager() {
   }
 
   const handleToggleActive = (index: number, checked: boolean) => {
+    const schedule = schedules[index]
+    const shopDay = barbershopSchedule.find(s => s.dayOfWeek === schedule.dayOfWeek)
+    
+    if (checked && (!shopDay || !shopDay.isActive)) {
+      toast.error('A barbearia está fechada neste dia')
+      return
+    }
+    
     const newSchedules = [...schedules]
     newSchedules[index].isActive = checked
     setSchedules(newSchedules)

@@ -375,6 +375,7 @@ export default function UnifiedCalendar({
                     onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
                     required
+                    disabled={modalMode === 'edit'}
                     />
                     <Input
                     placeholder="Email (opcional)"
@@ -389,6 +390,7 @@ export default function UnifiedCalendar({
                     value={formData.userPhone}
                     onChange={(e) => setFormData({ ...formData, userPhone: e.target.value })}
                     className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                    disabled={modalMode === 'edit'}
                     />
                 </div>
 
