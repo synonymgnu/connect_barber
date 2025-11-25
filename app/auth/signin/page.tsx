@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/app/_components/ui/button'
 import Image from 'next/image'
 
+export const dynamic = 'force-dynamic'
+
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

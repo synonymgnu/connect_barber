@@ -4,6 +4,8 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/app/_components/ui/button'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function AuthErrorPage() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
