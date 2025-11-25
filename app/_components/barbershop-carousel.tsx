@@ -63,8 +63,8 @@ export default function BarbershopCarousel({ title, barbershops }: Props) {
           ref={containerRef}
           className="flex gap-4 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
         >
-          {barbershops.map((barbershop) => (
-            <BarbershopItem key={barbershop.id} barbershop={{ ...barbershop, averageRating: 0 }} />
+          {barbershops.map((barbershop: any) => (
+            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
           ))}
         </div>
 

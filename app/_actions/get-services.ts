@@ -8,13 +8,11 @@ import { db } from '../_lib/prisma'
 export async function getServices() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user?.email) return []
+  if (!session?.user?.id) return []
 
   const barbershop = await db.barbershop.findFirst({
     where: {
-      owner: {
-        email: session.user.email,
-      },
+      ownerId: session.user.id,
     },
   })
 

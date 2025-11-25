@@ -1,14 +1,12 @@
 'use client'
 
 import { signIn, getSession } from 'next-auth/react'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/app/_components/ui/button'
 import Image from 'next/image'
 
-export const dynamic = 'force-dynamic'
-
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
@@ -69,5 +67,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-white">Carregando...</div></div>}>
+      <SignInContent />
+    </Suspense>
   )
 }

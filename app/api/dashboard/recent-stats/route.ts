@@ -3,6 +3,8 @@ import { db } from '@/app/_lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 interface StatData {
   count: number
   percentage: number
