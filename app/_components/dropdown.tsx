@@ -1,6 +1,18 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { useState, useRef } from 'react';
 
-const DropDown = ({ event, updateEventStatus }) => {
+interface DropDownProps {
+  event: any;
+  updateEventStatus: (id: string, status: string) => void;
+}
+
+const statusConfig = {
+  agendado: { label: 'Agendado', color: 'bg-yellow-500' },
+  confirmado: { label: 'Confirmado', color: 'bg-blue-500' },
+  faltou: { label: 'Faltou', color: 'bg-red-500' },
+};
+
+const DropDown = ({ event, updateEventStatus }: DropDownProps) => {
     const [open, setOpen] = useState(false);
     const triggerRef = useRef(null);
   
