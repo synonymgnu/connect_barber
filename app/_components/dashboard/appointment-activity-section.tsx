@@ -495,7 +495,7 @@ const AppointmentActivitySection = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {appointments.map((appointment) => (
+                {appointments.map((appointment: AppointmentProps) => (
                   <MobileAppointmentCard
                     key={appointment.id}
                     appointment={appointment}
