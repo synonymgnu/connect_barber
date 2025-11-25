@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client"
-//import { encrypt, decrypt } from "./encryption"
+import { encrypt, decrypt } from "./encryption"
 
 declare global {
     // eslint-disable-next-line no-unused-vars
@@ -22,7 +22,6 @@ if (process.env.NODE_ENV === "production") {
 
 // CRIPTOGRAFIA DESABILITADA
 
-/*
 const extendedPrisma = prisma.$extends({
   query: {
     user: {
@@ -112,6 +111,5 @@ const extendedPrisma = prisma.$extends({
 })
 
 export const db = extendedPrisma
-*/
 
-export const db = prisma
+// export const db = prisma
