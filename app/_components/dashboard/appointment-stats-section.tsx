@@ -61,7 +61,7 @@ function AppointmentStatsSection({ className }: AppointmentStatsSectionProps) {
   // gráfico divergente
   const chartData = useMemo(() => {
     if (!stats) return [];
-    return stats.chartData.map(item => ({
+    return stats.chartData.map((item: AppointmentStatsData) => ({
       time: item.time,
       offline: item.offline,
       online: -item.online,
