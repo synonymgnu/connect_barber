@@ -15,7 +15,7 @@ export async function deleteService(id: string) {
 
   // 1. Obtém a barbearia do usuário
   const barbershop = await db.barbershop.findFirst({
-    where: { owner: { email: session.user.email } },
+    where: { ownerId: session.user.id },
   })
 
   if (!barbershop) {

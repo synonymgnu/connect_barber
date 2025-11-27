@@ -22,7 +22,7 @@ export async function createService(data: {
   const price = typeof data.price === 'string' ? Number(data.price) : data.price
 
   const barbershop = await db.barbershop.findFirst({
-    where: { owner: { email: session.user.email } },
+    where: { ownerId: session.user.id },
   })
 
   if (!barbershop) {
