@@ -6,9 +6,8 @@ import { Button } from '@/app/_components/ui/button'
 import { Input } from '@/app/_components/ui/input'
 import { Switch } from '@/app/_components/ui/switch'
 import { Badge } from '@/app/_components/ui/badge'
-import { Trash2, Plus, Clock, Save, Loader2 } from 'lucide-react'
+import { Clock, Save, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSession } from 'next-auth/react'
 
 interface WorkSchedule {
   id?: string
@@ -29,31 +28,25 @@ const daysOfWeek = [
 ]
 
 export function WorkScheduleManager() {
-  const { data: session } = useSession()
   const [schedules, setSchedules] = useState<WorkSchedule[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [barbershopSchedule, setBarbershopSchedule] = useState<WorkSchedule[]>([])
 
   const fetchSchedules = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/availability/schedule')
       if (!response.ok) throw new Error('Erro ao carregar horários')
-      
-      const data = await response.json()
-      
-      const shopSchedule = data.filter((s: any) => !s.barberId)
-      setBarbershopSchedule(shopSchedule)
-      
+
+      const data: WorkSchedule[] = await response.json()
+
       const organized = daysOfWeek.map(day => {
         const existing = data.find((s: WorkSchedule) => s.dayOfWeek === day.id)
-        const shopDay = shopSchedule.find((s: WorkSchedule) => s.dayOfWeek === day.id)
-        
+
         return existing || {
           dayOfWeek: day.id,
-          startTime: shopDay?.startTime || '09:00',
-          endTime: shopDay?.endTime || '18:00',
+          startTime: '09:00',
+          endTime: '18:00',
           isActive: false
         }
       })
@@ -77,14 +70,6 @@ export function WorkScheduleManager() {
   }
 
   const handleToggleActive = (index: number, checked: boolean) => {
-    const schedule = schedules[index]
-    const shopDay = barbershopSchedule.find(s => s.dayOfWeek === schedule.dayOfWeek)
-    
-    if (checked && (!shopDay || !shopDay.isActive)) {
-      toast.error('A barbearia está fechada neste dia')
-      return
-    }
-    
     const newSchedules = [...schedules]
     newSchedules[index].isActive = checked
     setSchedules(newSchedules)
