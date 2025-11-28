@@ -111,12 +111,12 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     const fetchData = async () => {
       const [barbersRes, availabilityRes] = await Promise.all([
         fetch(`/api/barbers/active?barbershopId=${barbershop.id}`),
-        fetch(`/api/barbershop/${barbershop.id}/availability`)
+        fetch(`/api/barbershop/${barbershop.id}/availability`),
       ])
 
       const barbersData = await barbersRes.json()
       const availabilityData = await availabilityRes.json()
-      
+
       setBarbers(barbersData)
       setAvailability(availabilityData)
     }
@@ -162,7 +162,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
   const isDateDisabled = (date: Date) => {
     if (!availability) return false
-    
+
     const dateStr = date.toISOString().split('T')[0]
     return availability.shopClosures?.some((closure: any) => {
       const closureDate = new Date(closure.date).toISOString().split('T')[0]
@@ -172,27 +172,29 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
   const getAvailableBarbers = () => {
     if (!selectedDay || !availability) return barbers
-    
+
     const dateStr = selectedDay.toISOString().split('T')[0]
     const dayOfWeek = selectedDay.getDay()
-    
+
     return barbers.filter((barber: any) => {
-      const barberData = availability.barbers.find((b: any) => b.id === barber.id)
+      const barberData = availability.barbers.find(
+        (b: any) => b.id === barber.id
+      )
       if (!barberData) return true
-      
+
       const hasAbsence = barberData.absences?.some((absence: any) => {
         const absenceDate = new Date(absence.date).toISOString().split('T')[0]
         return absenceDate === dateStr
       })
-      
+
       if (hasAbsence) return false
-      
+
       if (barberData.workSchedule?.length === 0) return true
-      
-      const hasSchedule = barberData.workSchedule?.some((schedule: any) => 
-        schedule.dayOfWeek === dayOfWeek && schedule.isActive
+
+      const hasSchedule = barberData.workSchedule?.some(
+        (schedule: any) => schedule.dayOfWeek === dayOfWeek && schedule.isActive
       )
-      
+
       return hasSchedule
     })
   }
@@ -230,7 +232,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
       <Card>
         <CardContent className="flex items-center gap-3 p-3">
           {/* IMAGE */}
-          <div className="relative max-h-[110px] min-h-[110px] min-w-[80px] max-w-[80px]">
+          <div className="relative max-h-[110px] min-h-[110px] min-w-[110px] max-w-[110px]">
             <Image
               alt={service.name}
               src={service.imageUrl}
@@ -292,7 +294,10 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                         locale={ptBR}
                         selected={selectedDay}
                         onSelect={handleDateSelect}
-                        disabled={(date) => isPast(date) && !isToday(date) || isDateDisabled(date)}
+                        disabled={(date) =>
+                          (isPast(date) && !isToday(date)) ||
+                          isDateDisabled(date)
+                        }
                         styles={{
                           head_cell: {
                             width: '100%',
@@ -361,37 +366,39 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                             window.addEventListener('mouseup', handleMouseUp)
                           }}
                         >
-                          {getAvailableBarbers().length > 0 ? getAvailableBarbers().map((barber) => (
-                            <button
-                              key={barber.id}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setSelectedBarber(barber)
-                                setSelectedTime(undefined)
-                              }}
-                              className={`flex flex-col items-center p-3 rounded-xl border min-w-[100px] transition-all ${
-                                selectedBarber?.id === barber.id
-                                  ? 'border-primary bg-primary text-white'
-                                  : 'border-muted '
-                              }`}
-                            >
-                              <Avatar className="h-12 w-12">
-                                <AvatarImage
-                                  src={
-                                    barber.imageUrl ||
-                                    `https://ui-avatars.com/api/?name=${barber.name}&background=bc130d&color=fff`
-                                  }
-                                />
-                                <AvatarFallback>
-                                  {barber.name[0].toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
+                          {getAvailableBarbers().length > 0 ? (
+                            getAvailableBarbers().map((barber) => (
+                              <button
+                                key={barber.id}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedBarber(barber)
+                                  setSelectedTime(undefined)
+                                }}
+                                className={`flex flex-col items-center p-3 rounded-xl border min-w-[100px] transition-all ${
+                                  selectedBarber?.id === barber.id
+                                    ? 'border-primary bg-primary text-white'
+                                    : 'border-muted '
+                                }`}
+                              >
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage
+                                    src={
+                                      barber.imageUrl ||
+                                      `https://ui-avatars.com/api/?name=${barber.name}&background=bc130d&color=fff`
+                                    }
+                                  />
+                                  <AvatarFallback>
+                                    {barber.name[0].toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
 
-                              <span className="text-xs mt-2 font-medium">
-                                {barber.name}
-                              </span>
-                            </button>
-                          )) : (
+                                <span className="text-xs mt-2 font-medium">
+                                  {barber.name}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
                             <p className="text-sm text-gray-400 px-5">
                               Nenhum barbeiro disponível neste dia.
                             </p>
