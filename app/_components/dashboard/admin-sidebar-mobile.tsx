@@ -176,7 +176,7 @@ const AdminSidebarMobile = () => {
                           Sair da Conta
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="w-[30%]">
+                      <DialogContent className="w-[90%]">
                         <SignOutDialog />
                       </DialogContent>
                     </Dialog>
