@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       return {
         id: barber.id,
         name: barber.user.name || 'Barbeiro',
-        imageUrl: barber.user.image,
+        imageUrl: barber.imageUrl || barber.user.image,
         appointments,
         revenue,
         hoursWorked: Math.round(hoursWorked * 10) / 10

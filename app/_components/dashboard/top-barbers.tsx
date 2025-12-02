@@ -58,12 +58,12 @@ export default function TopBarbers() {
         <CardTitle className="text-white">Top Barbeiros</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {data.map((barber, index) => (
+        {data.map((barber) => (
           <div key={barber.id} className="flex items-center justify-between p-3 rounded-lg bg-[#0f0f0f] border border-[#1f1f1f] hover:border-[#8161FF]/30 transition">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={barber.imageUrl || '/user-img.svg'} />
-                <AvatarFallback>{barber.name[0]}</AvatarFallback>
+                <AvatarFallback className="bg-[#8161FF] text-white font-semibold">{barber.name[0]}</AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium text-white">{barber.name}</p>

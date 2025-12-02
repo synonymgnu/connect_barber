@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { useSession } from "next-auth/react"
 import { format, addDays } from "date-fns"
 import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
@@ -28,32 +27,47 @@ interface Booking {
   price: number
 }
 
+interface RawBooking {
+  id: string
+  date: string
+  status: string
+  user: { name: string }
+  service: { name: string; price: number }
+}
+
 export default function BarberSchedulePage() {
-  const { data: session } = useSession()
   const [period, setPeriod] = useState<"day" | "week" | "month">("day")
   const [bookings, setBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState({ total: 0, completed: 0, cancelled: 0, revenue: 0, avgRating: 0 })
   const [reviews, setReviews] = useState<{ id: string, value: number, clientName: string, serviceName: string, date: string }[]>([])
-  const [selectedDate, setSelectedDate] = useState(new Date())
+
 
   const fetchBookings = useCallback(async () => {
-    const start = format(selectedDate, "yyyy-MM-dd")
-    const end = format(
-      addDays(selectedDate, period === "day" ? 0 : period === "week" ? 7 : 30), 
-      "yyyy-MM-dd"
-    )
-    
+    const selectedDate = new Date()
+    // Usar período mais longo para capturar mais dados
+    const start = format(addDays(selectedDate, -90), "yyyy-MM-dd") // 90 dias atrás
+    const end = format(addDays(selectedDate, 90), "yyyy-MM-dd") // 90 dias à frente
+
     const res = await fetch(`/api/barber/bookings?start=${start}&end=${end}`)
-    
+
     if (!res.ok) {
       console.error("Failed to fetch bookings:", res.status, res.statusText)
       toast.error("Erro ao carregar agendamentos")
       return
     }
-    
-    const data = await res.json()
-    setBookings(data)
-  }, [selectedDate, period])
+
+    const data: RawBooking[] = await res.json()
+    // Transform data to match BookingsTable expected format
+    const transformedData = data.map((booking) => ({
+      id: booking.id,
+      clientName: booking.user.name,
+      serviceName: booking.service.name,
+      date: booking.date,
+      status: booking.status,
+      price: Number(booking.service.price)
+    }))
+    setBookings(transformedData)
+  }, [period])
 
   const fetchStats = useCallback(async () => {
     const res = await fetch(`/api/barber/stats?period=${period}`)
