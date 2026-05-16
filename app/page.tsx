@@ -46,14 +46,18 @@ const Home = async () => {
     distinct: ['id'],
     include: { ratings: { select: { value: true } } },
   })
-  const popularBarbershops = serializeDecimal(attachAverageRating(popularBarbershopsData))
+  const popularBarbershops = serializeDecimal(
+    attachAverageRating(popularBarbershopsData)
+  )
 
   const mostVisitedBarbershopsData = await db.barbershop.findMany({
     orderBy: { name: 'asc' },
     distinct: ['id'],
     include: { ratings: { select: { value: true } } },
   })
-  const mostVisitedBarbershops = serializeDecimal(attachAverageRating(mostVisitedBarbershopsData))
+  const mostVisitedBarbershops = serializeDecimal(
+    attachAverageRating(mostVisitedBarbershopsData)
+  )
 
   const confirmedBookings = await getConfirmedBookings()
 
@@ -67,7 +71,7 @@ const Home = async () => {
           <div className="lg:w-2/4 max-h-screen overflow-y-auto">
             {/* TEXTO */}
             <h2 className="text-xl font-bold lg:text-2xl">
-              Olá, {session?.user ? session.user.name : 'bem vindo'}!
+              Olá, {session?.user ? session.user.name : 'bem vindo(a)'}!
             </h2>
             <p>
               <span className="capitalize">
@@ -110,7 +114,7 @@ const Home = async () => {
             <div className="relative mt-6 h-[150px] w-full md:hidden">
               <Image
                 alt="Agende nos melhores com Connect Barber"
-                src="/banner-02.png"
+                src="/banner-03.png"
                 fill
                 className="rounded-xl object-cover"
               />
