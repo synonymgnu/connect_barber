@@ -65,19 +65,21 @@ model VerificationToken {
 }
 
 model Barbershop {
-  id          String              @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   address     String
   phone       String[]
   imageUrl    String
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   description String
-  ownerId     String?             @unique
-  barbers     Barber[]
-  owner       User?               @relation(fields: [ownerId], references: [id])
-  services    BarbershopService[]
-  ratings     Rating[]
+  ownerId     String?  @unique
+  isActive    Boolean  @default(true)
+
+  barbers  Barber[]
+  owner    User?               @relation(fields: [ownerId], references: [id])
+  services BarbershopService[]
+  ratings  Rating[]
 }
 
 model BarbershopService {
@@ -221,6 +223,7 @@ model AuditLog {
 }
 
 enum UserRole {
+  MASTER
   CLIENT
   BARBER
   ADMIN
