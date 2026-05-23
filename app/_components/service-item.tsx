@@ -30,7 +30,7 @@ import {
 import SignInDialog from './sign-in-dialog'
 import BookingSummary from './booking-summary'
 import { useRouter } from 'next/navigation'
-import { Clock2 } from 'lucide-react'
+import { Clock2, StarIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 interface ServiceItemProps {
@@ -324,11 +324,11 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                       />
                     </div>
 
-                    {/* 👍 MOSTRAR BARBEIROS SÓ APÓS SELECIONAR O DIA */}
+                    {/*  MOSTRAR BARBEIROS SÓ APÓS SELECIONAR O DIA */}
                     {selectedDay && (
                       <div className="border-b p-5 space-y-3 transition-all">
                         <p className="font-medium text-sm">
-                          Selecione o barbeiro:
+                          Selecione o barbeiro(a):
                         </p>
 
                         <div
@@ -377,7 +377,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 }}
                                 className={`flex flex-col items-center p-3 rounded-xl border min-w-[100px] transition-all ${
                                   selectedBarber?.id === barber.id
-                                    ? 'border-primary bg-primary text-white'
+                                    ? 'border-primary text-white'
                                     : 'border-muted '
                                 }`}
                               >
@@ -396,6 +396,20 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 <span className="text-xs mt-2 font-medium">
                                   {barber.name}
                                 </span>
+
+                                {barber.averageRating !== null ? (
+                                  <span className="flex items-center gap-[2px] text-xs">
+                                    <StarIcon
+                                      className="text-primary fill-primary"
+                                      size={20}
+                                    />
+                                    {barber.averageRating.toFixed(1)}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-gray-500">
+                                    Sem avaliações
+                                  </span>
+                                )}
                               </button>
                             ))
                           ) : (
