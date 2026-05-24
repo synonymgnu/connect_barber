@@ -1,51 +1,53 @@
-import { PrismaClient, UserRole } from "@prisma/client"
+import { PrismaClient, UserRole } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  
-  const adminEmails = [
-    'riquelmealb105@gmail.com',
-    'riquelme.albuquerque105@gmail.com',
-    '1519@estudante.se.df.gov.br',
-    'felipe2pac33@gmail.com',
-    'eduardolopes727@gmail.com',
-    'yuriraraujo5@gmail.com',
-    'zriquelme007.07@gmail.com',
-    'roosevelt205@gmail.com',
-    'yuri.r.araujo.dev@gmail.com',
-    'yuri1.xvi@gmail.com',
-]
+  const adminIds =
+    process.env.ADMIN_IDS?.split(',').map((id) => id.trim()) || []
+  if (adminIds.length === 0) throw new Error('ADMIN_IDS não definido no.env')
 
-  await prisma.user.updateMany({
-    where: { email: { in: adminEmails } },
-    data: { role: UserRole.ADMIN },
+  const availableBarbershops = await prisma.barbershop.findMany({
+    where: { ownerId: null },
   })
 
-  // Cria barbearias
-  for (const email of adminEmails) {
-    const user = await prisma.user.findUnique({
-        where: { email },
-        include: { ownedBarbershop: true }
-    })
-    
-    if (user && !user.ownedBarbershop) {
-      await prisma.barbershop.create({
-        data: {
-          name: `Barbearia do ${user.name || 'Admin'}`,
-          address: 'Endereço a ser configurado',
-          phone: ['(00) 00000-0000'],
-          description: 'Barbearia premium',
-          imageUrl: '/placeholder.jpg',
-          ownerId: user.id,
-        },
-      })
-    }
-  }
+  let barbershopIndex = 0
 
-  console.log('Roles e barbearias atribuídas com sucesso!')
+  for (const adminId of adminIds) {
+    const user = await prisma.user.findUnique({
+      where: { id: adminId },
+      include: { ownedBarbershop: true },
+    })
+
+    if (!user) {
+      console.log(`User ${adminId} não encontrado`)
+      continue
+    }
+
+    await prisma.user.update({
+      where: { id: adminId },
+      data: { role: UserRole.ADMIN },
+    })
+
+    if (user.ownedBarbershop) {
+      console.log(`Admin ${adminId} já é dono da: ${user.ownedBarbershop.name}`)
+      continue // PULA ESSA PORRA
+    }
+
+    if (barbershopIndex >= availableBarbershops.length) {
+      console.log(`Sem barbearias livres pra ${adminId}`)
+      break
+    }
+
+    const barbershop = availableBarbershops[barbershopIndex++]
+
+    await prisma.barbershop.update({
+      where: { id: barbershop.id },
+      data: { ownerId: adminId },
+    })
+
+    console.log(`Atribuído: "${barbershop.name}" -> ${adminId}`)
+  }
 }
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect())
+main().finally(() => prisma.$disconnect())
