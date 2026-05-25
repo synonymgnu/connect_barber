@@ -37,26 +37,65 @@ const Home = async () => {
   const session = await getServerSession(authOptions)
 
   const barbershopsData = await db.barbershop.findMany({
-    include: { ratings: { select: { value: true } } },
+    where: {
+      isActive: true,
+    },
+    include: {
+      ratings: {
+        select: {
+          value: true,
+        },
+      },
+    },
   })
-  const barbershops = serializeDecimal(attachAverageRating(barbershopsData))
-
-  const popularBarbershopsData = await db.barbershop.findMany({
-    orderBy: { name: 'desc' },
-    distinct: ['id'],
-    include: { ratings: { select: { value: true } } },
-  })
+  
+  const barbershopsWithRatings = attachAverageRating(barbershopsData)
+  
+  const barbershops = serializeDecimal(barbershopsWithRatings)
+  
   const popularBarbershops = serializeDecimal(
-    attachAverageRating(popularBarbershopsData)
+    [...barbershopsWithRatings].sort((a, b) => {
+      if (b.averageRating !== a.averageRating) {
+        return b.averageRating - a.averageRating
+      }
+  
+      return b.ratings.length - a.ratings.length
+    })
   )
-
+  
   const mostVisitedBarbershopsData = await db.barbershop.findMany({
-    orderBy: { name: 'asc' },
-    distinct: ['id'],
-    include: { ratings: { select: { value: true } } },
+    where: {
+      isActive: true,
+    },
+    include: {
+      ratings: {
+        select: {
+          value: true,
+        },
+      },
+      services: {
+        select: {
+          bookings: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
   })
+  
   const mostVisitedBarbershops = serializeDecimal(
     attachAverageRating(mostVisitedBarbershopsData)
+      .map((barbershop) => ({
+        ...barbershop,
+        bookingsCount: barbershop.services.reduce(
+          (total: number, service: { bookings: { id: string }[] }) =>
+            total + service.bookings.length,
+          0
+        ),
+      }))
+      .sort((a, b) => b.bookingsCount - a.bookingsCount)
   )
 
   const confirmedBookings = await getConfirmedBookings()
