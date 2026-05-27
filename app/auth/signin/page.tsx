@@ -5,6 +5,7 @@ import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/app/_components/ui/button'
 import Image from 'next/image'
+import Link from 'next/link'
 
 function SignInContent() {
   const router = useRouter()
@@ -63,6 +64,22 @@ function SignInContent() {
               <Image src="/google.svg" alt="Google" width={20} height={20} />
               Continuar com Google
             </Button>
+            <p className="text-sm text-center text-gray-400">
+              Ao continuar, você aceita nossos{' '}
+              <Link
+                href="/consent/terms-of-use"
+                className="text-[#8161FF] hover:underline"
+              >
+                Termos de Uso
+              </Link>{' '}
+              e confirma que leu nossa{' '}
+              <Link
+                href="/consent/political-privacy"
+                className="text-[#8161FF] hover:underline"
+              >
+                Política de Privacidade.
+              </Link>
+            </p>
           </div>
         </div>
       </div>
@@ -72,7 +89,13 @@ function SignInContent() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-white">Carregando...</div></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-white">Carregando...</div>
+        </div>
+      }
+    >
       <SignInContent />
     </Suspense>
   )

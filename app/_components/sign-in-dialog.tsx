@@ -3,6 +3,7 @@ import { Button } from './ui/button'
 import { DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 interface SignInDialogProps {
   callbackUrl?: string
@@ -38,6 +39,22 @@ const SignInDialog = ({ callbackUrl }: SignInDialogProps) => {
         />
         Google
       </Button>
+      <p className="text-sm text-center text-gray-400">
+        Ao continuar, você aceita nossos{' '}
+        <Link
+          href="/consent/terms-of-use"
+          className="text-[#8161FF] hover:underline"
+        >
+          Termos de Uso
+        </Link>{' '}
+        e confirma que leu nossa{' '}
+        <Link
+          href="/consent/political-privacy"
+          className="text-[#8161FF] hover:underline"
+        >
+          Política de Privacidade.
+        </Link>
+      </p>
     </>
   )
 }

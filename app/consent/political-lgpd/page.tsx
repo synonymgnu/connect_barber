@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/app/_components/ui/card'
-import Header from '@/app/_components/header'
+import ConsentHeader from '@/app/_components/header-consent'
 
 export default function LGPDPrivacyPolicy() {
   return (
     <div className="min-h-screen text-white">
-      <Header />
+      <ConsentHeader />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className=" border-[#333]">

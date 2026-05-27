@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import Header from '@/app/_components/header'
 import { Card, CardContent } from '@/app/_components/ui/card'
+import ConsentHeader from '@/app/_components/header-consent'
 
 export default async function TermsOfUse() {
   return (
     <div className="min-h-screen text-white">
-      <Header />
+      <ConsentHeader />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className=" border-[#333]">
