@@ -49,7 +49,10 @@ export default async function AccountPage() {
           </p>
           <div className="flex lg:flex-col flex-row items-center gap-2 mt-10 lg:gap-0 lg:mt-0 lg:items-start">
             <Avatar className="lg:mt-10 w-20 h-20 lg:w-60 lg:h-60">
-              <AvatarImage src={user.image ?? ''} />
+              <AvatarImage
+                src={user.image ?? ''}
+                referrerPolicy="no-referrer"
+              />
             </Avatar>
             <div className="flex flex-col items-start">
               <h1 className="text-xl font-semibold lg:mt-5">{user.name}</h1>
@@ -59,7 +62,10 @@ export default async function AccountPage() {
 
           {/* ===== EDITAR TELEFONE ===== */}
           <div className="mt-6">
-            <EditPhoneForm userId={user.id} initialPhone={user.phone ?? ''} />
+            <EditPhoneForm
+              userId={user.id}
+              initialPhone={(user.phone ?? '').trim()}
+            />
           </div>
 
           {/* ===== BOTÃO SAIR ===== */}
