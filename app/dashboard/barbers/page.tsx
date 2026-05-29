@@ -7,9 +7,8 @@ import { Button } from "@/app/_components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/_components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/_components/ui/dropdown-menu";
 import { Input } from "@/app/_components/ui/input";
-import { Edit3, Filter, Loader2, Search, Trash2, UserPlus, Store, MoreVertical, Mail, Phone, Instagram } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { Edit3, Filter, Loader2, Search, Trash2, UserPlus, Store, MoreVertical, Mail, Phone, InstagramIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type Barber = {
@@ -25,6 +24,11 @@ type Barber = {
   createdAt: string
 }
 
+type BarberFormData = Pick<Barber, "name" | "email" | "phone" | "speciality" | "bio" | "instagram">
+
+const apiFetch = (url: string, options?: RequestInit) =>
+  fetch(url, { headers: { "Content-Type": "application/json" }, ...options })
+
 export default function BarbersPage() {
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,24 +38,35 @@ export default function BarbersPage() {
   const [editing, setEditing] = useState<Barber | null>(null)
   const [hasBarbershop, setHasBarbershop] = useState<boolean | null>(null)
 
-  useEffect(() => { 
-    checkBarbershop()
-    loadBarbers() 
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const res = await fetch("/api/admin/barbershop")
+        if (res.ok) {
+          const data = await res.json()
+          setHasBarbershop(data.hasBarbershop)
+          if (!data.hasBarbershop) {
+            toast.error("Você precisa criar uma barbearia primeiro")
+            return
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar barbearia:", error)
+      }
+      await loadBarbers()
+    }
+    init()
   }, [])
 
-  const checkBarbershop = async () => {
+  const loadBarbers = async () => {
     try {
-      const res = await fetch("/api/admin/barbershop")
-      if (res.ok) {
-        const data = await res.json()
-        setHasBarbershop(data.hasBarbershop)
-        
-        if (!data.hasBarbershop) {
-          toast.error("Você precisa criar uma barbearia primeiro")
-        }
-      }
+      const res = await fetch("/api/barbers")
+      if (res.ok) setBarbers(await res.json())
     } catch (error) {
-      console.error("Erro ao verificar barbearia:", error)
+      console.error("Erro ao carregar barbeiros:", error)
+      toast.error("Erro ao carregar barbeiros")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -61,7 +76,7 @@ export default function BarbersPage() {
       if (res.ok) {
         toast.success("Barbearia criada com sucesso!")
         setHasBarbershop(true)
-        loadBarbers()
+        await loadBarbers()
       } else {
         toast.error("Erro ao criar barbearia")
       }
@@ -71,41 +86,19 @@ export default function BarbersPage() {
     }
   }
 
-  const loadBarbers = async () => {
-    try {
-      const res = await fetch("/api/barbers")
-      if (res.ok) {
-        const data = await res.json()
-        setBarbers(data)
-      } else {
-        console.error("Erro ao carregar barbeiros")
-      }
-    } catch (error) {
-      console.error("Erro ao carregar barbeiros:", error)
-      toast.error("Erro ao carregar barbeiros")
-    } finally { 
-      setLoading(false) 
-    }
-  }
-
-  const onSave = async (data: any) => {
+  const onSave = async (data: BarberFormData) => {
     try {
       const url = editing ? `/api/barbers/${editing.id}` : "/api/barbers"
-      const method = editing ? "PATCH" : "POST"
-      const res = await fetch(url, { 
-        method, 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(data) 
-      })
-
+      const res = await apiFetch(url, { method: editing ? "PATCH" : "POST", body: JSON.stringify(data) })
       if (res.ok) {
+        const saved: Barber = await res.json()
+        setBarbers(prev => editing ? prev.map(b => b.id === saved.id ? saved : b) : [...prev, saved])
         toast.success(editing ? "Barbeiro atualizado com sucesso!" : "Barbeiro cadastrado com sucesso!")
         setModalOpen(false)
         setEditing(null)
-        await loadBarbers()
       } else {
-        const errorData = await res.json()
-        toast.error(errorData.error || "Erro ao salvar")
+        const err = await res.json()
+        toast.error(err.error || "Erro ao salvar")
       }
     } catch (error) {
       console.error("Erro ao salvar barbeiro:", error)
@@ -113,17 +106,12 @@ export default function BarbersPage() {
     }
   }
 
-  const toggleStatus = async (id: string, status: boolean) => {
+  const toggleStatus = async (id: string, isActive: boolean) => {
     try {
-      const res = await fetch(`/api/barbers/${id}`, { 
-        method: "PATCH", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ isActive: !status }) 
-      })
-      
+      const res = await apiFetch(`/api/barbers/${id}`, { method: "PATCH", body: JSON.stringify({ isActive: !isActive }) })
       if (res.ok) {
-        await loadBarbers()
-        toast.success(status ? "Barbeiro inativado com sucesso!" : "Barbeiro ativado com sucesso!")
+        setBarbers(prev => prev.map(b => b.id === id ? { ...b, isActive: !isActive } : b))
+        toast.success(isActive ? "Barbeiro inativado com sucesso!" : "Barbeiro ativado com sucesso!")
       } else {
         toast.error("Erro ao alterar status")
       }
@@ -135,12 +123,10 @@ export default function BarbersPage() {
 
   const deleteBarber = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este barbeiro? Esta ação não pode ser desfeita.")) return
-    
     try {
       const res = await fetch(`/api/barbers/${id}`, { method: "DELETE" })
-      
       if (res.ok) {
-        await loadBarbers()
+        setBarbers(prev => prev.filter(b => b.id !== id))
         toast.success("Barbeiro removido com sucesso!")
       } else {
         toast.error("Erro ao remover barbeiro")
@@ -151,12 +137,17 @@ export default function BarbersPage() {
     }
   }
 
-  const filtered = barbers.filter(b => {
+  const openModal = (barber: Barber | null = null) => {
+    setEditing(barber)
+    setModalOpen(true)
+  }
+
+  const filtered = useMemo(() => barbers.filter(b => {
     const matches = b.name.toLowerCase().includes(search.toLowerCase()) || b.email.toLowerCase().includes(search.toLowerCase())
-    if (filter === "active")  return matches && b.isActive
+    if (filter === "active") return matches && b.isActive
     if (filter === "inactive") return matches && !b.isActive
     return matches
-  })
+  }), [barbers, search, filter])
 
   if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
 
@@ -166,9 +157,7 @@ export default function BarbersPage() {
         <div className="text-center">
           <Store className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Barbearia Não Encontrada</h1>
-          <p className="text-muted-foreground mb-6">
-            Você precisa criar uma barbearia antes de adicionar barbeiros.
-          </p>
+          <p className="text-muted-foreground mb-6">Você precisa criar uma barbearia antes de adicionar barbeiros.</p>
           <Button onClick={createBarbershop}>
             <UserPlus className="mr-2 h-4 w-4" /> Criar Minha Barbearia
           </Button>
@@ -184,7 +173,7 @@ export default function BarbersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
           <p className="text-muted-foreground mt-1">Gerencie sua equipe de barbeiros</p>
         </div>
-        <Button onClick={() => { setEditing(null); setModalOpen(true) }} size="lg">
+        <Button onClick={() => openModal()} size="lg">
           <UserPlus className="mr-2 h-5 w-5" /> Adicionar Barbeiro
         </Button>
       </div>
@@ -193,12 +182,7 @@ export default function BarbersPage() {
         <CardContent className="flex flex-col md:flex-row gap-4 py-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Pesquisar por nome ou email..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              className="pl-10" 
-            />
+            <Input placeholder="Pesquisar por nome ou email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -224,12 +208,10 @@ export default function BarbersPage() {
               {barbers.length === 0 ? "Nenhum barbeiro cadastrado" : "Nenhum barbeiro encontrado"}
             </h3>
             <p className="text-muted-foreground text-center mb-6">
-              {barbers.length === 0 
-                ? "Comece adicionando o primeiro barbeiro da sua equipe" 
-                : "Tente ajustar os filtros de pesquisa"}
+              {barbers.length === 0 ? "Comece adicionando o primeiro barbeiro da sua equipe" : "Tente ajustar os filtros de pesquisa"}
             </p>
             {barbers.length === 0 && (
-              <Button onClick={() => { setEditing(null); setModalOpen(true) }}>
+              <Button onClick={() => openModal()}>
                 <UserPlus className="mr-2 h-4 w-4" /> Adicionar Primeiro Barbeiro
               </Button>
             )}
@@ -262,7 +244,7 @@ export default function BarbersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => { setEditing(b); setModalOpen(true) }}>
+                      <DropdownMenuItem onClick={() => openModal(b)}>
                         <Edit3 className="h-4 w-4 mr-2" />Editar
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => toggleStatus(b.id, b.isActive)}>
@@ -288,7 +270,7 @@ export default function BarbersPage() {
                 )}
                 {b.instagram && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Instagram className="h-4 w-4" />
+                    <InstagramIcon className="h-4 w-4" />
                     <span>{b.instagram}</span>
                   </div>
                 )}
@@ -312,10 +294,7 @@ export default function BarbersPage() {
 
       <BarberModal
         open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open)
-          if (!open) setEditing(null)
-        }}
+        onOpenChange={(open) => { setModalOpen(open); if (!open) setEditing(null) }}
         barber={editing}
         onSubmit={onSave}
       />
