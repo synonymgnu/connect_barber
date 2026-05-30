@@ -26,11 +26,29 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
     include: {
       services: true,
       ratings: true,
+      barbers: {
+        where: { isActive: true },
+        include: { workSchedule: { where: { isActive: true } } },
+      },
     },
   })
 
   if (!barbershop) {
     return notFound()
+  }
+
+  // Build shop schedule: for each day of week, collect earliest start / latest end across all barbers
+  const DAY_NAMES = ['Domingo', 'Segunda', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado']
+  const scheduleMap: Record<number, { startTime: string; endTime: string }> = {}
+  for (const barber of barbershop.barbers) {
+    for (const s of barber.workSchedule) {
+      if (!scheduleMap[s.dayOfWeek]) {
+        scheduleMap[s.dayOfWeek] = { startTime: s.startTime, endTime: s.endTime }
+      } else {
+        if (s.startTime < scheduleMap[s.dayOfWeek].startTime) scheduleMap[s.dayOfWeek].startTime = s.startTime
+        if (s.endTime > scheduleMap[s.dayOfWeek].endTime) scheduleMap[s.dayOfWeek].endTime = s.endTime
+      }
+    }
   }
 
   const averageRating =
@@ -247,34 +265,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </div>
             {/*DIAS E HORÁRIOS*/}
             <div className="text-xs  border-t border-zinc-800 pt-3 space-y-1">
-              <div className="flex justify-between">
-                <p className="text-zinc-500">Segunda</p>
-                <p>Fechado</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-zinc-500">Terça-Feira</p>
-                <p>09:00 - 21:00</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-zinc-500">Quarta-Feira</p>
-                <p>09:00 - 21:00</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-zinc-500">Quinta-Feira</p>
-                <p>09:00 - 21:00</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-zinc-500">Sexta-Feira</p>
-                <p>09:00 - 21:00</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-zinc-500">Sábado</p>
-                <p>08:00 - 17:00</p>
-              </div>
-              <div className="flex justify-between">
-                <p>Domingo</p>
-                <p>Fechado</p>
-              </div>
+              {DAY_NAMES.map((name, idx) => (
+                <div key={idx} className="flex justify-between">
+                  <p className={scheduleMap[idx] ? '' : 'text-zinc-500'}>{name}</p>
+                  <p>{scheduleMap[idx] ? `${scheduleMap[idx].startTime} - ${scheduleMap[idx].endTime}` : 'Fechado'}</p>
+                </div>
+              ))}
             </div>
 
             <div className="flex items-center justify-between">

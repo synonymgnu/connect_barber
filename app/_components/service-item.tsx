@@ -1,6 +1,6 @@
 'use client'
 
-import { Barbershop, BarbershopService, Booking } from '@prisma/client'
+import { Barbershop, BarbershopService } from '@prisma/client'
 import Image from 'next/image'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -18,7 +18,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { isPast, isToday, set } from 'date-fns'
 import { createBooking } from '../_actions/create-booking'
 import { useSession } from 'next-auth/react'
-import { getBookings } from '../_actions/get-bookings'
 import {
   Dialog,
   DialogContent,
@@ -38,56 +37,7 @@ interface ServiceItemProps {
   barbershop: Pick<Barbershop, 'id' | 'name'>
 }
 
-const TIME_LIST = [
-  '08:00',
-  '08:30',
-  '09:00',
-  '09:30',
-  '10:00',
-  '10:30',
-  '11:00',
-  '11:30',
-  '12:00',
-  '12:30',
-  '13:00',
-  '13:30',
-  '14:00',
-  '14:30',
-  '15:00',
-  '15:30',
-  '16:00',
-  '16:30',
-  '17:00',
-  '17:30',
-  '18:00',
-]
 
-interface GetTimeListProps {
-  bookings: Booking[]
-  selectedDay: Date
-}
-
-const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
-  // TODO: Não exibir horários no passado
-  return TIME_LIST.filter((time) => {
-    const hour = Number(time.split(':')[0])
-    const minutes = Number(time.split(':')[1])
-
-    const timeIsOnThePast = isPast(set(new Date(), { hours: hour, minutes }))
-    if (timeIsOnThePast && isToday(selectedDay)) {
-      return false
-    }
-
-    const hasBookingOnCurrentTime = bookings.some(
-      (booking) =>
-        booking.date.getHours() == hour && booking.date.getMinutes() == minutes
-    )
-    if (hasBookingOnCurrentTime) {
-      return false
-    }
-    return true
-  })
-}
 
 const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const { data } = useSession()
@@ -100,12 +50,12 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
     undefined
   )
-  const [dayBookings, setDayBookings] = useState<Booking[]>([])
   const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
 
   const [selectedBarber, setSelectedBarber] = useState<any>(null)
   const [barbers, setBarbers] = useState<any[]>([])
   const [availability, setAvailability] = useState<any>(null)
+  const [timeSlots, setTimeSlots] = useState<string[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -142,32 +92,37 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     setSelectedDay(undefined)
     setSelectedTime(undefined)
     setSelectedBarber(null)
-    setDayBookings([])
+    setTimeSlots([])
     setBookingSheetIsOpen(false)
   }
 
-  const handleDateSelect = async (date: Date | undefined) => {
+  const handleDateSelect = (date: Date | undefined) => {
     setSelectedDay(date)
     setSelectedTime(undefined)
     setSelectedBarber(null)
-
-    if (!date) return
-
-    const bookings = await getBookings({
-      date,
-      serviceId: service.id,
-    })
-    setDayBookings(bookings)
+    setTimeSlots([])
   }
 
   const isDateDisabled = (date: Date) => {
     if (!availability) return false
 
     const dateStr = date.toISOString().split('T')[0]
-    return availability.shopClosures?.some((closure: any) => {
+    const isClosure = availability.shopClosures?.some((closure: any) => {
       const closureDate = new Date(closure.date).toISOString().split('T')[0]
       return closureDate === dateStr
     })
+    if (isClosure) return true
+
+    // Disable days where no barber has a work schedule
+    if (availability.shopSchedule?.length > 0) {
+      const dayOfWeek = date.getDay()
+      const hasSchedule = availability.shopSchedule.some(
+        (s: any) => s.dayOfWeek === dayOfWeek
+      )
+      if (!hasSchedule) return true
+    }
+
+    return false
   }
 
   const getAvailableBarbers = () => {
@@ -199,6 +154,15 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     })
   }
 
+  const fetchBarberSlots = async (barber: any, day: Date) => {
+    const dateStr = day.toISOString().split('T')[0]
+    const res = await fetch(
+      `/api/barbers/${barber.id}/slots?date=${dateStr}&duration=${service.duration}`
+    )
+    const slots = await res.json()
+    setTimeSlots(Array.isArray(slots) ? slots : [])
+  }
+
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time)
   }
@@ -219,13 +183,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     }
   }
 
-  const timeList = useMemo(() => {
-    if (!selectedDay) return []
-    return getTimeList({
-      bookings: dayBookings,
-      selectedDay,
-    })
-  }, [dayBookings, selectedDay])
+  const timeList = timeSlots
 
   return (
     <>
@@ -374,6 +332,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                   e.stopPropagation()
                                   setSelectedBarber(barber)
                                   setSelectedTime(undefined)
+                                  if (selectedDay) fetchBarberSlots(barber, selectedDay)
                                 }}
                                 className={`flex flex-col items-center p-3 rounded-xl border min-w-[100px] transition-all ${
                                   selectedBarber?.id === barber.id

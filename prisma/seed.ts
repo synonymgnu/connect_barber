@@ -141,6 +141,36 @@ async function seedDatabase() {
         })
       }
 
+      // Create a default barber with default work schedule (Tue-Sat 09:00-18:00)
+      const defaultUser = await prisma.user.create({
+        data: {
+          email: `barber-${barbershop.id}@connectbarber.app`,
+          name: 'Barbeiro Padrão',
+          role: 'BARBER',
+        },
+      })
+
+      const defaultBarber = await prisma.barber.create({
+        data: {
+          name: 'Barbeiro Padrão',
+          userId: defaultUser.id,
+          barbershopId: barbershop.id,
+          isActive: true,
+        },
+      })
+
+      // Tue=2, Wed=3, Thu=4, Fri=5, Sat=6
+      const workDays = [2, 3, 4, 5, 6]
+      await prisma.barberWorkSchedule.createMany({
+        data: workDays.map((day) => ({
+          barberId: defaultBarber.id,
+          dayOfWeek: day,
+          startTime: '09:00',
+          endTime: '18:00',
+          isActive: true,
+        })),
+      })
+
       barbershops.push(barbershop)
     }
 
