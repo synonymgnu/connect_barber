@@ -202,9 +202,9 @@ export default function UnifiedCalendar({
     setModalOpen(true)
   }
 
-  const handleEventDrop = (dropInfo: { event: { extendedProps: any; start: Date } }) => {
+  const handleEventDrop = (dropInfo: { event: { extendedProps: any; start: Date | null } }) => {
     const { extendedProps: appointment, start: newDate } = dropInfo.event
-    if (!appointment) return
+    if (!appointment || !newDate) return
 
     updateMutation.mutate({
       id: appointment.id,
