@@ -40,9 +40,38 @@ export default function EditPhoneForm({
       .replace(/(\d{5})(\d)/, '$1-$2')
   }
 
+  function isValidPhone(value: string): boolean {
+    const numeric = value.replace(/\D/g, '')
+
+    if (numeric.length !== 11) return false
+
+    // Bloqueia sequências com todos os dígitos iguais (ex: 11111111111)
+    if (/^(\d)\1+$/.test(numeric)) return false
+
+    const ddd = parseInt(numeric.slice(0, 2), 10)
+
+    // DDDs válidos no Brasil
+    const validDDDs = [
+      11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33, 34,
+      35, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 61, 62,
+      63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 77, 79, 81, 82, 83, 84, 85,
+      86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+    ]
+    if (!validDDDs.includes(ddd)) return false
+
+    // Celular deve começar com 9 (11 dígitos)
+    const numberPart = numeric.slice(2)
+    if (numberPart[0] !== '9') return false
+
+    // Bloqueia sequência repetida no número (ex: 911111111, 900000000)
+    if (/^(\d)\1+$/.test(numberPart)) return false
+
+    return true
+  }
+
   async function handleSave() {
-    if (inputValue.replace(/\D/g, '').length !== 11) {
-      return toast.error('Telefone deve ter 11 dígitos.')
+    if (!isValidPhone(inputValue)) {
+      return toast.error('Número de telefone inválido.')
     }
 
     setLoading(true)
@@ -58,7 +87,6 @@ export default function EditPhoneForm({
       return toast.error('Erro ao atualizar telefone.')
     }
 
-    // Atualiza o token JWT para refletir o novo phone sem precisar relogar
     await update()
     router.refresh()
 
@@ -97,7 +125,6 @@ export default function EditPhoneForm({
     setEditing(false)
   }
 
-  // ── Sem telefone, não editando ──────────────────────────────────────────────
   if (!hasPhone && !editing) {
     return (
       <div className="space-y-2">
@@ -117,7 +144,6 @@ export default function EditPhoneForm({
     )
   }
 
-  // ── Com telefone, não editando ──────────────────────────────────────────────
   if (hasPhone && !editing) {
     return (
       <div className="space-y-2">
@@ -153,7 +179,6 @@ export default function EditPhoneForm({
     )
   }
 
-  // ── Editando / adicionando ──────────────────────────────────────────────────
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">
