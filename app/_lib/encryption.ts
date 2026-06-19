@@ -29,19 +29,19 @@ export function encrypt(text: string): string {
   const salt = crypto.randomBytes(SALT_LENGTH)
   const key = deriveKey(salt)
   const iv = crypto.randomBytes(IV_LENGTH)
-  
+
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
-  
+
   let encrypted = cipher.update(text, 'utf8', 'hex')
   encrypted += cipher.final('hex')
-  
+
   const authTag = cipher.getAuthTag()
-  
+
   return [
     salt.toString('hex'),
     iv.toString('hex'),
     authTag.toString('hex'),
-    encrypted
+    encrypted,
   ].join(':')
 }
 
@@ -55,18 +55,18 @@ export function decrypt(encryptedData: string): string {
     if (parts.length !== 4) return encryptedData
 
     const [saltHex, ivHex, authTagHex, encrypted] = parts
-    
+
     const salt = Buffer.from(saltHex, 'hex')
     const iv = Buffer.from(ivHex, 'hex')
     const authTag = Buffer.from(authTagHex, 'hex')
     const key = deriveKey(salt)
-    
+
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
     decipher.setAuthTag(authTag)
-    
+
     let decrypted = decipher.update(encrypted, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
-    
+
     return decrypted
   } catch (error) {
     console.error('Erro ao descriptografar:', error)
@@ -76,4 +76,10 @@ export function decrypt(encryptedData: string): string {
 
 export function generateKey(): string {
   return crypto.randomBytes(32).toString('base64')
+}
+export function hashEmail(email: string): string {
+  return crypto
+    .createHash('sha256')
+    .update(email.trim().toLowerCase())
+    .digest('hex')
 }

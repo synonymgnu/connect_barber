@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { db as prisma } from '../app/_lib/prisma'
 
 async function seedDatabase() {
   try {
@@ -153,6 +151,7 @@ async function seedDatabase() {
       const defaultBarber = await prisma.barber.create({
         data: {
           name: 'Barbeiro Padrão',
+          email: `barber-${barbershop.id}@connectbarber.app`,
           userId: defaultUser.id,
           barbershopId: barbershop.id,
           isActive: true,

@@ -1,85 +1,106 @@
-import { PrismaClient } from "@prisma/client"
-import { encrypt, decrypt } from "./encryption"
+import { PrismaClient } from '@prisma/client'
+import { encrypt, decrypt, hashEmail } from './encryption'
 
 declare global {
-    // eslint-disable-next-line no-unused-vars
-    var cachedPrisma: PrismaClient
+  // eslint-disable-next-line no-unused-vars
+  var cachedPrisma: PrismaClient
 }
 
 let prisma: PrismaClient
-if (process.env.NODE_ENV === "production") {
-    prisma = new PrismaClient({
-        log: ['error'],
-    })
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient({
+    log: ['error'],
+  })
 } else {
-    if (!global.cachedPrisma) {
-        global.cachedPrisma = new PrismaClient({
-            log: ['error', 'warn'],
-        })
-    }
-    prisma = global.cachedPrisma
+  if (!global.cachedPrisma) {
+    global.cachedPrisma = new PrismaClient({
+      log: ['error', 'warn'],
+    })
+  }
+  prisma = global.cachedPrisma
 }
 
 const extendedPrisma = prisma.$extends({
   query: {
     user: {
       async create({ args, query }) {
-        // Criptografar dados sensíveis
         if (args.data.phone) {
           args.data.phone = encrypt(args.data.phone as string)
         }
         if (args.data.email) {
-          args.data.email = encrypt(args.data.email as string)
+          const rawEmail = args.data.email as string
+          args.data.emailHash = hashEmail(rawEmail)
+          args.data.email = encrypt(rawEmail)
         }
-        
+
         const result = await query(args)
-        
-        // Descriptografar na resposta
+
         if (result.phone) result.phone = decrypt(result.phone)
         if (result.email) result.email = decrypt(result.email)
-        
+
         return result
       },
-      
+
       async update({ args, query }) {
         if (args.data.phone) {
           args.data.phone = encrypt(args.data.phone as string)
         }
         if (args.data.email) {
-          args.data.email = encrypt(args.data.email as string)
+          const rawEmail = args.data.email as string
+          args.data.emailHash = hashEmail(rawEmail)
+          args.data.email = encrypt(rawEmail)
         }
-        
+        // Permite buscar por email no where também (ex: update({ where: { email: '...' } }))
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const result = await query(args)
-        
+
         if (result.phone) result.phone = decrypt(result.phone)
         if (result.email) result.email = decrypt(result.email)
-        
+
         return result
       },
-      
+
       async upsert({ args, query }) {
         if (args.create.phone) {
           args.create.phone = encrypt(args.create.phone as string)
         }
         if (args.create.email) {
-          args.create.email = encrypt(args.create.email as string)
+          const rawEmail = args.create.email as string
+          args.create.emailHash = hashEmail(rawEmail)
+          args.create.email = encrypt(rawEmail)
         }
         if (args.update.phone) {
           args.update.phone = encrypt(args.update.phone as string)
         }
         if (args.update.email) {
-          args.update.email = encrypt(args.update.email as string)
+          const rawEmail = args.update.email as string
+          args.update.emailHash = hashEmail(rawEmail)
+          args.update.email = encrypt(rawEmail)
         }
-        
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const result = await query(args)
-        
+
         if (result.phone) result.phone = decrypt(result.phone)
         if (result.email) result.email = decrypt(result.email)
-        
+
         return result
       },
-      
+
       async findUnique({ args, query }) {
+        // Troca busca por email (texto puro) por busca pelo hash determinístico
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const result = await query(args)
         if (result) {
           if (result.phone) result.phone = decrypt(result.phone)
@@ -87,8 +108,13 @@ const extendedPrisma = prisma.$extends({
         }
         return result
       },
-      
+
       async findFirst({ args, query }) {
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const result = await query(args)
         if (result) {
           if (result.phone) result.phone = decrypt(result.phone)
@@ -96,17 +122,22 @@ const extendedPrisma = prisma.$extends({
         }
         return result
       },
-      
+
       async findMany({ args, query }) {
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const results = await query(args)
-        return results.map(r => {
+        return results.map((r) => {
           if (r.phone) r.phone = decrypt(r.phone)
           if (r.email) r.email = decrypt(r.email)
           return r
         })
       },
     },
-    
+
     account: {
       async create({ args, query }) {
         if (args.data.access_token) {
@@ -120,7 +151,7 @@ const extendedPrisma = prisma.$extends({
         }
         return query(args)
       },
-      
+
       async update({ args, query }) {
         if (args.data.access_token) {
           args.data.access_token = encrypt(args.data.access_token as string)
@@ -133,30 +164,34 @@ const extendedPrisma = prisma.$extends({
         }
         return query(args)
       },
-      
+
       async findFirst({ args, query }) {
         const result = await query(args)
         if (result) {
-          if (result.access_token) result.access_token = decrypt(result.access_token)
-          if (result.refresh_token) result.refresh_token = decrypt(result.refresh_token)
+          if (result.access_token)
+            result.access_token = decrypt(result.access_token)
+          if (result.refresh_token)
+            result.refresh_token = decrypt(result.refresh_token)
           if (result.id_token) result.id_token = decrypt(result.id_token)
         }
         return result
       },
-      
+
       async findUnique({ args, query }) {
         const result = await query(args)
         if (result) {
-          if (result.access_token) result.access_token = decrypt(result.access_token)
-          if (result.refresh_token) result.refresh_token = decrypt(result.refresh_token)
+          if (result.access_token)
+            result.access_token = decrypt(result.access_token)
+          if (result.refresh_token)
+            result.refresh_token = decrypt(result.refresh_token)
           if (result.id_token) result.id_token = decrypt(result.id_token)
         }
         return result
       },
-      
+
       async findMany({ args, query }) {
         const results = await query(args)
-        return results.map(r => {
+        return results.map((r) => {
           if (r.access_token) r.access_token = decrypt(r.access_token)
           if (r.refresh_token) r.refresh_token = decrypt(r.refresh_token)
           if (r.id_token) r.id_token = decrypt(r.id_token)
@@ -164,113 +199,146 @@ const extendedPrisma = prisma.$extends({
         })
       },
     },
-    
+
     booking: {
       async create({ args, query }) {
         if (args.data.notes) {
           args.data.notes = encrypt(args.data.notes as string)
         }
-        
+
         const result = await query(args)
-        
+
         if (result.notes) result.notes = decrypt(result.notes)
         return result
       },
-      
+
       async update({ args, query }) {
         if (args.data.notes) {
           args.data.notes = encrypt(args.data.notes as string)
         }
-        
+
         const result = await query(args)
-        
+
         if (result.notes) result.notes = decrypt(result.notes)
         return result
       },
-      
+
       async findUnique({ args, query }) {
-        const result = await query(args) as any
+        const result = (await query(args)) as any
         if (result) {
           if (result.notes) result.notes = decrypt(result.notes)
           if (result.user?.email) result.user.email = decrypt(result.user.email)
           if (result.user?.phone) result.user.phone = decrypt(result.user.phone)
-          if (result.barber?.email) result.barber.email = decrypt(result.barber.email)
-          if (result.barber?.phone) result.barber.phone = decrypt(result.barber.phone)
-          if (result.service?.barbershop?.address) result.service.barbershop.address = decrypt(result.service.barbershop.address)
-          if (result.service?.barbershop?.phone && Array.isArray(result.service.barbershop.phone)) {
-            result.service.barbershop.phone = result.service.barbershop.phone.map((p: string) => decrypt(p))
+          if (result.barber?.email)
+            result.barber.email = decrypt(result.barber.email)
+          if (result.barber?.phone)
+            result.barber.phone = decrypt(result.barber.phone)
+          if (result.service?.barbershop?.address)
+            result.service.barbershop.address = decrypt(
+              result.service.barbershop.address
+            )
+          if (
+            result.service?.barbershop?.phone &&
+            Array.isArray(result.service.barbershop.phone)
+          ) {
+            result.service.barbershop.phone =
+              result.service.barbershop.phone.map((p: string) => decrypt(p))
           }
         }
         return result
       },
-      
+
       async findFirst({ args, query }) {
-        const result = await query(args) as any
+        const result = (await query(args)) as any
         if (result) {
           if (result.notes) result.notes = decrypt(result.notes)
           if (result.user?.email) result.user.email = decrypt(result.user.email)
           if (result.user?.phone) result.user.phone = decrypt(result.user.phone)
-          if (result.barber?.email) result.barber.email = decrypt(result.barber.email)
-          if (result.barber?.phone) result.barber.phone = decrypt(result.barber.phone)
-          if (result.service?.barbershop?.address) result.service.barbershop.address = decrypt(result.service.barbershop.address)
-          if (result.service?.barbershop?.phone && Array.isArray(result.service.barbershop.phone)) {
-            result.service.barbershop.phone = result.service.barbershop.phone.map((p: string) => decrypt(p))
+          if (result.barber?.email)
+            result.barber.email = decrypt(result.barber.email)
+          if (result.barber?.phone)
+            result.barber.phone = decrypt(result.barber.phone)
+          if (result.service?.barbershop?.address)
+            result.service.barbershop.address = decrypt(
+              result.service.barbershop.address
+            )
+          if (
+            result.service?.barbershop?.phone &&
+            Array.isArray(result.service.barbershop.phone)
+          ) {
+            result.service.barbershop.phone =
+              result.service.barbershop.phone.map((p: string) => decrypt(p))
           }
         }
         return result
       },
-      
+
       async findMany({ args, query }) {
-        const results = await query(args) as any[]
-        return results.map(r => {
+        const results = (await query(args)) as any[]
+        return results.map((r) => {
           if (r.notes) r.notes = decrypt(r.notes)
           if (r.user?.email) r.user.email = decrypt(r.user.email)
           if (r.user?.phone) r.user.phone = decrypt(r.user.phone)
           if (r.barber?.email) r.barber.email = decrypt(r.barber.email)
           if (r.barber?.phone) r.barber.phone = decrypt(r.barber.phone)
-          if (r.service?.barbershop?.address) r.service.barbershop.address = decrypt(r.service.barbershop.address)
-          if (r.service?.barbershop?.phone && Array.isArray(r.service.barbershop.phone)) {
-            r.service.barbershop.phone = r.service.barbershop.phone.map((p: string) => decrypt(p))
+          if (r.service?.barbershop?.address)
+            r.service.barbershop.address = decrypt(r.service.barbershop.address)
+          if (
+            r.service?.barbershop?.phone &&
+            Array.isArray(r.service.barbershop.phone)
+          ) {
+            r.service.barbershop.phone = r.service.barbershop.phone.map(
+              (p: string) => decrypt(p)
+            )
           }
           return r
         })
       },
     },
-    
+
     barber: {
       async create({ args, query }) {
         if (args.data.phone) {
           args.data.phone = encrypt(args.data.phone as string)
         }
         if (args.data.email) {
-          args.data.email = encrypt(args.data.email as string)
+          const rawEmail = args.data.email as string
+          args.data.emailHash = hashEmail(rawEmail)
+          args.data.email = encrypt(rawEmail)
         }
-        
+
         const result = await query(args)
-        
+
         if (result.phone) result.phone = decrypt(result.phone)
         if (result.email) result.email = decrypt(result.email)
-        
+
         return result
       },
-      
+
       async update({ args, query }) {
         if (args.data.phone) {
           args.data.phone = encrypt(args.data.phone as string)
         }
         if (args.data.email) {
-          args.data.email = encrypt(args.data.email as string)
+          const rawEmail = args.data.email as string
+          args.data.emailHash = hashEmail(rawEmail)
+          args.data.email = encrypt(rawEmail)
         }
-        
+
         const result = await query(args)
-        
+
         if (result.phone) result.phone = decrypt(result.phone)
         if (result.email) result.email = decrypt(result.email)
-        
+
         return result
       },
-      
+
       async findUnique({ args, query }) {
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const result = await query(args)
         if (result) {
           if (result.phone) result.phone = decrypt(result.phone)
@@ -278,8 +346,13 @@ const extendedPrisma = prisma.$extends({
         }
         return result
       },
-      
+
       async findFirst({ args, query }) {
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const result = await query(args)
         if (result) {
           if (result.phone) result.phone = decrypt(result.phone)
@@ -287,39 +360,43 @@ const extendedPrisma = prisma.$extends({
         }
         return result
       },
-      
+
       async findMany({ args, query }) {
+        if ((args.where as any)?.email) {
+          ;(args.where as any).emailHash = hashEmail((args.where as any).email)
+          delete (args.where as any).email
+        }
+
         const results = await query(args)
-        return results.map(r => {
+        return results.map((r) => {
           if (r.phone) r.phone = decrypt(r.phone)
           if (r.email) r.email = decrypt(r.email)
           return r
         })
       },
     },
-    
+
     barbershop: {
       async create({ args, query }) {
-        // Phone é array de strings
         if (args.data.phone && Array.isArray(args.data.phone)) {
           args.data.phone = args.data.phone.map((p: string) => encrypt(p))
         }
         if (args.data.address) {
           args.data.address = encrypt(args.data.address as string)
         }
-        
+
         const result = await query(args)
-        
+
         if (result.phone && Array.isArray(result.phone)) {
           result.phone = result.phone.map((p: string) => decrypt(p))
         }
         if (result.address) {
           result.address = decrypt(result.address)
         }
-        
+
         return result
       },
-      
+
       async update({ args, query }) {
         if (args.data.phone && Array.isArray(args.data.phone)) {
           args.data.phone = args.data.phone.map((p: string) => encrypt(p))
@@ -327,19 +404,19 @@ const extendedPrisma = prisma.$extends({
         if (args.data.address) {
           args.data.address = encrypt(args.data.address as string)
         }
-        
+
         const result = await query(args)
-        
+
         if (result.phone && Array.isArray(result.phone)) {
           result.phone = result.phone.map((p: string) => decrypt(p))
         }
         if (result.address) {
           result.address = decrypt(result.address)
         }
-        
+
         return result
       },
-      
+
       async findUnique({ args, query }) {
         const result = await query(args)
         if (result) {
@@ -352,7 +429,7 @@ const extendedPrisma = prisma.$extends({
         }
         return result
       },
-      
+
       async findFirst({ args, query }) {
         const result = await query(args)
         if (result) {
@@ -365,10 +442,10 @@ const extendedPrisma = prisma.$extends({
         }
         return result
       },
-      
+
       async findMany({ args, query }) {
         const results = await query(args)
-        return results.map(r => {
+        return results.map((r) => {
           if (r.phone && Array.isArray(r.phone)) {
             r.phone = r.phone.map((p: string) => decrypt(p))
           }
