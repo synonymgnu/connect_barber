@@ -86,7 +86,9 @@ export async function GET(request: Request) {
           select: { 
             id: true, 
             name: true,
-            image: true
+            image: true,
+            email: true,
+            phone: true
           } 
         },
         service: { select: { id: true, name: true, price: true, duration: true } },
@@ -97,13 +99,13 @@ export async function GET(request: Request) {
       take: pageSize
     })
 
-    // Removido auto-update inline - usar cron job separado para melhor performance
+        // Removido auto-update inline - usar cron job separado para melhor performance
 
     const formattedBookings = bookings.map(booking => ({
       id: booking.id,
       customerName: booking.user.name || 'Cliente',
-      customerEmail: '',
-      customerPhone: '',
+      customerEmail: booking.user.email || '',
+      customerPhone: booking.user.phone || '',
       customerImageUrl: booking.user.image || null,
       type: booking.service.name,
       serviceId: booking.service.id,
