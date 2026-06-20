@@ -34,12 +34,30 @@ export async function GET() {
     const sixtyDaysAgo = new Date()
     sixtyDaysAgo.setDate(today.getDate() - 60)
 
-    // Próximos
+    // Próximos (7 dias)
     const upcomingBookings = await db.booking.count({
       where: {
         date: {
           gte: today,
           lte: next7Days
+        },
+        service: {
+          barbershopId: barbershopId
+        }
+      }
+    })
+
+    // Próximos do período anterior (7-14 dias atrás)
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(today.getDate() - 7)
+    const fourteenDaysAgo = new Date()
+    fourteenDaysAgo.setDate(today.getDate() - 14)
+
+    const previousUpcomingBookings = await db.booking.count({
+      where: {
+        date: {
+          gte: fourteenDaysAgo,
+          lt: sevenDaysAgo
         },
         service: {
           barbershopId: barbershopId
@@ -145,6 +163,7 @@ export async function GET() {
       return Number((((current - previous) / previous) * 100).toFixed(1))
     }
 
+    const upcomingChange = calculatePercentage(upcomingBookings, previousUpcomingBookings)
     const completedChange = calculatePercentage(completedBookings, previousCompletedBookings)
     const customersChange = calculatePercentage(totalCustomers.length, previousCustomers.length)
     const cancelledChange = calculatePercentage(last30DaysCancelled, previousCancelledBookings)
@@ -153,9 +172,9 @@ export async function GET() {
       metrics: {
         upcoming: {
           value: upcomingBookings.toString(),
-          change: Math.round(completedChange),
+          change: Math.round(upcomingChange),
           percentage: "12%",
-          trend: upcomingBookings > previousCompletedBookings ? "up" : "down"
+          trend: upcomingChange > 0 ? "up" : "down"
         },
         completed: {
           value: completedBookings.toString(),
