@@ -3,6 +3,7 @@ import { AuthOptions } from 'next-auth'
 import { db } from './prisma'
 import { Adapter } from 'next-auth/adapters'
 import GoogleProvider from 'next-auth/providers/google'
+import { hashEmail } from './encryption'
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
@@ -19,7 +20,7 @@ export const authOptions: AuthOptions = {
         try {
           // Verificar se já existe um usuário com este email
           const existingUser = await db.user.findUnique({
-            where: { email: user.email! },
+            where: { emailHash: hashEmail(user.email!) },
             include: {
               barber: {
                 select: { id: true },

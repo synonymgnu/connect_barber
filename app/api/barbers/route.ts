@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
+import { hashEmail } from '@/app/_lib/encryption'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { emailHash: hashEmail(email) },
       include: { barber: true },
     })
 
