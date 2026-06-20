@@ -25,7 +25,6 @@ async function seedDatabase() {
       'https://utfs.io/f/07842cfb-7b30-4fdc-accc-719618dfa1f2-17s.png',
       'https://utfs.io/f/0522fdaf-0357-4213-8f52-1d83c3dcb6cd-18e.png',
     ]
-    // Nomes criativos para as barbearias
     const creativeNames = [
       'Barbearia Vintage',
       'Corte & Estilo',
@@ -39,7 +38,6 @@ async function seedDatabase() {
       'Estilo Clássico',
     ]
 
-    // Endereços fictícios para as barbearias
     const addresses = [
       'Rua da Barbearia, 123',
       'Avenida dos Cortes, 456',
@@ -58,7 +56,7 @@ async function seedDatabase() {
         name: 'Corte de Cabelo',
         description: 'Estilo personalizado com as últimas tendências.',
         price: 60.0,
-        duration: 30, // 30 minutos
+        duration: 30,
         imageUrl:
           'https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png',
       },
@@ -104,7 +102,6 @@ async function seedDatabase() {
       },
     ]
 
-    // Criar 10 barbearias com nomes e endereços fictícios
     const barbershops = []
     for (let i = 0; i < 10; i++) {
       const name = creativeNames[i]
@@ -139,41 +136,9 @@ async function seedDatabase() {
         })
       }
 
-      // Create a default barber with default work schedule (Tue-Sat 09:00-18:00)
-      const defaultUser = await prisma.user.create({
-        data: {
-          email: `barber-${barbershop.id}@connectbarber.app`,
-          name: 'Barbeiro Padrão',
-          role: 'BARBER',
-        },
-      })
-
-      const defaultBarber = await prisma.barber.create({
-        data: {
-          name: 'Barbeiro Padrão',
-          email: `barber-${barbershop.id}@connectbarber.app`,
-          userId: defaultUser.id,
-          barbershopId: barbershop.id,
-          isActive: true,
-        },
-      })
-
-      // Tue=2, Wed=3, Thu=4, Fri=5, Sat=6
-      const workDays = [2, 3, 4, 5, 6]
-      await prisma.barberWorkSchedule.createMany({
-        data: workDays.map((day) => ({
-          barberId: defaultBarber.id,
-          dayOfWeek: day,
-          startTime: '09:00',
-          endTime: '18:00',
-          isActive: true,
-        })),
-      })
-
       barbershops.push(barbershop)
     }
 
-    // Fechar a conexão com o banco de dados
     await prisma.$disconnect()
   } catch (error) {
     console.error('Erro ao criar as barbearias:', error)
