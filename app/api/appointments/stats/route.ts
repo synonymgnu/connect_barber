@@ -204,7 +204,7 @@ export async function GET(request: Request) {
     const chartData = Object.entries(groupedData).map(([time, data]) => ({
       time,
       offline: data.offline,
-      online: -data.online
+      online: data.online
     }))
 
     const sortedChartData = chartData.sort((a, b) => {
