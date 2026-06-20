@@ -10,7 +10,7 @@ datasource db {
 model User {
   id              String         @id @default(cuid())
   email           String
-  emailHash       String         @unique
+  emailHash       String?         @unique
   name            String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -99,7 +99,7 @@ model Barber {
   id           String               @id @default(uuid())
   name         String
   email        String
-  emailHash    String         @unique
+  emailHash    String?        @unique
   phone        String?
   imageUrl     String?
   userId       String               @unique
