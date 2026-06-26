@@ -12,6 +12,12 @@ interface ServiceInput {
   imageUrl: string
 }
 
+interface SocialMediaInput {
+  instagram?: string
+  facebook?: string
+  googleMaps?: string
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
 
@@ -32,6 +38,10 @@ export async function POST(req: NextRequest) {
       shopImageUrl,
       description,
       phone,
+      // Redes Sociais
+      socialMedia,
+      // Formas de Pagamento
+      paymentMethods,
       // Dados do dono (ADMIN)
       ownerName,
       ownerEmail,
@@ -43,11 +53,14 @@ export async function POST(req: NextRequest) {
       shopImageUrl: string
       description: string
       phone: string[]
+      socialMedia?: SocialMediaInput
+      paymentMethods?: string[]
       ownerName: string
       ownerEmail: string
       services?: ServiceInput[]
     }
 
+    // Validações básicas
     if (!shopName || !address || !shopImageUrl || !description) {
       return NextResponse.json(
         { error: 'Dados da barbearia incompletos' },
@@ -58,6 +71,27 @@ export async function POST(req: NextRequest) {
     if (!ownerName || !ownerEmail) {
       return NextResponse.json(
         { error: 'Nome e email do dono são obrigatórios' },
+        { status: 400 }
+      )
+    }
+
+    // Validação de formas de pagamento
+    if (!paymentMethods || paymentMethods.length === 0) {
+      return NextResponse.json(
+        { error: 'Selecione pelo menos uma forma de pagamento' },
+        { status: 400 }
+      )
+    }
+
+    // Validar se as formas de pagamento são válidas
+    const validPaymentMethods = ['cash', 'pix', 'credit_card', 'debit_card']
+    const isValidPaymentMethods = paymentMethods.every((method) =>
+      validPaymentMethods.includes(method)
+    )
+
+    if (!isValidPaymentMethods) {
+      return NextResponse.json(
+        { error: 'Formas de pagamento inválidas' },
         { status: 400 }
       )
     }
@@ -129,6 +163,12 @@ export async function POST(req: NextRequest) {
           imageUrl: shopImageUrl,
           description,
           phone: phone?.length ? phone : [],
+          // Redes Sociais
+          instagram: socialMedia?.instagram || null,
+          facebook: socialMedia?.facebook || null,
+          googleMaps: socialMedia?.googleMaps || null,
+          // Formas de Pagamento
+          paymentMethods: paymentMethods || [],
           ownerId: owner.id,
           isActive: true,
         },

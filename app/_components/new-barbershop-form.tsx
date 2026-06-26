@@ -24,6 +24,7 @@ import {
 } from '@/app/_components/ui/form'
 import { Input } from '@/app/_components/ui/input'
 import { Textarea } from '@/app/_components/ui/textarea'
+import { Checkbox } from '@/app/_components/ui/checkbox'
 import {
   AlertCircle,
   Info,
@@ -33,10 +34,18 @@ import {
   Plus,
   Store,
   X,
+  Instagram,
+  Facebook,
+  MapPinIcon,
+  CreditCard,
+  Banknote,
+  QrCode,
+  WalletCards,
 } from 'lucide-react'
 import Image from 'next/image'
 
 const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/
+const urlRegex = /^(https?:\/\/.+|)$/
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -55,12 +64,29 @@ const formSchema = z.object({
   phones: z.array(
     z.string().regex(phoneRegex, 'Formato inválido. Use (00) 00000-0000')
   ),
+  // Redes Sociais
+  socialMedia: z.object({
+    instagram: z.string().url('URL inválida').or(z.literal('')),
+    facebook: z.string().url('URL inválida').or(z.literal('')),
+    googleMaps: z.string(),
+  }),
+  // Formas de Pagamento
+  paymentMethods: z
+    .array(z.enum(['cash', 'pix', 'credit_card', 'debit_card']))
+    .min(1, 'Selecione pelo menos uma forma de pagamento'),
   // Dados do dono
   ownerName: z.string().min(1, 'Nome do dono é obrigatório'),
   ownerEmail: z.string().email('Email inválido'),
 })
 
 type FormValues = z.infer<typeof formSchema>
+
+const paymentMethodsOptions = [
+  { id: 'cash', label: 'Dinheiro', icon: Banknote },
+  { id: 'pix', label: 'Pix', icon: QrCode },
+  { id: 'credit_card', label: 'Cartão de Crédito', icon: CreditCard },
+  { id: 'debit_card', label: 'Cartão de Débito', icon: WalletCards },
+] as const
 
 export default function NewBarbershopForm() {
   const router = useRouter()
@@ -78,6 +104,12 @@ export default function NewBarbershopForm() {
       shopImageUrl: '',
       description: '',
       phones: [''],
+      socialMedia: {
+        instagram: '',
+        facebook: '',
+        googleMaps: '',
+      },
+      paymentMethods: [],
       ownerName: '',
       ownerEmail: '',
     },
@@ -104,6 +136,19 @@ export default function NewBarbershopForm() {
     },
     [form]
   )
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '').slice(0, 11)
+
+    if (numbers.length <= 2) {
+      return numbers
+    }
+
+    if (numbers.length <= 7) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`
+    }
+
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`
+  }
 
   const addService = useCallback(() => {
     setServices((prev) => [
@@ -188,6 +233,21 @@ export default function NewBarbershopForm() {
     setIsSubmitting(true)
 
     try {
+      let googleMaps = values.socialMedia.googleMaps.trim()
+
+      // Usuário colou o iframe inteiro
+      if (googleMaps.includes('<iframe')) {
+        const match = googleMaps.match(/src="([^"]+)"/)
+
+        if (match) {
+          googleMaps = match[1]
+        }
+      }
+
+      // Usuário colou somente a URL mas junto com width=""...
+      else if (googleMaps.includes('width=')) {
+        googleMaps = googleMaps.split('" width=')[0]
+      }
       const res = await fetch('/api/master/barbershops', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -197,6 +257,12 @@ export default function NewBarbershopForm() {
           shopImageUrl: values.shopImageUrl,
           description: values.description,
           phone: values.phones.filter(Boolean),
+          socialMedia: {
+            instagram: values.socialMedia.instagram || null,
+            facebook: values.socialMedia.facebook || null,
+            googleMaps: googleMaps || null,
+          },
+          paymentMethods: values.paymentMethods,
           ownerName: values.ownerName,
           ownerEmail: values.ownerEmail,
           services:
@@ -283,6 +349,29 @@ export default function NewBarbershopForm() {
                     <p className="text-sm text-zinc-300 line-clamp-4">
                       {description}
                     </p>
+                  </div>
+                )}
+
+                {form.watch('paymentMethods').length > 0 && (
+                  <div className="pt-4 border-t border-[#1f2022]">
+                    <p className="text-xs text-zinc-500 mb-2">
+                      Formas de Pagamento
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {form.watch('paymentMethods').map((method) => {
+                        const option = paymentMethodsOptions.find(
+                          (o) => o.id === method
+                        )
+                        return (
+                          <span
+                            key={method}
+                            className="text-xs bg-[#2b2c2e] text-zinc-300 px-2 py-1 rounded-md"
+                          >
+                            {option?.label}
+                          </span>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -448,7 +537,12 @@ export default function NewBarbershopForm() {
                                       <FormControl>
                                         <Input
                                           placeholder="(00) 00000-0000"
-                                          {...field}
+                                          value={field.value}
+                                          onChange={(e) =>
+                                            field.onChange(
+                                              formatPhone(e.target.value)
+                                            )
+                                          }
                                           className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
                                         />
                                       </FormControl>
@@ -473,6 +567,153 @@ export default function NewBarbershopForm() {
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+
+                {/* Redes Sociais e Formas de Pagamento */}
+                <Card className="bg-[#1a1b1d] border border-[#1f2022] rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2 text-white">
+                      <Instagram className="h-5 w-5 text-violet-500" />
+                      Redes Sociais e Pagamento
+                    </CardTitle>
+                    <CardDescription className="text-zinc-400">
+                      Links de redes sociais e formas de pagamento aceitas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Redes Sociais */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium text-zinc-300">
+                        Redes Sociais
+                      </h4>
+
+                      {/* Instagram */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.instagram"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <Instagram className="h-4 w-4 text-violet-500" />
+                              Instagram
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://instagram.com/seu_perfil"
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Facebook */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.facebook"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <Facebook className="h-4 w-4 text-violet-500" />
+                              Facebook
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://facebook.com/seu_perfil"
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Google Maps */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.googleMaps"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <MapPinIcon className="h-4 w-4 text-violet-500" />
+                              Google Maps
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder={`Cole aqui o link ou o código <iframe> do Google Maps`}
+                                rows={4}
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white resize-none focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Formas de Pagamento */}
+                    <div className="space-y-4 pt-4 border-t border-[#1f2022]">
+                      <h4 className="text-sm font-medium text-zinc-300">
+                        Formas de Pagamento
+                      </h4>
+                      <FormField
+                        control={form.control}
+                        name="paymentMethods"
+                        render={() => (
+                          <FormItem>
+                            <div className="space-y-3">
+                              {paymentMethodsOptions.map((option) => (
+                                <FormField
+                                  key={option.id}
+                                  control={form.control}
+                                  name="paymentMethods"
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem
+                                        key={option.id}
+                                        className="flex flex-row items-center space-x-3 space-y-0"
+                                      >
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value?.includes(
+                                              option.id
+                                            )}
+                                            onCheckedChange={(checked) => {
+                                              return checked
+                                                ? field.onChange([
+                                                    ...field.value,
+                                                    option.id,
+                                                  ])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                      (value) =>
+                                                        value !== option.id
+                                                    )
+                                                  )
+                                            }}
+                                            className="border-[#2b2c2e] rounded"
+                                          />
+                                        </FormControl>
+                                        <FormLabel className="font-normal text-zinc-300 cursor-pointer flex items-center gap-2">
+                                          <option.icon className="h-4 w-4 text-violet-500" />
+                                          {option.label}
+                                        </FormLabel>
+                                      </FormItem>
+                                    )
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 

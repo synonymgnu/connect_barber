@@ -76,6 +76,10 @@ model Barbershop {
   description String
   ownerId     String?  @unique
   isActive    Boolean  @default(true)
+  instagram String?
+  facebook String?
+  googleMaps String?
+  paymentMethods String[] 
 
   barbers  Barber[]
   owner    User?               @relation(fields: [ownerId], references: [id])
