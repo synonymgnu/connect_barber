@@ -3,86 +3,130 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 
-export async function GET() {
+// GET /api/availability/schedule?type=shop
+// GET /api/availability/schedule?type=barber&barberId=xxx
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session?.user?.barbershopId) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const barbershop = await db.barbershop.findUnique({
-      where: { id: session.user.barbershopId },
-      include: {
-        barbers: {
-          include: {
-            workSchedule: true
-            }
-        }
-      }
-    })
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get('type') ?? 'shop'
+    const barberId = searchParams.get('barberId')
 
-    if (!barbershop || barbershop.barbers.length === 0) {
-      return NextResponse.json([])
+    if (type === 'barber') {
+      if (!barberId) {
+        return NextResponse.json({ error: 'barberId obrigatório' }, { status: 400 })
+      }
+
+      const barber = await db.barber.findFirst({
+        where: { id: barberId, barbershopId: session.user.barbershopId },
+      })
+      if (!barber) {
+        return NextResponse.json({ error: 'Barbeiro não encontrado' }, { status: 404 })
+      }
+
+      const schedules = await db.barberWorkSchedule.findMany({
+        where: { barberId },
+        orderBy: { dayOfWeek: 'asc' },
+      })
+      return NextResponse.json(schedules)
     }
 
-    // Retorna o horário do primeiro barbeiro (padrão da barbearia)
-    // Você pode adaptar para múltiplos barbeiros depois
-    const schedules = barbershop.barbers[0].workSchedule
-    return NextResponse.json(schedules)
+    // type === 'shop'
+    const hours = await db.barbershopHours.findMany({
+      where: { barbershopId: session.user.barbershopId },
+      orderBy: { dayOfWeek: 'asc' },
+    })
+    return NextResponse.json(hours)
   } catch (error) {
-    console.error('Error fetching work schedule:', error)
+    console.error('Error fetching schedule:', error)
     return NextResponse.json({ error: 'Erro ao carregar horários' }, { status: 500 })
   }
 }
 
+// POST /api/availability/schedule
+// body: { type: 'shop' | 'barber', barberId?: string, schedules: WorkSchedule[] }
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session?.user?.barbershopId) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const { schedules } = await request.json()
-    
-    const barbershop = await db.barbershop.findUnique({
-      where: { id: session.user.barbershopId },
-      include: {
-        barbers: true
-      }
-    })
+    const { type = 'shop', barberId, schedules } = await request.json()
 
-    if (!barbershop || barbershop.barbers.length === 0) {
-      return NextResponse.json({ error: 'Nenhum barbeiro encontrado' }, { status: 404 })
+    if (!Array.isArray(schedules)) {
+      return NextResponse.json({ error: 'schedules inválido' }, { status: 400 })
     }
 
-    const barber = barbershop.barbers[0]
+    // Validação startTime < endTime
+    for (const s of schedules) {
+      if (s.isActive && s.startTime >= s.endTime) {
+        return NextResponse.json(
+          { error: `Horário inválido no dia ${s.dayOfWeek}: início deve ser antes do fim` },
+          { status: 400 }
+        )
+      }
+    }
 
-    // Deleta horários existentes e cria novos
-    await db.barberWorkSchedule.deleteMany({
-      where: { barberId: barber.id }
-    })
+    if (type === 'barber') {
+      if (!barberId) {
+        return NextResponse.json({ error: 'barberId obrigatório' }, { status: 400 })
+      }
 
-    const createPromises = schedules
-      .filter((s: any) => s.isActive)
-      .map((schedule: any) => 
-        db.barberWorkSchedule.create({
-          data: {
-            barberId: barber.id,
-            dayOfWeek: schedule.dayOfWeek,
-            startTime: schedule.startTime,
-            endTime: schedule.endTime,
-            isActive: schedule.isActive
-          }
-        })
+      const barber = await db.barber.findFirst({
+        where: { id: barberId, barbershopId: session.user.barbershopId },
+      })
+      if (!barber) {
+        return NextResponse.json({ error: 'Barbeiro não encontrado' }, { status: 404 })
+      }
+
+      await db.$transaction(async (tx) => {
+        await tx.barberWorkSchedule.deleteMany({ where: { barberId } })
+        await Promise.all(
+          schedules.map((s: any) =>
+            tx.barberWorkSchedule.create({
+              data: {
+                barberId,
+                dayOfWeek: s.dayOfWeek,
+                startTime: s.startTime,
+                endTime: s.endTime,
+                isActive: s.isActive,
+              },
+            })
+          )
+        )
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
+    // type === 'shop'
+    const barbershopId = session.user.barbershopId
+
+    await db.$transaction(async (tx) => {
+      await tx.barbershopHours.deleteMany({ where: { barbershopId } })
+      await Promise.all(
+        schedules.map((s: any) =>
+          tx.barbershopHours.create({
+            data: {
+              barbershopId,
+              dayOfWeek: s.dayOfWeek,
+              startTime: s.startTime,
+              endTime: s.endTime,
+              isActive: s.isActive,
+            },
+          })
+        )
       )
-
-    await Promise.all(createPromises)
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error saving work schedule:', error)
+    console.error('Error saving schedule:', error)
     return NextResponse.json({ error: 'Erro ao salvar horários' }, { status: 500 })
   }
 }

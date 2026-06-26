@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
     }
 
-    const date = new Date(dateStr)
+    const date = new Date(`${dateStr}T12:00:00`)
     const dayOfWeek = date.getDay()
 
     const barber = await db.barber.findUnique({
@@ -56,16 +56,20 @@ export async function GET(
     const endMinutes = endH * 60 + endM
 
     // Build occupied intervals from existing bookings
+    // Use UTC offset to convert stored UTC time back to local time
+    const tzOffsetMinutes = new Date().getTimezoneOffset()
     const occupied = barber.bookings.map((b) => {
-      const bookingStart = b.date.getHours() * 60 + b.date.getMinutes()
+      const bookingStartUTC = b.date.getUTCHours() * 60 + b.date.getUTCMinutes()
+      const bookingStart = bookingStartUTC - tzOffsetMinutes
       const bookingDuration = b.service?.duration ?? 30
       return { start: bookingStart, end: bookingStart + bookingDuration }
     })
 
     const slots: string[] = []
     const now = new Date()
-    const isToday =
-      date.toISOString().split('T')[0] === now.toISOString().split('T')[0]
+    const toLocalDateStr = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const isToday = toLocalDateStr(date) === toLocalDateStr(now)
 
     for (let m = startMinutes; m + duration <= endMinutes; m += 30) {
       // Skip past slots for today
@@ -87,7 +91,21 @@ export async function GET(
       slots.push(`${h}:${min}`)
     }
 
-    return NextResponse.json(slots)
+    return NextResponse.json({
+      slots,
+      debug: {
+        dateStr,
+        dayOfWeek,
+        scheduleFound: !!schedule,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        startMinutes,
+        endMinutes,
+        duration,
+        isToday,
+        bookingsCount: barber.bookings.length,
+      }
+    })
   } catch (error) {
     console.error('Error fetching barber slots:', error)
     return NextResponse.json({ error: 'Erro ao buscar horários' }, { status: 500 })

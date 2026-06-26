@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-interface WorkSchedule {
+export interface WorkSchedule {
   id?: string
   dayOfWeek: number
   startTime: string
@@ -9,37 +9,65 @@ interface WorkSchedule {
   isActive: boolean
 }
 
-export function useWorkSchedule() {
+export function useShopSchedule() {
   return useQuery({
-    queryKey: ['work-schedule'],
+    queryKey: ['schedule', 'shop'],
     queryFn: async () => {
-      const response = await fetch('/api/availability/schedule')
-      if (!response.ok) throw new Error('Erro ao carregar horários')
-      return response.json() as Promise<WorkSchedule[]>
+      const res = await fetch('/api/availability/schedule?type=shop')
+      if (!res.ok) throw new Error('Erro ao carregar horários da loja')
+      return res.json() as Promise<WorkSchedule[]>
     },
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: 2 * 60 * 1000,
   })
 }
 
-export function useUpdateWorkSchedule() {
+export function useBarberSchedule(barberId: string | null) {
+  return useQuery({
+    queryKey: ['schedule', 'barber', barberId],
+    queryFn: async () => {
+      const res = await fetch(`/api/availability/schedule?type=barber&barberId=${barberId}`)
+      if (!res.ok) throw new Error('Erro ao carregar horários do barbeiro')
+      return res.json() as Promise<WorkSchedule[]>
+    },
+    enabled: !!barberId,
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+export function useUpdateSchedule() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (schedules: WorkSchedule[]) => {
-      const response = await fetch('/api/availability/schedule', {
+    mutationFn: async ({
+      type,
+      barberId,
+      schedules,
+    }: {
+      type: 'shop' | 'barber'
+      barberId?: string
+      schedules: WorkSchedule[]
+    }) => {
+      const res = await fetch('/api/availability/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ schedules }),
+        body: JSON.stringify({ type, barberId, schedules }),
       })
-      if (!response.ok) throw new Error('Erro ao salvar')
-      return response.json()
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Erro ao salvar')
+      }
+      return res.json()
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['work-schedule'] })
+    onSuccess: (_, { type, barberId }) => {
+      if (type === 'shop') {
+        queryClient.invalidateQueries({ queryKey: ['schedule', 'shop'] })
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['schedule', 'barber', barberId] })
+      }
       toast.success('Horários salvos com sucesso!')
     },
-    onError: () => {
-      toast.error('Erro ao salvar horários')
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao salvar horários')
     },
   })
 }
