@@ -7,8 +7,9 @@ const Footer = () => {
   const pathname = usePathname()
 
   const isDashboard = pathname.startsWith('/dashboard')
+  const isMaster = pathname.startsWith('/master')
 
-  if (isDashboard) return null
+  if (isDashboard || isMaster) return null
 
   return (
     <footer>

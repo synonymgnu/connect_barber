@@ -176,6 +176,22 @@ const Header = ({ isHidden }: HeaderProps) => {
                         </div>
                       </DropdownMenuItem>
                     )}
+                    {data.user.role === 'MASTER' && (
+                      <DropdownMenuItem>
+                        <div className="flex flex-col border-b border-solid w-full">
+                          <Button
+                            className="justify-start"
+                            variant="ghost"
+                            asChild
+                          >
+                            <Link href="/master/barbershops">
+                              <CalendarIcon size={18} />
+                              Dashboard Master
+                            </Link>
+                          </Button>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem>
                       <div className="flex flex-col  w-full">
                         <Button

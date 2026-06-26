@@ -1,5 +1,14 @@
 import { db } from '@/app/_lib/prisma'
-import { ChevronLeftIcon, MapPinIcon, StarIcon } from 'lucide-react'
+import {
+  ChevronLeftIcon,
+  MapPinIcon,
+  StarIcon,
+  Banknote,
+  CreditCard,
+  WalletCards,
+  QrCode,
+  Facebook,
+} from 'lucide-react'
 import Image from 'next/image'
 import { Button } from '../../_components/ui/button'
 import Link from 'next/link'
@@ -38,15 +47,52 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   }
 
   // Build shop schedule: for each day of week, collect earliest start / latest end across all barbers
-  const DAY_NAMES = ['Domingo', 'Segunda', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado']
+  const DAY_NAMES = [
+    'Domingo',
+    'Segunda',
+    'Terça-Feira',
+    'Quarta-Feira',
+    'Quinta-Feira',
+    'Sexta-Feira',
+    'Sábado',
+  ]
+
+  const paymentMethodsOptions = [
+    {
+      id: 'cash',
+      label: 'Dinheiro',
+      icon: Banknote,
+    },
+    {
+      id: 'pix',
+      label: 'Pix',
+      icon: QrCode,
+    },
+    {
+      id: 'credit_card',
+      label: 'Cartão de Crédito',
+      icon: CreditCard,
+    },
+    {
+      id: 'debit_card',
+      label: 'Cartão de Débito',
+      icon: WalletCards,
+    },
+  ]
+
   const scheduleMap: Record<number, { startTime: string; endTime: string }> = {}
   for (const barber of barbershop.barbers) {
     for (const s of barber.workSchedule) {
       if (!scheduleMap[s.dayOfWeek]) {
-        scheduleMap[s.dayOfWeek] = { startTime: s.startTime, endTime: s.endTime }
+        scheduleMap[s.dayOfWeek] = {
+          startTime: s.startTime,
+          endTime: s.endTime,
+        }
       } else {
-        if (s.startTime < scheduleMap[s.dayOfWeek].startTime) scheduleMap[s.dayOfWeek].startTime = s.startTime
-        if (s.endTime > scheduleMap[s.dayOfWeek].endTime) scheduleMap[s.dayOfWeek].endTime = s.endTime
+        if (s.startTime < scheduleMap[s.dayOfWeek].startTime)
+          scheduleMap[s.dayOfWeek].startTime = s.startTime
+        if (s.endTime > scheduleMap[s.dayOfWeek].endTime)
+          scheduleMap[s.dayOfWeek].endTime = s.endTime
       }
     }
   }
@@ -214,15 +260,25 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
           <div className="p-5 space-y-5">
             {/* SOBRE NÓS - SOMENTE DESKTOP */}
             <div>
-              <div className="relative h-[180px] w-full mb-5">
-                {/* MAPA*/}
-                <Image
-                  alt="Mapa"
-                  src="/map.png"
-                  fill
-                  className="rounded-xl object-cover"
-                />
-                {/* CARD SOBRE O MAPA */}
+              <div className="relative h-[200px] w-full mb-5">
+                {barbershop.googleMaps ? (
+                  <iframe
+                    src={barbershop.googleMaps}
+                    className="w-full h-[200px] rounded-xl"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                ) : (
+                  <Image
+                    alt="Mapa"
+                    src="/map.png"
+                    fill
+                    className="rounded-xl object-cover"
+                  />
+                )}
+                {/* CARD SOBRE O MAPA 
                 <Card className="truncate absolute bottom-4 left-1/2 transform -translate-x-1/2 rounded-2xl px-2 flex items-center gap-1 h-[35%] md:w-[90%] shadow-lg">
                   <Avatar className="h-6 w-6">
                     <AvatarImage
@@ -238,7 +294,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                       {barbershop.address}
                     </p>
                   </div>
-                </Card>
+                </Card> */}
               </div>
 
               <h2 className="font-bold uppercase text-sm mb-2.5">Sobre nós</h2>
@@ -252,23 +308,69 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 <PhoneItem key={phone} phone={phone} />
               ))}
             </div>
-            <div className="flex items-center justify-center">
-              <a
-                href="https://instagram.com/seuusuario"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="inline-flex"
-              >
-                <InstagramIcon className="w-8 h-8" />
-              </a>
+
+            <div className="flex items-center justify-center gap-4">
+              {barbershop.instagram && (
+                <a
+                  href={barbershop.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="inline-flex hover:text-primary transition-colors"
+                >
+                  <InstagramIcon className="w-8 h-8" />
+                </a>
+              )}
+
+              {barbershop.facebook && (
+                <a
+                  href={barbershop.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="inline-flex hover:text-primary transition-colors"
+                >
+                  {/* Ícone do Facebook */}
+                </a>
+              )}
+            </div>
+            <h2 className="font-bold uppercase text-sm mt-5 border-t pt-5">
+              Formas de pagamento
+            </h2>
+
+            <div className="grid grid-cols-2 gap-2">
+              {barbershop.paymentMethods.map((method) => {
+                const option = paymentMethodsOptions.find(
+                  (item) => item.id === method
+                )
+
+                if (!option) return null
+
+                const Icon = option.icon
+
+                return (
+                  <div
+                    key={method}
+                    className="flex items-center gap-2 rounded-lg border border-zinc-800 p-2"
+                  >
+                    <Icon className="h-4 w-4 text-primary" />
+                    <span className="text-sm">{option.label}</span>
+                  </div>
+                )
+              })}
             </div>
             {/*DIAS E HORÁRIOS*/}
             <div className="text-xs  border-t border-zinc-800 pt-3 space-y-1">
               {DAY_NAMES.map((name, idx) => (
                 <div key={idx} className="flex justify-between">
-                  <p className={scheduleMap[idx] ? '' : 'text-zinc-500'}>{name}</p>
-                  <p>{scheduleMap[idx] ? `${scheduleMap[idx].startTime} - ${scheduleMap[idx].endTime}` : 'Fechado'}</p>
+                  <p className={scheduleMap[idx] ? '' : 'text-zinc-500'}>
+                    {name}
+                  </p>
+                  <p>
+                    {scheduleMap[idx]
+                      ? `${scheduleMap[idx].startTime} - ${scheduleMap[idx].endTime}`
+                      : 'Fechado'}
+                  </p>
                 </div>
               ))}
             </div>
@@ -289,16 +391,55 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
           {barbershop.phone.map((phone) => (
             <PhoneItem key={phone} phone={phone} />
           ))}
-          <div className="flex items-center justify-center">
-            <a
-              href="https://instagram.com/seuusuario"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              className="inline-flex"
-            >
-              <InstagramIcon className="w-8 h-8 mt-2" />
-            </a>
+          <div className="flex items-center justify-center gap-4">
+            {barbershop.instagram && (
+              <a
+                href={barbershop.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="inline-flex hover:text-primary transition-colors"
+              >
+                <InstagramIcon className="w-8 h-8" />
+              </a>
+            )}
+
+            {barbershop.facebook && (
+              <a
+                href={barbershop.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="inline-flex hover:text-primary transition-colors"
+              >
+                {/* Ícone do Facebook */}
+              </a>
+            )}
+          </div>
+          <h2 className="font-bold uppercase text-gray-400 text-xs mb-3 lg:text-sm">
+            Formas de pagamento
+          </h2>
+
+          <div className="grid grid-cols-2 gap-2">
+            {barbershop.paymentMethods.map((method) => {
+              const option = paymentMethodsOptions.find(
+                (item) => item.id === method
+              )
+
+              if (!option) return null
+
+              const Icon = option.icon
+
+              return (
+                <div
+                  key={method}
+                  className="flex items-center gap-2 rounded-lg border border-zinc-800 p-2"
+                >
+                  <Icon className="h-4 w-4 text-primary" />
+                  <span className="text-sm">{option.label}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

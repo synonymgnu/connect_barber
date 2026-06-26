@@ -107,6 +107,16 @@ const SidebarSheet = () => {
           </SheetClose>
           {data?.user ? (
             <>
+              {data.user.role === 'MASTER' && (
+                <SheetClose asChild>
+                  <Button className="justify-start" variant="ghost" asChild>
+                    <Link href="/master/barbershops">
+                      <CalendarIcon size={18} />
+                      Dashboard Master
+                    </Link>
+                  </Button>
+                </SheetClose>
+              )}
               <Button className="justify-start" variant="ghost" asChild>
                 <Link href="/account">
                   <UserCog size={18} /> Minha conta

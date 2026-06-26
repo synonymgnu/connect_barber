@@ -130,7 +130,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={booking.service.barbershop.imageUrl} />
-                <AvatarFallback>{booking.service.barbershop.name[0]}</AvatarFallback>
+                <AvatarFallback>
+                  {booking.service.barbershop.name[0]}
+                </AvatarFallback>
               </Avatar>
               <p className="text-sm">{booking.service.barbershop.name}</p>
             </div>
@@ -172,14 +174,25 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </SheetHeader>
 
             <div className="relative flex h-[180px] w-full items-end mt-6">
-              <Image
-                alt={`Mapa da barbearia ${booking.service.barbershop.name}`}
-                src="map.png"
-                fill
-                className="object-cover rounded-xl"
-              />
+              {barbershop.googleMaps ? (
+                <iframe
+                  src={barbershop.googleMaps}
+                  className="w-full h-[200px] rounded-xl"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              ) : (
+                <Image
+                  alt="Mapa"
+                  src="/map.png"
+                  fill
+                  className="rounded-xl object-cover"
+                />
+              )}
 
-              <Card className="z-50 mx-5 mb-3 w-full rounded-xl">
+              {/* <Card className="z-50 mx-5 mb-3 w-full rounded-xl">
                 <CardContent className="flex px-5 py-3 items-center gap-3">
                   <Avatar>
                     <AvatarImage src={barbershop.imageUrl} />
@@ -190,7 +203,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                     <p className="text-xs">{barbershop.address}</p>
                   </div>
                 </CardContent>
-              </Card>
+              </Card>*/}
             </div>
 
             <div className="mt-6">
