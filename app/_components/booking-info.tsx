@@ -51,14 +51,25 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
     <Card className="hidden lg:block mt-[51px] self-start w-[380px]">
       <CardContent>
         <div className="relative flex h-[180px] w-full items-end mt-6">
-          <Image
-            alt={`Mapa da barbearia ${booking.service.barbershop.name}`}
-            src="map.png"
-            fill
-            className="object-cover rounded-xl"
-          />
+          {barbershop.googleMaps ? (
+            <iframe
+              src={barbershop.googleMaps}
+              className="w-full h-[200px] rounded-xl"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          ) : (
+            <Image
+              alt="Mapa"
+              src="/map.png"
+              fill
+              className="rounded-xl object-cover"
+            />
+          )}
 
-          <Card className="z-50 mx-5 mb-3 w-full rounded-xl">
+          {/*<Card className="z-50 mx-5 mb-3 w-full rounded-xl">
             <CardContent className="flex px-5 py-3 items-center gap-3">
               <Avatar>
                 <AvatarImage src={barbershop.imageUrl} />
@@ -69,7 +80,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
                 <p className="text-xs">{barbershop.address}</p>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         <h2 className="font-bold uppercase text-sm mb-2.5 mt-5">Sobre nós</h2>
