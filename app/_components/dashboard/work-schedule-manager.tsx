@@ -127,6 +127,34 @@ function ShopScheduleTab() {
   )
 }
 
+function BarberSchedulePanel({ barberId }: { barberId: string }) {
+  const { data, isLoading } = useBarberSchedule(barberId)
+  const { mutate, isPending } = useUpdateSchedule()
+  // Inicia null — só recebe valor após edição do usuário
+  const [localSchedules, setLocalSchedules] = useState<WorkSchedule[] | null>(null)
+
+  if (isLoading) return <Loader2 className="h-8 w-8 animate-spin text-slate-500 mx-auto" />
+
+  // Usa edição local se existir, caso contrário usa dados da API mesclados com defaults
+  const displayed = localSchedules ?? mergeWithDefaults(data ?? [])
+
+  return (
+    <div className="space-y-6">
+      <ScheduleGrid schedules={displayed} onChange={setLocalSchedules} />
+      <div className="flex justify-end">
+        <Button
+          onClick={() => mutate({ type: 'barber', barberId, schedules: displayed })}
+          disabled={isPending}
+          className="bg-[#8161FF] hover:bg-[#8161FF]/80 text-white"
+        >
+          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {isPending ? 'Salvando...' : 'Salvar Horários do Barbeiro'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function BarberScheduleTab() {
   const { data: barbers, isLoading: loadingBarbers } = useQuery({
     queryKey: ['barbers'],
@@ -138,18 +166,6 @@ function BarberScheduleTab() {
   })
 
   const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null)
-  const { data, isLoading } = useBarberSchedule(selectedBarberId)
-  const { mutate, isPending } = useUpdateSchedule()
-  const [schedules, setSchedules] = useState<WorkSchedule[] | null>(null)
-  const [prevBarberId, setPrevBarberId] = useState<string | null>(null)
-
-  // Reseta edição local ao trocar de barbeiro
-  if (selectedBarberId !== prevBarberId) {
-    setSchedules(null)
-    setPrevBarberId(selectedBarberId)
-  }
-
-  const current = schedules ?? (data ? mergeWithDefaults(data) : DEFAULT_SCHEDULE)
 
   return (
     <div className="space-y-6">
@@ -172,24 +188,10 @@ function BarberScheduleTab() {
         )}
       </div>
 
+      {/* key={selectedBarberId} garante que o componente é remontado ao trocar de barbeiro,
+          resetando estado local e disparando nova query automaticamente */}
       {selectedBarberId && (
-        isLoading ? (
-          <Loader2 className="h-8 w-8 animate-spin text-slate-500 mx-auto" />
-        ) : (
-          <div className="space-y-6">
-            <ScheduleGrid schedules={current} onChange={setSchedules} />
-            <div className="flex justify-end">
-              <Button
-                onClick={() => mutate({ type: 'barber', barberId: selectedBarberId, schedules: current })}
-                disabled={isPending}
-                className="bg-[#8161FF] hover:bg-[#8161FF]/80 text-white"
-              >
-                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {isPending ? 'Salvando...' : 'Salvar Horários do Barbeiro'}
-              </Button>
-            </div>
-          </div>
-        )
+        <BarberSchedulePanel key={selectedBarberId} barberId={selectedBarberId} />
       )}
     </div>
   )
