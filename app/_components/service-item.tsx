@@ -103,17 +103,19 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     setTimeSlots([])
   }
 
+  const toLocalDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
   const isDateDisabled = (date: Date) => {
     if (!availability) return false
 
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = toLocalDateStr(date)
     const isClosure = availability.shopClosures?.some((closure: any) => {
-      const closureDate = new Date(closure.date).toISOString().split('T')[0]
+      const closureDate = toLocalDateStr(new Date(closure.date))
       return closureDate === dateStr
     })
     if (isClosure) return true
 
-    // Disable days where no barber has a work schedule
     if (availability.shopSchedule?.length > 0) {
       const dayOfWeek = date.getDay()
       const hasSchedule = availability.shopSchedule.some(
@@ -128,7 +130,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const getAvailableBarbers = () => {
     if (!selectedDay || !availability) return barbers
 
-    const dateStr = selectedDay.toISOString().split('T')[0]
+    const dateStr = toLocalDateStr(selectedDay)
     const dayOfWeek = selectedDay.getDay()
 
     return barbers.filter((barber: any) => {
@@ -138,7 +140,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
       if (!barberData) return true
 
       const hasAbsence = barberData.absences?.some((absence: any) => {
-        const absenceDate = new Date(absence.date).toISOString().split('T')[0]
+        const absenceDate = toLocalDateStr(new Date(absence.date))
         return absenceDate === dateStr
       })
 
@@ -155,7 +157,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   }
 
   const fetchBarberSlots = async (barber: any, day: Date) => {
-    const dateStr = day.toISOString().split('T')[0]
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
     const res = await fetch(
       `/api/barbers/${barber.id}/slots?date=${dateStr}&duration=${service.duration}`
     )

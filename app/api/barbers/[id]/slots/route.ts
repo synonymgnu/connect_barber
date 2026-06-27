@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/app/_lib/prisma'
-import { startOfDay, endOfDay, set } from 'date-fns'
+import { startOfDay, endOfDay } from 'date-fns'
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +15,9 @@ export async function GET(
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
     }
 
-    const date = new Date(`${dateStr}T12:00:00`)
+    // Parse date in local time to avoid UTC shift
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
     const dayOfWeek = date.getDay()
 
     const barber = await db.barber.findUnique({
@@ -71,11 +73,14 @@ export async function GET(
     for (let m = startMinutes; m + duration <= endMinutes; m += 30) {
       // Skip past slots for today
       if (isToday) {
-        const slotDate = set(date, {
-          hours: Math.floor(m / 60),
-          minutes: m % 60,
-          seconds: 0,
-        })
+        const slotDate = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          Math.floor(m / 60),
+          m % 60,
+          0
+        )
         if (slotDate <= now) continue
       }
 
