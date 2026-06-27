@@ -37,7 +37,10 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       ratings: true,
       barbers: {
         where: { isActive: true },
-        include: { workSchedule: { where: { isActive: true } } },
+      },
+      hours: {
+        where: { isActive: true },
+        orderBy: { dayOfWeek: 'asc' },
       },
     },
   })
@@ -81,20 +84,8 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   ]
 
   const scheduleMap: Record<number, { startTime: string; endTime: string }> = {}
-  for (const barber of barbershop.barbers) {
-    for (const s of barber.workSchedule) {
-      if (!scheduleMap[s.dayOfWeek]) {
-        scheduleMap[s.dayOfWeek] = {
-          startTime: s.startTime,
-          endTime: s.endTime,
-        }
-      } else {
-        if (s.startTime < scheduleMap[s.dayOfWeek].startTime)
-          scheduleMap[s.dayOfWeek].startTime = s.startTime
-        if (s.endTime > scheduleMap[s.dayOfWeek].endTime)
-          scheduleMap[s.dayOfWeek].endTime = s.endTime
-      }
-    }
+  for (const h of barbershop.hours) {
+    scheduleMap[h.dayOfWeek] = { startTime: h.startTime, endTime: h.endTime }
   }
 
   const averageRating =
