@@ -87,7 +87,7 @@ function AppointmentsMetrics() {
       title: "Próximos agendamentos",
       value: data.metrics.upcoming.value,
       change: data.metrics.upcoming.change,
-      percentage: "12%",
+      percentage: data.metrics.upcoming.percentage,
       icon: <Calendar className="h-4 w-4" />,
       trend: data.metrics.upcoming.trend,
       color: "#10b981"
@@ -96,7 +96,7 @@ function AppointmentsMetrics() {
       title: "Agendamentos concluídos",
       value: data.metrics.completed.value,
       change: data.metrics.completed.change,
-      percentage: "11%",
+      percentage: data.metrics.completed.percentage,
       icon: <CheckCircle className="h-4 w-4" />,
       trend: data.metrics.completed.trend,
       color: "#B400E0"
@@ -105,7 +105,7 @@ function AppointmentsMetrics() {
       title: "Agendamentos cancelados",
       value: data.metrics.cancelled.value,
       change: data.metrics.cancelled.change,
-      percentage: "15%",
+      percentage: data.metrics.cancelled.percentage,
       icon: <XCircle className="h-4 w-4" />,
       trend: data.metrics.cancelled.trend,
       color: "#FF8E00"
@@ -114,7 +114,7 @@ function AppointmentsMetrics() {
       title: "Total de clientes",
       value: data.metrics.customers.value,
       change: data.metrics.customers.change,
-      percentage: "35%",
+      percentage: data.metrics.customers.percentage,
       icon: <Users className="h-4 w-4" />,
       trend: data.metrics.customers.trend,
       color: "#008DD2"
