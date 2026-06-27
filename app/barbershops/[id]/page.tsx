@@ -171,7 +171,10 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 </p>
               </div>
               {barbershop.googleMaps && (
-                <MapButtonSheet googleMapsUrl={barbershop.googleMaps} />
+                <MapButtonSheet
+                  googleMapsUrl={barbershop.googleMaps}
+                  address={barbershop.address}
+                />
               )}
             </div>
             {/* BLOCO DIREITA (AVALIAÇÃO) */}
