@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/app/_lib/prisma'
-import { startOfDay, endOfDay } from 'date-fns'
 
 export async function GET(
   request: NextRequest,
@@ -22,18 +21,28 @@ export async function GET(
     const date = new Date(year, month - 1, day)
     const dayOfWeek = date.getDay()
 
+    // Range do dia em UTC considerando fuso UTC-3 (busca das 03:00 UTC até 02:59 UTC do dia seguinte)
+    // Usa o offset enviado pelo cliente para ser preciso
+    const tzOffsetMinutes = Number(searchParams.get('tzOffset') ?? 180) // Brasil = 180 (UTC-3)
+    const tzOffsetMs = tzOffsetMinutes * 60 * 1000
+    // meia-noite local = meia-noite UTC + offset
+    // ex: 00:00 BRT = 03:00 UTC → Date.UTC(..., 0,0,0) + 3h
+    const dayStartUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0) + tzOffsetMs)
+    const dayEndUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59) + tzOffsetMs)
+
     const barber = await db.barber.findUnique({
       where: { id: params.id },
       include: {
         workSchedule: { where: { dayOfWeek, isActive: true } },
         absences: {
           where: {
-            date: { gte: startOfDay(date), lte: endOfDay(date) },
+            date: { gte: dayStartUTC, lte: dayEndUTC },
           },
         },
         bookings: {
           where: {
-            date: { gte: startOfDay(date), lte: endOfDay(date) },
+            date: { gte: dayStartUTC, lte: dayEndUTC },
+            status: { notIn: ['CANCELLED'] },
           },
           include: { service: { select: { duration: true } } },
         },
@@ -59,9 +68,11 @@ export async function GET(
     const startMinutes = startH * 60 + startM
     const endMinutes = endH * 60 + endM
 
-    // Build occupied intervals from existing bookings
+    // Build occupied intervals — booking.date está em UTC no banco
+    // Converte para minutos do dia local usando o offset do cliente
     const occupied = barber.bookings.map((b) => {
-      const bookingStart = b.date.getHours() * 60 + b.date.getMinutes()
+      const utcMinutes = b.date.getUTCHours() * 60 + b.date.getUTCMinutes()
+      const bookingStart = utcMinutes - tzOffsetMinutes
       const bookingDuration = b.service?.duration ?? 30
       return { start: bookingStart, end: bookingStart + bookingDuration }
     })

@@ -161,8 +161,9 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     const localNow = new Date()
     const nowMinutes = localNow.getHours() * 60 + localNow.getMinutes()
     const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`
+    const tzOffset = localNow.getTimezoneOffset() // Brasil = 180, representa UTC-3
     const res = await fetch(
-      `/api/barbers/${barber.id}/slots?date=${dateStr}&duration=${service.duration}&todayStr=${todayStr}&nowMinutes=${nowMinutes}`
+      `/api/barbers/${barber.id}/slots?date=${dateStr}&duration=${service.duration}&todayStr=${todayStr}&nowMinutes=${nowMinutes}&tzOffset=${tzOffset}`
     )
     const slots = await res.json()
     setTimeSlots(Array.isArray(slots) ? slots : [])
