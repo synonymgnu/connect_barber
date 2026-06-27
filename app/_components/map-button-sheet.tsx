@@ -8,18 +8,16 @@ import Image from 'next/image'
 
 interface MapButtonSheetProps {
   googleMapsUrl: string
-  latitude: number
-  longitude: number
+  address: string
 }
 
 export default function MapButtonSheet({
   googleMapsUrl,
-  latitude,
-  longitude,
+  address,
 }: MapButtonSheetProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const uberUrl = `https://m.uber.com/?action=setPickupLocation&pickup[latitude]=${latitude}&pickup[longitude]=${longitude}`
+  const uberUrl = `https://m.uber.com/?action=setPickupLocation&pickup=${encodeURIComponent(address)}`
 
   const UberIcon = ({ className }: { className?: string }) => (
     <svg
@@ -35,11 +33,12 @@ export default function MapButtonSheet({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="link" size="sm" className="mb-2 text-xs md:hidden">
+        <Button variant="outline" size="sm" className="mt-3 text-xs md:hidden">
+          <MapPinIcon size={16} className="mr-2" />
           Ver Mapa
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[50vh] max-h-[40vh] p-0">
+      <SheetContent side="bottom" className="h-[80vh] max-h-[80vh] p-0">
         <div className="h-full w-full flex flex-col p-5">
           <h2 className="font-bold uppercase text-sm mb-4">Localização</h2>
           <div className="relative flex-1 w-full rounded-xl overflow-hidden mb-4">
