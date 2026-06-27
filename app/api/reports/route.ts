@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
+import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,6 +110,16 @@ export async function GET(request: NextRequest) {
         const appointmentsGrowth = previousAppointments > 0
             ? ((totalAppointments - previousAppointments) / previousAppointments) * 100
             : 0
+
+        const clientInfo = getClientInfo(request)
+        await createAuditLog({
+            userId: session.user.id,
+            action: 'EXPORT_DATA',
+            resource: 'reports',
+            ipAddress: clientInfo.ipAddress,
+            userAgent: clientInfo.userAgent,
+            metadata: { range, barbershopId }
+        })
 
         return NextResponse.json({
             totalRevenue,
