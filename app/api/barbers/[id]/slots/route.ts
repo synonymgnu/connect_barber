@@ -56,11 +56,8 @@ export async function GET(
     const endMinutes = endH * 60 + endM
 
     // Build occupied intervals from existing bookings
-    // Use UTC offset to convert stored UTC time back to local time
-    const tzOffsetMinutes = new Date().getTimezoneOffset()
     const occupied = barber.bookings.map((b) => {
-      const bookingStartUTC = b.date.getUTCHours() * 60 + b.date.getUTCMinutes()
-      const bookingStart = bookingStartUTC - tzOffsetMinutes
+      const bookingStart = b.date.getHours() * 60 + b.date.getMinutes()
       const bookingDuration = b.service?.duration ?? 30
       return { start: bookingStart, end: bookingStart + bookingDuration }
     })
@@ -91,21 +88,7 @@ export async function GET(
       slots.push(`${h}:${min}`)
     }
 
-    return NextResponse.json({
-      slots,
-      debug: {
-        dateStr,
-        dayOfWeek,
-        scheduleFound: !!schedule,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        startMinutes,
-        endMinutes,
-        duration,
-        isToday,
-        bookingsCount: barber.bookings.length,
-      }
-    })
+    return NextResponse.json(slots)
   } catch (error) {
     console.error('Error fetching barber slots:', error)
     return NextResponse.json({ error: 'Erro ao buscar horários' }, { status: 500 })
