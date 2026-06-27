@@ -10,7 +10,8 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const dateStr = searchParams.get('date')
     const duration = Number(searchParams.get('duration') ?? 30)
-    const nowParam = searchParams.get('now') // horário atual do cliente (ISO string)
+    const todayStr = searchParams.get('todayStr')
+    const nowMinutes = Number(searchParams.get('nowMinutes') ?? -1)
 
     if (!dateStr) {
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
@@ -66,17 +67,12 @@ export async function GET(
     })
 
     const slots: string[] = []
-    // Usa o horário do cliente se fornecido, caso contrário usa o servidor
-    const now = nowParam ? new Date(nowParam) : new Date()
-    const toLocalDateStr = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    // Compara a data solicitada com a data atual do cliente
-    const isToday = dateStr === toLocalDateStr(now)
+    // isToday e nowMinutes já vêm calculados no fuso do cliente
+    const isToday = todayStr === dateStr
 
     for (let m = startMinutes; m + duration <= endMinutes; m += 30) {
       // Skip past slots for today
-      if (isToday) {
-        const nowMinutes = now.getHours() * 60 + now.getMinutes()
+      if (isToday && nowMinutes >= 0) {
         if (m <= nowMinutes) continue
       }
 
