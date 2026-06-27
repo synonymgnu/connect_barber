@@ -20,7 +20,7 @@ export async function PATCH(
 
   try {
     const body = await req.json()
-    const { name, email, phone, speciality, bio, instagram, isActive } = body
+    const { name, email, phone, speciality, bio, instagram, isActive, imageUrl } = body
 
     const barber = await db.barber.findUnique({
       where: { id: params.id },
@@ -74,6 +74,7 @@ export async function PATCH(
         ...(speciality !== undefined && { speciality: speciality || null }),
         ...(bio !== undefined && { bio: bio || null }),
         ...(instagram !== undefined && { instagram: instagram || null }),
+        ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         ...(isActive !== undefined && { isActive }),
       },
       include: {

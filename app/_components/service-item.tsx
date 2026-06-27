@@ -347,13 +347,8 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 }`}
                               >
                                 <Avatar className="h-12 w-12">
-                                  <AvatarImage
-                                    src={
-                                      barber.imageUrl ||
-                                      `https://ui-avatars.com/api/?name=${barber.name}&background=bc130d&color=fff`
-                                    }
-                                  />
-                                  <AvatarFallback>
+                                  <AvatarImage src={barber.imageUrl || undefined} />
+                                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                                     {barber.name[0].toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>

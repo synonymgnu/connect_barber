@@ -1,15 +1,17 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import Image from "next/image"
 
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { Label } from "@/app/_components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog"
 import { Textarea } from "../ui/textarea"
+import { UploadButton } from "@/utils/uploadthing"
 
 const schema = z.object({
   name: z.string().min(1, "Nome obrigatório"),
@@ -18,6 +20,7 @@ const schema = z.object({
   speciality: z.string().optional(),
   bio: z.string().optional(),
   instagram: z.string().optional(),
+  imageUrl: z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -30,15 +33,12 @@ interface Props {
 }
 
 export function BarberModal({ open, onOpenChange, barber, onSubmit }: Props) {
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      speciality: "",
-      bio: "",
-      instagram: "",
+      name: "", email: "", phone: "", speciality: "", bio: "", instagram: "", imageUrl: "",
     },
   })
 
@@ -51,22 +51,19 @@ export function BarberModal({ open, onOpenChange, barber, onSubmit }: Props) {
         speciality: barber.speciality || "",
         bio: barber.bio || "",
         instagram: barber.instagram || "",
+        imageUrl: barber.imageUrl || "",
       })
+      setImageUrl(barber.imageUrl || undefined)
     } else {
-      form.reset({
-        name: "",
-        email: "",
-        phone: "",
-        speciality: "",
-        bio: "",
-        instagram: "",
-      })
+      form.reset({ name: "", email: "", phone: "", speciality: "", bio: "", instagram: "", imageUrl: "" })
+      setImageUrl(undefined)
     }
   }, [barber, open, form])
 
   const handleSubmit = async (data: FormData) => {
-    await onSubmit(data)
+    await onSubmit({ ...data, imageUrl: imageUrl || undefined })
     form.reset()
+    setImageUrl(undefined)
   }
 
   return (
@@ -77,6 +74,30 @@ export function BarberModal({ open, onOpenChange, barber, onSubmit }: Props) {
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          {/* Foto de perfil */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative h-20 w-20 rounded-full overflow-hidden border-2 border-muted">
+              {imageUrl ? (
+                <Image src={imageUrl} alt="Foto do barbeiro" fill className="object-cover" />
+              ) : (
+                <div className="h-full w-full bg-primary flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary-foreground">
+                    {form.watch("name")?.[0]?.toUpperCase() || "?"}
+                  </span>
+                </div>
+              )}
+            </div>
+            <UploadButton
+              endpoint="barberImage"
+              onClientUploadComplete={(res) => {
+                if (res?.[0]?.url) setImageUrl(res[0].url)
+              }}
+              onUploadError={(err) => console.error(err)}
+              appearance={{ button: "ut-ready:bg-primary ut-uploading:bg-primary/70 text-xs px-3 py-1 h-8" }}
+              content={{ button: "Alterar foto" }}
+            />
+          </div>
+
           <div>
             <Label>Nome Completo *</Label>
             <Input placeholder="Nome completo" {...form.register("name")} />

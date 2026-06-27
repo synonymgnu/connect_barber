@@ -9,6 +9,11 @@ export const ourFileRouter = {
     console.log('Arquivo enviado:', file.url)
     return { url: file.url }
   }),
+  barberImage: f({
+    image: { maxFileSize: '4MB' },
+  }).onUploadComplete(async ({ file }) => {
+    return { url: file.url }
+  }),
 } satisfies FileRouter
 
 export type OurFileRouter = typeof ourFileRouter

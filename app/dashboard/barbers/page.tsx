@@ -225,8 +225,8 @@ export default function BarbersPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16 border-2 border-background shadow-md">
-                      <AvatarImage src={b.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(b.name)}&background=bc130d&color=fff`} />
-                      <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-700 text-white text-xl font-semibold">
+                      <AvatarImage src={b.imageUrl || undefined} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xl font-semibold">
                         {b.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
