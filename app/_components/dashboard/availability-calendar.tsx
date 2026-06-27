@@ -34,7 +34,7 @@ interface WorkSchedule {
   dayOfWeek: number
   startTime: string
   endTime: string
-  isActive: boolean
+  isActive?: boolean
 }
 
 interface Absence {
@@ -75,15 +75,17 @@ function getDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence
   const dayAbsences = absences.filter(a => isSameDay(a.date, date))
   const shopClosures = dayAbsences.filter(a => a.type === 'SHOP_CLOSURE')
   const barberAbsences = dayAbsences.filter(a => a.type === 'BARBER_ABSENCE')
+  // workSchedules aqui são os BarbershopHours — isActive pode ser undefined se vier sem o campo
   const schedule = workSchedules.find(s => s.dayOfWeek === dayOfWeek)
-  
+  const isWorkingDay = !!schedule && shopClosures.length === 0
+
   const availableBarbers = barbers.filter(barber => {
     const barberAbsence = barberAbsences.find(a => a.barberId === barber.id)
-    return !barberAbsence && schedule?.isActive
+    return !barberAbsence
   }).length
 
   return {
-    isWorkingDay: (schedule?.isActive ?? false) && shopClosures.length === 0,
+    isWorkingDay,
     schedule,
     shopClosures,
     barberAbsences,
@@ -92,15 +94,13 @@ function getDayInfo(date: Date, workSchedules: WorkSchedule[], absences: Absence
   }
 }
 
-function getBarberInfo(barber: Barber, date: Date, workSchedules: WorkSchedule[], absences: Absence[]): BarberInfo {
-  const dayOfWeek = date.getDay()
-  const schedule = workSchedules.find(s => s.dayOfWeek === dayOfWeek)
+function getBarberInfo(barber: Barber, date: Date, absences: Absence[]): BarberInfo {
   const absence = absences.find(a => isSameDay(a.date, date) && a.barberId === barber.id && a.type === 'BARBER_ABSENCE')
 
   return {
     id: barber.id,
     name: barber.name,
-    schedule,
+    schedule: undefined,
     isAbsent: !!absence,
     absence
   }
@@ -124,7 +124,7 @@ export function AvailabilityCalendar() {
     try {
       setLoading(true)
       const [schedulesRes, absencesRes, barbersRes] = await Promise.all([
-        fetch('/api/availability/schedule'),
+        fetch('/api/availability/schedule?type=shop'),
         fetch('/api/availability/absences'),
         fetch('/api/barbershop/barbers')
       ])
@@ -577,30 +577,23 @@ export function AvailabilityCalendar() {
                           </h4>
                           <div className="space-y-2">
                             {barbers.map((barber) => {
-                              const barberInfo = getBarberInfo(barber, selectedDate, workSchedules, absences)
+                              const barberInfo = getBarberInfo(barber, selectedDate, absences)
                               
                               return (
                                 <div 
                                   key={barber.id} 
                                   className={`p-3 rounded-lg border flex items-center justify-between ${
                                     barberInfo.isAbsent ? 'bg-red-500/10 border-red-500/30' :
-                                    barberInfo.schedule?.isActive ? 'bg-green-500/10 border-green-500/30' :
+                                    !barberInfo.isAbsent ? 'bg-green-500/10 border-green-500/30' :
                                     'bg-[#0c0c0c] border-[#1f1f1f]'
                                   }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <div className={`w-3 h-3 rounded-full ${
-                                      barberInfo.isAbsent ? 'bg-red-400' :
-                                      barberInfo.schedule?.isActive ? 'bg-green-400' :
-                                      'bg-slate-500'
+                                      barberInfo.isAbsent ? 'bg-red-400' : 'bg-green-400'
                                     }`} />
                                     <div>
                                       <p className="text-sm text-white">{barber.name}</p>
-                                      {barberInfo.schedule?.isActive && !barberInfo.isAbsent && (
-                                        <p className="text-xs text-slate-400">
-                                          {barberInfo.schedule.startTime} - {barberInfo.schedule.endTime}
-                                        </p>
-                                      )}
                                       {barberInfo.absence?.reason && (
                                         <p className="text-xs text-red-300">{barberInfo.absence.reason}</p>
                                       )}
@@ -611,13 +604,9 @@ export function AvailabilityCalendar() {
                                       <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30">
                                         Ausente
                                       </Badge>
-                                    ) : barberInfo.schedule?.isActive ? (
+                                    ) : (
                                       <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30">
                                         Disponível
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="bg-slate-500/20 text-slate-400 border-slate-500/30">
-                                        Folga
                                       </Badge>
                                     )}
                                   </div>
