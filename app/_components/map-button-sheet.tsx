@@ -17,7 +17,7 @@ export default function MapButtonSheet({
 }: MapButtonSheetProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const uberUrl = `https://m.uber.com/?action=setPickupLocation&pickup=${encodeURIComponent(address)}`
+  const uberUrl = `https://www.uber.com/launch?dropoff_address=${encodeURIComponent(address)}`
 
   const UberIcon = ({ className }: { className?: string }) => (
     <svg
