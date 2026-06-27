@@ -10,6 +10,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const dateStr = searchParams.get('date')
     const duration = Number(searchParams.get('duration') ?? 30)
+    const nowParam = searchParams.get('now') // horário atual do cliente (ISO string)
 
     if (!dateStr) {
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
@@ -65,23 +66,18 @@ export async function GET(
     })
 
     const slots: string[] = []
-    const now = new Date()
+    // Usa o horário do cliente se fornecido, caso contrário usa o servidor
+    const now = nowParam ? new Date(nowParam) : new Date()
     const toLocalDateStr = (d: Date) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const isToday = toLocalDateStr(date) === toLocalDateStr(now)
+    // Compara a data solicitada com a data atual do cliente
+    const isToday = dateStr === toLocalDateStr(now)
 
     for (let m = startMinutes; m + duration <= endMinutes; m += 30) {
       // Skip past slots for today
       if (isToday) {
-        const slotDate = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate(),
-          Math.floor(m / 60),
-          m % 60,
-          0
-        )
-        if (slotDate <= now) continue
+        const nowMinutes = now.getHours() * 60 + now.getMinutes()
+        if (m <= nowMinutes) continue
       }
 
       // Skip if overlaps with any existing booking

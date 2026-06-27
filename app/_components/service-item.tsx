@@ -158,8 +158,9 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
   const fetchBarberSlots = async (barber: any, day: Date) => {
     const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
+    const now = new Date().toISOString()
     const res = await fetch(
-      `/api/barbers/${barber.id}/slots?date=${dateStr}&duration=${service.duration}`
+      `/api/barbers/${barber.id}/slots?date=${dateStr}&duration=${service.duration}&now=${encodeURIComponent(now)}`
     )
     const slots = await res.json()
     setTimeSlots(Array.isArray(slots) ? slots : [])
