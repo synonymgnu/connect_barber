@@ -2,6 +2,7 @@ import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
 import { getServerSession } from "next-auth"
 import { NextRequest, NextResponse } from "next/server"
+import { createAuditLog, getClientInfo } from "@/app/_lib/audit"
 
 export async function GET() {
   try {
@@ -57,6 +58,17 @@ export async function PATCH(req: NextRequest) {
       },
     })
 
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'UPDATE_BARBERSHOP',
+      resource: 'barbershop',
+      resourceId: barbershop.id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { name: body.name, address: body.address }
+    })
+
     return NextResponse.json(barbershop)
   } catch (error) {
     console.error("[BARBERSHOP_SETTINGS_ERROR]", error)
@@ -67,46 +79,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// POST para criar barbearia (primeira vez)
-export async function POST(req: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
-    }
-
-    // Verifica se usuário já tem barbearia
-    const existing = await db.barbershop.findUnique({
-      where: { ownerId: session.user.id },
-    })
-
-    if (existing) {
-      return NextResponse.json(
-        { error: "Barbearia já existe" },
-        { status: 400 }
-      )
-    }
-
-    const body = await req.json()
-    
-    const barbershop = await db.barbershop.create({
-      data: {
-        name: body.name,
-        address: body.address,
-        description: body.description,
-        imageUrl: body.imageUrl,
-        phone: body.phones.filter((p: string) => p.trim() !== ""),
-        ownerId: session.user.id,
-      },
-    })
-
-    return NextResponse.json(barbershop, { status: 201 })
-  } catch (error) {
-    console.error("[BARBERSHOP_SETTINGS_ERROR]", error)
-    return NextResponse.json(
-      { error: "Erro ao criar barbearia" },
-      { status: 500 }
-    )
-  }
+// POST para criar barbearia — bloqueado: apenas MASTER pode criar via /api/master/barbershops
+export async function POST() {
+  return NextResponse.json({ error: 'Não autorizado. Use o painel master para criar barbearias.' }, { status: 403 })
 }

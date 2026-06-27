@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 import { hashEmail } from '@/app/_lib/encryption'
+import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
 export async function PATCH(
   req: NextRequest,
@@ -89,6 +90,17 @@ export async function PATCH(
       },
     })
 
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'UPDATE_BARBER',
+      resource: 'barber',
+      resourceId: params.id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { barbershopId: barbershop.id, isActive }
+    })
+
     return NextResponse.json(updatedBarber)
   } catch (error) {
     console.error('Erro ao atualizar barbeiro:', error)
@@ -145,6 +157,17 @@ export async function DELETE(
         where: { id: barber.userId },
       }),
     ])
+
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'DELETE_BARBER',
+      resource: 'barber',
+      resourceId: params.id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { name: barber.name, barbershopId: barbershop.id }
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

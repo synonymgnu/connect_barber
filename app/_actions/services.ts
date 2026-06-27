@@ -2,9 +2,9 @@
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
-
 import { revalidatePath } from 'next/cache'
 import { db } from '../_lib/prisma'
+import { createAuditLog } from '../_lib/audit'
 
 export async function deleteService(id: string) {
   const session = await getServerSession(authOptions)
@@ -13,7 +13,6 @@ export async function deleteService(id: string) {
     throw new Error('Usuário não autenticado')
   }
 
-  // 1. Obtém a barbearia do usuário
   const barbershop = await db.barbershop.findFirst({
     where: { ownerId: session.user.id },
   })
@@ -22,7 +21,6 @@ export async function deleteService(id: string) {
     throw new Error('Barbearia do usuário não encontrada')
   }
 
-  // 2. Busca o serviço para validar
   const service = await db.barbershopService.findUnique({
     where: { id },
   })
@@ -31,14 +29,22 @@ export async function deleteService(id: string) {
     throw new Error('Serviço não encontrado')
   }
 
-  // 3. Garante que pertence ao dono
   if (service.barbershopId !== barbershop.id) {
     throw new Error('Você não tem permissão para excluir este serviço')
   }
 
-  // 4. Excluir
   await db.barbershopService.delete({
     where: { id },
+  })
+
+  await createAuditLog({
+    userId: session.user.id,
+    action: 'DELETE_SERVICE',
+    resource: 'service',
+    resourceId: id,
+    ipAddress: 'server-action',
+    userAgent: 'client-app',
+    metadata: { name: service.name, barbershopId: barbershop.id }
   })
 
   revalidatePath('/dashboard/services')

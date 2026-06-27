@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 import { hashEmail } from '@/app/_lib/encryption'
+import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -105,6 +106,17 @@ export async function POST(req: NextRequest) {
           },
         },
       },
+    })
+
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'CREATE_BARBER',
+      resource: 'barber',
+      resourceId: barber.id,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { name, email, barbershopId: barbershop.id }
     })
 
     return NextResponse.json(barber, { status: 201 })

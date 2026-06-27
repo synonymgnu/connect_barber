@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
+import { createAuditLog, getClientInfo } from "@/app/_lib/audit"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -65,6 +66,17 @@ export async function POST(req: NextRequest) {
       )
 
       return newSchedule
+    })
+
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'UPDATE_SCHEDULE',
+      resource: 'schedule',
+      resourceId: barberId,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { daysCount: scheduleData.length }
     })
 
     return NextResponse.json(result)

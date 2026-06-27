@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 import { hashEmail } from '@/app/_lib/encryption'
+import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
 interface ServiceInput {
   name: string
@@ -203,6 +204,16 @@ export async function POST(req: NextRequest) {
         },
         services: true,
       },
+    })
+
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'CREATE_BARBERSHOP',
+      resource: 'barbershop',
+      resourceId: result.barbershop.id,
+      ipAddress: getClientInfo(req).ipAddress,
+      userAgent: getClientInfo(req).userAgent,
+      metadata: { name: result.barbershop.name, ownerId: result.owner.id, createdBy: 'MASTER' }
     })
 
     return NextResponse.json(fullBarbershop, { status: 201 })

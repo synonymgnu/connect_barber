@@ -2,9 +2,9 @@
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
-
 import { revalidatePath } from 'next/cache'
 import { db } from '../_lib/prisma'
+import { createAuditLog } from '../_lib/audit'
 
 export async function createService(data: {
   name: string
@@ -29,15 +29,25 @@ export async function createService(data: {
     throw new Error('Barbearia não encontrada para este usuário')
   }
 
-  await db.barbershopService.create({
+  const service = await db.barbershopService.create({
     data: {
       name: data.name,
       description: data.description,
       price,
       imageUrl: data.imageUrl,
-      duration: data.duration, // <-- NOVO
+      duration: data.duration,
       barbershopId: barbershop.id,
     },
+  })
+
+  await createAuditLog({
+    userId: session.user.id,
+    action: 'CREATE_SERVICE',
+    resource: 'service',
+    resourceId: service.id,
+    ipAddress: 'server-action',
+    userAgent: 'client-app',
+    metadata: { name: data.name, price, barbershopId: barbershop.id }
   })
 
   revalidatePath('/dashboard/services')
