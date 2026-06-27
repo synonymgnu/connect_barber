@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
+import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
+import { decrypt } from '@/app/_lib/encryption'
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -18,6 +20,7 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '50')
   const action = searchParams.get('action')
+  const isExport = searchParams.get('export') === 'true'
 
   // Buscar apenas logs de ações na barbearia específica
   // 1. Ações do admin/barbeiros da barbearia
@@ -62,7 +65,7 @@ export async function GET(req: NextRequest) {
   
   if (action) where.action = action
 
-  const logs = await db.auditLog.findMany({
+  const rawLogs = await db.auditLog.findMany({
     where,
     include: {
       user: {
@@ -74,7 +77,24 @@ export async function GET(req: NextRequest) {
     take: limit
   })
 
+  const logs = rawLogs.map(log => ({
+    ...log,
+    user: log.user ? { ...log.user, email: decrypt(log.user.email ?? '') || log.user.email } : null
+  }))
+
   const total = await db.auditLog.count({ where })
+
+  if (isExport) {
+    const clientInfo = getClientInfo(req)
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'EXPORT_DATA',
+      resource: 'audit-logs',
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent,
+      metadata: { actionFilter: action || 'all', totalRecords: total, barbershopId: session.user.barbershopId }
+    })
+  }
 
   return NextResponse.json({
     logs,
