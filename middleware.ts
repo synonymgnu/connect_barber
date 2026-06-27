@@ -18,6 +18,18 @@ export default withAuth(
       }
     }
 
+    if (pathname.startsWith('/master')) {
+      if (token?.role !== 'MASTER') {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
+    }
+
+    if (pathname.startsWith('/audit-logs')) {
+      if (token?.role !== 'ADMIN') {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
+    }
+
     return NextResponse.next()
   },
   {
@@ -53,5 +65,8 @@ export const config = {
   matcher: [
     '/barber/:path*',
     '/dashboard/:path*',
+    '/master/:path*',
+    '/audit-logs/:path*',
+    '/audit-logs',
   ],
 }
