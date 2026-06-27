@@ -30,24 +30,33 @@ export async function GET(
     const dayStartUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0) + tzOffsetMs)
     const dayEndUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59) + tzOffsetMs)
 
-    const barber = await db.barber.findUnique({
-      where: { id: params.id },
-      include: {
-        workSchedule: { where: { dayOfWeek, isActive: true } },
-        absences: {
-          where: {
-            date: { gte: dayStartUTC, lte: dayEndUTC },
+    const [barber, shopHours] = await Promise.all([
+      db.barber.findUnique({
+        where: { id: params.id },
+        include: {
+          workSchedule: { where: { dayOfWeek, isActive: true } },
+          absences: {
+            where: {
+              date: { gte: dayStartUTC, lte: dayEndUTC },
+            },
+          },
+          bookings: {
+            where: {
+              date: { gte: dayStartUTC, lte: dayEndUTC },
+              status: { notIn: ['CANCELLED'] },
+            },
+            include: { service: { select: { duration: true } } },
           },
         },
-        bookings: {
-          where: {
-            date: { gte: dayStartUTC, lte: dayEndUTC },
-            status: { notIn: ['CANCELLED'] },
-          },
-          include: { service: { select: { duration: true } } },
+      }),
+      db.barbershopHours.findFirst({
+        where: {
+          barbershop: { barbers: { some: { id: params.id } } },
+          dayOfWeek,
+          isActive: true,
         },
-      },
-    })
+      }),
+    ])
 
     if (!barber) {
       return NextResponse.json({ error: 'Barbeiro não encontrado' }, { status: 404 })
@@ -65,8 +74,18 @@ export async function GET(
 
     const [startH, startM] = schedule.startTime.split(':').map(Number)
     const [endH, endM] = schedule.endTime.split(':').map(Number)
-    const startMinutes = startH * 60 + startM
-    const endMinutes = endH * 60 + endM
+    let startMinutes = startH * 60 + startM
+    let endMinutes = endH * 60 + endM
+
+    // Limita pelo horário de funcionamento da barbearia
+    if (shopHours) {
+      const [shH, shM] = shopHours.startTime.split(':').map(Number)
+      const [ehH, ehM] = shopHours.endTime.split(':').map(Number)
+      const shopStart = shH * 60 + shM
+      const shopEnd = ehH * 60 + ehM
+      startMinutes = Math.max(startMinutes, shopStart)
+      endMinutes = Math.min(endMinutes, shopEnd)
+    }
 
     // Build occupied intervals — booking.date está em UTC no banco
     // Converte para minutos do dia local usando o offset do cliente
