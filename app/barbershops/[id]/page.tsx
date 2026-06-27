@@ -20,6 +20,7 @@ import SidebarSheet from '@/app/_components/sidebar-sheet'
 import Header from '@/app/_components/header'
 import { Card, CardContent } from '@/app/_components/ui/card'
 import { Avatar, AvatarImage } from '@/app/_components/ui/avatar'
+import MapButtonSheet from '@/app/_components/map-button-sheet'
 
 interface BarbershopPageProps {
   params: {
@@ -107,7 +108,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 0 000-2.881z" />
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
     </svg>
   )
 
@@ -157,22 +158,25 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </Sheet>
           </div>
           {/* NOME, ENDEREÇO E AVALIAÇÃO */}
-          <div className="p-5 border-b  lg:flex lg:items-center lg:justify-between lg:p-0 lg:mt-5 lg:border-b-0">
+          <div className="p-5 border-b lg:flex lg:items-center lg:justify-between lg:p-0 lg:mt-5 lg:border-b-0 lg:gap-5">
             {/* BLOCO ESQUERDA */}
-            <div>
+            <div className="lg:flex-1 lg:min-w-0">
               <h1 className="text-xl font-bold mb-3 lg:text-3xl">
                 {barbershop.name}
               </h1>
-              <div className=" mb-2 flex items-center gap-2 lg:mb-0">
-                <MapPinIcon className="text-primary" size={18} />
-                <p className="text-sm lg:text-base text-zinc-300">
+              <div className="flex items-center gap-2 lg:mb-0">
+                <MapPinIcon className="text-primary flex-shrink-0" size={18} />
+                <p className="text-sm lg:text-base text-zinc-300 break-words">
                   {barbershop.address}
                 </p>
               </div>
+              {barbershop.googleMaps && (
+                <MapButtonSheet googleMapsUrl={barbershop.googleMaps} />
+              )}
             </div>
             {/* BLOCO DIREITA (AVALIAÇÃO) */}
 
-            <Card className="hidden md:block border-0">
+            <Card className="hidden md:block border-0 flex-shrink-0">
               <div className="hidden md:flex flex-col items-center px-5 py-2.5">
                 {totalRatings > 0 ? (
                   <>
@@ -321,7 +325,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                   aria-label="Facebook"
                   className="inline-flex hover:text-primary transition-colors"
                 >
-                  {/* Ícone do Facebook */}
+                  <Facebook className="w-8 h-8" />
                 </a>
               )}
             </div>
@@ -403,7 +407,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 aria-label="Facebook"
                 className="inline-flex hover:text-primary transition-colors"
               >
-                {/* Ícone do Facebook */}
+                <Facebook className="w-8 h-8" />
               </a>
             )}
           </div>
