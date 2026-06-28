@@ -3,7 +3,11 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 import { hashEmail } from '@/app/_lib/encryption'
+<<<<<<< Updated upstream
 import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
+=======
+import * as LabelPrimitive from '@radix-ui/react-label';
+>>>>>>> Stashed changes
 
 interface ServiceInput {
   name: string
@@ -36,6 +40,8 @@ export async function POST(req: NextRequest) {
       // Dados da barbearia
       shopName,
       address,
+      latitude,
+      longitude,
       shopImageUrl,
       description,
       phone,
@@ -51,6 +57,8 @@ export async function POST(req: NextRequest) {
     } = body as {
       shopName: string
       address: string
+      latitude: number
+      longitude: number
       shopImageUrl: string
       description: string
       phone: string[]
@@ -161,6 +169,8 @@ export async function POST(req: NextRequest) {
         data: {
           name: shopName,
           address,
+          latitude,
+          longitude,
           imageUrl: shopImageUrl,
           description,
           phone: phone?.length ? phone : [],

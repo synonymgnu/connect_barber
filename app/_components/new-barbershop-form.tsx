@@ -59,6 +59,8 @@ const formSchema = z.object({
   // Dados da barbearia
   shopName: z.string().min(1, 'Nome é obrigatório'),
   address: z.string().min(1, 'Endereço é obrigatório'),
+  latitude: z.number(),
+  longitude: z.number(),
   shopImageUrl: z.string().min(1, 'Imagem é obrigatória'),
   description: z.string().min(1, 'Descrição é obrigatória'),
   phones: z.array(
@@ -101,6 +103,8 @@ export default function NewBarbershopForm() {
     defaultValues: {
       shopName: '',
       address: '',
+      latitude: 0,
+      longitude: 0,
       shopImageUrl: '',
       description: '',
       phones: [''],
@@ -116,7 +120,7 @@ export default function NewBarbershopForm() {
   })
 
   const watchValues = form.watch()
-  const { shopName, address, shopImageUrl, description, phones } = watchValues
+  const { shopName, address, latitude, longitude, shopImageUrl, description, phones } = watchValues
 
   const addPhone = useCallback(() => {
     const currentPhones = form.getValues('phones')
@@ -254,6 +258,8 @@ export default function NewBarbershopForm() {
         body: JSON.stringify({
           shopName: values.shopName,
           address: values.address,
+          latitude: values.latitude,
+          longitude: values.longitude,
           shopImageUrl: values.shopImageUrl,
           description: values.description,
           phone: values.phones.filter(Boolean),
@@ -475,6 +481,48 @@ export default function NewBarbershopForm() {
                               />
                             </FormControl>
                             <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="latitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Latitude</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="any"
+                                placeholder="-23.561684"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="longitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Longitude</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="any"
+                                placeholder="-46.655981"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                              />
+                            </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
