@@ -74,7 +74,11 @@ const BarbershopsPage = async ({ searchParams }: BarbershopPageProps) => {
         </h2>
         <div className="grid grid-cols-2 gap-4 md:grid md:grid-cols-4 md:gap-4">
           {barbershops.map((barbershop) => (
-            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+            <BarbershopItem
+              key={barbershop.id}
+              barbershop={barbershop}
+              containerWidth="search"
+            />
           ))}
         </div>
       </div>

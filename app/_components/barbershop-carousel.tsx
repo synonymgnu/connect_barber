@@ -138,9 +138,11 @@ export default function BarbershopCarousel({ title, barbershops }: Props) {
           className="flex flex-nowrap gap-4 overflow-x-auto [&::-webkit-scrollbar]:hidden select-none"
         >
           {barbershops.map((barbershop: any) => (
-            <div key={barbershop.id} className="flex-shrink-0">
-              <BarbershopItem barbershop={barbershop} />
-            </div>
+            <BarbershopItem
+              key={barbershop.id}
+              barbershop={barbershop}
+              containerWidth="carousel"
+            />
           ))}
         </div>
 
