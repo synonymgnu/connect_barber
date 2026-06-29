@@ -19,7 +19,11 @@ import { Sheet, SheetTrigger } from '@/app/_components/ui/sheet'
 import SidebarSheet from '@/app/_components/sidebar-sheet'
 import Header from '@/app/_components/header'
 import { Card, CardContent } from '@/app/_components/ui/card'
-import { Avatar, AvatarImage } from '@/app/_components/ui/avatar'
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from '@/app/_components/ui/avatar'
 import MapButtonSheet from '@/app/_components/map-button-sheet'
 
 interface BarbershopPageProps {
@@ -49,6 +53,29 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   if (!barbershop) {
     return notFound()
   }
+
+  const barbers = await db.barber.findMany({
+    where: {
+      barbershopId: params.id,
+      isActive: true,
+    },
+    include: {
+      Rating: {
+        select: {
+          value: true,
+        },
+      },
+      bookings: {
+        select: {
+          ratings: {
+            select: {
+              value: true,
+            },
+          },
+        },
+      },
+    },
+  })
 
   // Build shop schedule: for each day of week, collect earliest start / latest end across all barbers
   const DAY_NAMES = [
@@ -96,6 +123,26 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       : 0
 
   const totalRatings = barbershop.ratings.length
+
+  // Calcular avaliação média para cada barbeiro
+  const barbersWithRatings = barbers.map((barber) => {
+    const directRatings = barber.Rating.map((r) => r.value)
+
+    const bookingRatings = barber.bookings.flatMap((b) =>
+      b.ratings.map((r) => r.value)
+    )
+
+    const allRatings = directRatings.length > 0 ? directRatings : bookingRatings
+
+    return {
+      ...barber,
+      averageRating:
+        allRatings.length > 0
+          ? allRatings.reduce((sum, value) => sum + value, 0) /
+            allRatings.length
+          : null,
+    }
+  })
 
   type InstagramIconProps = {
     className?: string
@@ -172,18 +219,18 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
               </div>
               {barbershop.googleMaps && (
                 <MapButtonSheet
-                googleMapsUrl={barbershop.googleMaps}
-                address={barbershop.address}
-                latitude={barbershop.latitude}
-                longitude={barbershop.longitude}
-              />
+                  googleMapsUrl={barbershop.googleMaps}
+                  address={barbershop.address}
+                  latitude={barbershop.latitude}
+                  longitude={barbershop.longitude}
+                />
               )}
             </div>
             {/* BLOCO DIREITA (AVALIAÇÃO) */}
 
             <Card className="hidden md:block border-0 flex-shrink-0">
               <div className="hidden md:flex flex-col items-center px-5 py-2.5">
-                {totalRatings > 0 ? (
+                {totalRatings > 0 && (
                   <>
                     <div className="flex items-center gap-2">
                       <StarIcon
@@ -199,16 +246,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                       {totalRatings === 1 ? 'avaliação' : 'avaliações'}
                     </p>
                   </>
-                ) : (
-                  <p className="text-xs text-gray-400 text-center">
-                    Esta barbearia ainda não possui avaliações.
-                  </p>
                 )}
               </div>
             </Card>
 
             {/* AVALIAÇÃO MOBILE */}
-            {totalRatings > 0 ? (
+            {totalRatings > 0 && (
               <div className="flex items-center gap-2 md:hidden">
                 <StarIcon className="text-primary fill-primary" size={18} />
                 <p className="text-sm">
@@ -216,10 +259,6 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                   {totalRatings === 1 ? 'Avaliação' : 'Avaliações'})
                 </p>
               </div>
-            ) : (
-              <p className="text-sm text-gray-400 md:hidden">
-                Esta barbearia ainda não possui avaliações.
-              </p>
             )}
           </div>
 
@@ -231,8 +270,59 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             <p className="text-sn text-justify">{barbershop?.description}</p>
           </div>
 
+          {/* EQUIPE */}
+          <div className="p-5 space-y-3 lg:p-0 lg:mt-10">
+            <h2 className="font-bold uppercase text-gray-400 text-xs mb-3 lg:text-sm">
+              Equipe
+            </h2>
+            <div className="mt-4">
+              {barbersWithRatings.length === 0 ? (
+                <p className="text-sm text-gray-400">
+                  Esta barbearia ainda não possui barbeiros cadastrados.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-5">
+                  {barbersWithRatings.map((barber) => (
+                    <Card key={barber.id} className="border-0">
+                      <CardContent className="flex flex-col items-center p-4">
+                        <Avatar className="h-14 w-14 lg:h-16 lg:w-16 mb-3">
+                          <AvatarImage src={barber.imageUrl || undefined} />
+                          <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
+                            {barber.name[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <h3 className="text-sm lg:text-base font-medium text-center line-clamp-2">
+                          {barber.name}
+                        </h3>
+
+                        <div className="mt-2">
+                          {barber.averageRating !== null ? (
+                            <div className="flex items-center gap-1">
+                              <StarIcon
+                                className="text-primary fill-primary"
+                                size={14}
+                              />
+                              <span className="text-sm font-medium">
+                                {barber.averageRating.toFixed(1)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-500">
+                              Sem avaliações
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* SERVIÇOS*/}
-          <div className="p-5 space-y-3  lg:p-0 lg:mt-10">
+          <div className="p-5 space-y-3 lg:p-0 lg:mt-10">
             <h2 className="font-bold uppercase text-gray-400 text-xs mb-3 lg:text-sm">
               Serviços
             </h2>
@@ -278,23 +368,6 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                     className="rounded-xl object-cover"
                   />
                 )}
-                {/* CARD SOBRE O MAPA 
-                <Card className="truncate absolute bottom-4 left-1/2 transform -translate-x-1/2 rounded-2xl px-2 flex items-center gap-1 h-[35%] md:w-[90%] shadow-lg">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage
-                      alt={barbershop.name}
-                      src={barbershop?.imageUrl}
-                    />
-                  </Avatar>
-                  <div>
-                    <h3 className="text-white font-semibold text-base">
-                      {barbershop.name}
-                    </h3>
-                    <p className="text-zinc-400 text-xs">
-                      {barbershop.address}
-                    </p>
-                  </div>
-                </Card> */}
               </div>
 
               <h2 className="font-bold uppercase text-sm mb-2.5">Sobre nós</h2>
@@ -360,7 +433,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
               })}
             </div>
             {/*DIAS E HORÁRIOS*/}
-            <div className="text-xs  border-t border-zinc-800 pt-3 space-y-1">
+            <div className="text-xs border-t border-zinc-800 pt-3 space-y-1">
               {DAY_NAMES.map((name, idx) => (
                 <div key={idx} className="flex justify-between">
                   <p className={scheduleMap[idx] ? '' : 'text-zinc-500'}>
