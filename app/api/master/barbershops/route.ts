@@ -3,11 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
 import { hashEmail } from '@/app/_lib/encryption'
-<<<<<<< Updated upstream
 import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
-=======
-import * as LabelPrimitive from '@radix-ui/react-label';
->>>>>>> Stashed changes
 
 interface ServiceInput {
   name: string
