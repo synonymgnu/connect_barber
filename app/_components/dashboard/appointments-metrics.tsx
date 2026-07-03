@@ -9,16 +9,19 @@ import { useDashboardMetrics } from "@/app/_hooks/use-dashboard-metrics"
 interface Metric {
   title: string
   value: string
-  change: number
+  change: number | null
   percentage: string
   icon: React.ReactNode
   trend: "up" | "down"
   color: string
+  invertTrend?: boolean
 }
 
 const MetricCard = memo(({ metric, index }: { metric: Metric; index: number }) => {
+  const isGood = metric.invertTrend ? metric.trend === "down" : metric.trend === "up"
   const TrendIcon = metric.trend === "up" ? TrendingUp : TrendingDown
-  const trendColor = metric.trend === "up" ? "text-green-500" : "text-red-500"
+  const trendColor = isGood ? "text-green-500" : "text-red-500"
+  const noComparison = metric.change === null
 
   return (
     <Card className="bg-[#15141b] border-[#1f1f1f] hover:bg-[#0c0c0c] transition-colors">
@@ -37,10 +40,10 @@ const MetricCard = memo(({ metric, index }: { metric: Metric; index: number }) =
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1">
             <div className="bg-slate-800 rounded-2xl p-2">
-              <TrendIcon className={`h-3 w-3 ${trendColor}`} />
+              <TrendIcon className={`h-3 w-3 ${noComparison ? 'text-slate-400' : trendColor}`} />
             </div>
-            <span className={`text-sm font-medium ${trendColor}`}>
-              {metric.change > 0 ? '+' : ''}{metric.change}%
+            <span className={`text-sm font-medium ${noComparison ? 'text-slate-400' : trendColor}`}>
+              {noComparison ? 'Novo' : `${metric.change! > 0 ? '+' : ''}${metric.change}%`}
             </span>
           </div>
           <div className="relative w-12 h-12">
@@ -58,7 +61,7 @@ const MetricCard = memo(({ metric, index }: { metric: Metric; index: number }) =
                 cy="18"
                 r="16"
                 fill="none"
-                stroke={metric.trend === "up" ? metric.color : "#ef4444"}
+                stroke={isGood ? metric.color : "#ef4444"}
                 strokeWidth="2"
                 strokeDasharray="100"
                 strokeDashoffset={100 - parseInt(metric.percentage)}
@@ -108,7 +111,8 @@ function AppointmentsMetrics() {
       percentage: data.metrics.cancelled.percentage,
       icon: <XCircle className="h-4 w-4" />,
       trend: data.metrics.cancelled.trend,
-      color: "#FF8E00"
+      color: "#FF8E00",
+      invertTrend: true
     },
     {
       title: "Total de clientes",
