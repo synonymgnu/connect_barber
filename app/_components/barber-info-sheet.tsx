@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import {
   Mail,
@@ -69,7 +70,7 @@ export default function BarberInfoSheet({
   }, [imageModalOpen])
 
   useEffect(() => {
-    if (open) {
+    if (!open) {
       setImageModalOpen(false)
     }
   }, [open])
@@ -92,7 +93,10 @@ export default function BarberInfoSheet({
     <div className="space-y-6">
       <div className="flex flex-col items-center">
         <button
-          onClick={handleImageClick}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleImageClick()
+          }}
           className={`relative group ${barber.imageUrl ? 'cursor-pointer' : ''}`}
         >
           <Avatar className="h-24 w-24">
@@ -180,7 +184,14 @@ export default function BarberInfoSheet({
   if (isDesktop) {
     return (
       <>
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog
+          open={open}
+          onOpenChange={(newOpen) => {
+            if (!imageModalOpen) {
+              onOpenChange(newOpen)
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Informações do barbeiro</DialogTitle>
@@ -190,9 +201,72 @@ export default function BarberInfoSheet({
           </DialogContent>
         </Dialog>
 
-        {imageModalOpen && open && barber.imageUrl && (
+        {imageModalOpen &&
+          open &&
+          barber.imageUrl &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center cursor-zoom-in pointer-events-auto"
+              onClick={() => setImageModalOpen(false)}
+              onWheel={handleWheel}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setImageModalOpen(false)
+                }}
+                className="absolute top-4 right-4 text-white hover:text-gray-300 z-50"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="relative w-[90vw] h-[90vh]">
+                <Image
+                  src={barber.imageUrl}
+                  alt={barber.name}
+                  fill
+                  className="object-contain"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transition: 'transform 0.2s ease-out',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>,
+            document.body
+          )}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Drawer
+        open={open}
+        onOpenChange={(newOpen) => {
+          if (!imageModalOpen) {
+            onOpenChange(newOpen)
+          }
+        }}
+      >
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Informações do barbeiro</DrawerTitle>
+          </DrawerHeader>
+
+          <div className="px-4 pb-8">
+            <Content />
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {imageModalOpen &&
+        open &&
+        barber.imageUrl &&
+        createPortal(
           <div
-            className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center cursor-zoom-in"
+            className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center p-4 pointer-events-auto"
             onClick={() => setImageModalOpen(false)}
             onWheel={handleWheel}
           >
@@ -206,7 +280,7 @@ export default function BarberInfoSheet({
               <X size={24} />
             </button>
 
-            <div className="relative w-[90vw] h-[90vh]">
+            <div className="relative w-full h-[60vh]">
               <Image
                 src={barber.imageUrl}
                 alt={barber.name}
@@ -219,57 +293,9 @@ export default function BarberInfoSheet({
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
-          </div>
+          </div>,
+          document.body
         )}
-      </>
-    )
-  }
-
-  return (
-    <>
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Informações do barbeiro</DrawerTitle>
-          </DrawerHeader>
-
-          <div className="px-4 pb-8">
-            <Content />
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      {imageModalOpen && open && barber.imageUrl && (
-        <div
-          className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center p-4"
-          onClick={() => setImageModalOpen(false)}
-          onWheel={handleWheel}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setImageModalOpen(false)
-            }}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50"
-          >
-            <X size={24} />
-          </button>
-
-          <div className="relative w-full h-[60vh]">
-            <Image
-              src={barber.imageUrl}
-              alt={barber.name}
-              fill
-              className="object-contain"
-              style={{
-                transform: `scale(${zoom})`,
-                transition: 'transform 0.2s ease-out',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
     </>
   )
 }
