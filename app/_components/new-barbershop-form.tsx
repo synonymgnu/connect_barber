@@ -41,6 +41,9 @@ import {
   Banknote,
   QrCode,
   WalletCards,
+  Globe,
+  MessageCircle,
+  Music2,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -71,6 +74,12 @@ const formSchema = z.object({
     instagram: z.string().url('URL inválida').or(z.literal('')),
     facebook: z.string().url('URL inválida').or(z.literal('')),
     googleMaps: z.string(),
+    whatsapp: z
+      .string()
+      .regex(phoneRegex, 'Formato inválido. Use (00) 00000-0000')
+      .or(z.literal('')),
+    tiktok: z.string().url('URL inválida').or(z.literal('')),
+    website: z.string().url('URL inválida').or(z.literal('')),
   }),
   // Formas de Pagamento
   paymentMethods: z
@@ -112,6 +121,9 @@ export default function NewBarbershopForm() {
         instagram: '',
         facebook: '',
         googleMaps: '',
+        whatsapp: '',
+        tiktok: '',
+        website: '',
       },
       paymentMethods: [],
       ownerName: '',
@@ -120,7 +132,15 @@ export default function NewBarbershopForm() {
   })
 
   const watchValues = form.watch()
-  const { shopName, address, latitude, longitude, shopImageUrl, description, phones } = watchValues
+  const {
+    shopName,
+    address,
+    latitude,
+    longitude,
+    shopImageUrl,
+    description,
+    phones,
+  } = watchValues
 
   const addPhone = useCallback(() => {
     const currentPhones = form.getValues('phones')
@@ -267,6 +287,9 @@ export default function NewBarbershopForm() {
             instagram: values.socialMedia.instagram || null,
             facebook: values.socialMedia.facebook || null,
             googleMaps: googleMaps || null,
+            whatsapp: values.socialMedia.whatsapp || null,
+            tiktok: values.socialMedia.tiktok || null,
+            website: values.socialMedia.website || null,
           },
           paymentMethods: values.paymentMethods,
           ownerName: values.ownerName,
@@ -499,7 +522,9 @@ export default function NewBarbershopForm() {
                                 step="any"
                                 placeholder="-23.561684"
                                 {...field}
-                                onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                                onChange={(e) =>
+                                  field.onChange(e.target.valueAsNumber)
+                                }
                               />
                             </FormControl>
                             <FormMessage />
@@ -519,7 +544,9 @@ export default function NewBarbershopForm() {
                                 step="any"
                                 placeholder="-46.655981"
                                 {...field}
-                                onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                                onChange={(e) =>
+                                  field.onChange(e.target.valueAsNumber)
+                                }
                               />
                             </FormControl>
                             <FormMessage />
@@ -671,6 +698,75 @@ export default function NewBarbershopForm() {
                             <FormControl>
                               <Input
                                 placeholder="https://facebook.com/seu_perfil"
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* WhatsApp */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.whatsapp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <MessageCircle className="h-4 w-4 text-violet-500" />
+                              WhatsApp
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="(00) 00000-0000"
+                                value={field.value}
+                                onChange={(e) =>
+                                  field.onChange(formatPhone(e.target.value))
+                                }
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* TikTok */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.tiktok"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <Music2 className="h-4 w-4 text-violet-500" />
+                              TikTok
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://tiktok.com/@seu_perfil"
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Site */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <Globe className="h-4 w-4 text-violet-500" />
+                              Site
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://seusite.com.br"
                                 {...field}
                                 className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
                               />
