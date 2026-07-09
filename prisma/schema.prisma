@@ -117,6 +117,7 @@ model BarbershopService {
   duration     Int
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   bookings     Booking[]
+  barbers      Barber[]   @relation("BarberServices")
 }
 
 model Barber {
@@ -140,6 +141,7 @@ model Barber {
   workSchedule BarberWorkSchedule[]
   bookings     Booking[]
   Rating       Rating[]
+  services     BarbershopService[]  @relation("BarberServices")
 }
 
 model BarberWorkSchedule {

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { name, email, phone, speciality, bio, instagram } = body
+    const { name, email, phone, speciality, bio, instagram, serviceIds } = body
 
     if (!name || !email) {
       return NextResponse.json(
@@ -36,6 +36,19 @@ export async function POST(req: NextRequest) {
         { error: 'Admin não possui uma barbearia cadastrada' },
         { status: 400 }
       )
+    }
+
+    // Garante que os serviços informados pertencem a esta barbearia
+    let validServiceIds: string[] = []
+    if (Array.isArray(serviceIds) && serviceIds.length > 0) {
+      const validServices = await db.barbershopService.findMany({
+        where: {
+          id: { in: serviceIds },
+          barbershopId: barbershop.id,
+        },
+        select: { id: true },
+      })
+      validServiceIds = validServices.map((s) => s.id)
     }
 
     const existingUser = await db.user.findUnique({
@@ -95,6 +108,10 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         barbershopId: barbershop.id,
         isActive: true,
+        services:
+          validServiceIds.length > 0
+            ? { connect: validServiceIds.map((id) => ({ id })) }
+            : undefined,
       },
       include: {
         user: {
@@ -103,6 +120,12 @@ export async function POST(req: NextRequest) {
             email: true,
             role: true,
             image: true,
+          },
+        },
+        services: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -116,7 +139,12 @@ export async function POST(req: NextRequest) {
       resourceId: barber.id,
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
-      metadata: { name, email, barbershopId: barbershop.id }
+      metadata: {
+        name,
+        email,
+        barbershopId: barbershop.id,
+        serviceIds: validServiceIds,
+      },
     })
 
     return NextResponse.json(barber, { status: 201 })
@@ -161,6 +189,12 @@ export async function GET(req: NextRequest) {
             email: true,
             role: true,
             image: true,
+          },
+        },
+        services: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },

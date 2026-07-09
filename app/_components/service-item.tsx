@@ -37,8 +37,6 @@ interface ServiceItemProps {
   barbershop: Pick<Barbershop, 'id' | 'name'>
 }
 
-
-
 const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const { data } = useSession()
   const router = useRouter()
@@ -127,13 +125,22 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     return false
   }
 
+  // Barbeiros que executam este serviço (independe de dia/disponibilidade)
+  const barbersForThisService = useMemo(() => {
+    return barbers.filter((barber: any) => {
+      // Fallback: se a API ainda não retornar "services", não bloqueia ninguém
+      if (!barber.services) return true
+      return barber.services.some((s: any) => s.id === service.id)
+    })
+  }, [barbers, service.id])
+
   const getAvailableBarbers = () => {
-    if (!selectedDay || !availability) return barbers
+    if (!selectedDay || !availability) return barbersForThisService
 
     const dateStr = toLocalDateStr(selectedDay)
     const dayOfWeek = selectedDay.getDay()
 
-    return barbers.filter((barber: any) => {
+    return barbersForThisService.filter((barber: any) => {
       const barberData = availability.barbers.find(
         (b: any) => b.id === barber.id
       )
@@ -338,7 +345,8 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                   e.stopPropagation()
                                   setSelectedBarber(barber)
                                   setSelectedTime(undefined)
-                                  if (selectedDay) fetchBarberSlots(barber, selectedDay)
+                                  if (selectedDay)
+                                    fetchBarberSlots(barber, selectedDay)
                                 }}
                                 className={`flex flex-col items-center p-3 rounded-xl border min-w-[100px] transition-all ${
                                   selectedBarber?.id === barber.id
@@ -347,7 +355,9 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 }`}
                               >
                                 <Avatar className="h-12 w-12">
-                                  <AvatarImage src={barber.imageUrl || undefined} />
+                                  <AvatarImage
+                                    src={barber.imageUrl || undefined}
+                                  />
                                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                                     {barber.name[0].toUpperCase()}
                                   </AvatarFallback>
@@ -374,7 +384,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                             ))
                           ) : (
                             <p className="text-sm text-gray-400 px-5">
-                              Nenhum barbeiro disponível neste dia.
+                              Nenhum barbeiro(a) executa este serviço.
                             </p>
                           )}
                         </div>

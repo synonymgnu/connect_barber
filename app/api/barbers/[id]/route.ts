@@ -21,7 +21,17 @@ export async function PATCH(
 
   try {
     const body = await req.json()
-    const { name, email, phone, speciality, bio, instagram, isActive, imageUrl } = body
+    const {
+      name,
+      email,
+      phone,
+      speciality,
+      bio,
+      instagram,
+      isActive,
+      imageUrl,
+      serviceIds,
+    } = body
 
     const barber = await db.barber.findUnique({
       where: { id: params.id },
@@ -56,6 +66,23 @@ export async function PATCH(
       }
     }
 
+    // Garante que os serviços informados pertencem a esta barbearia
+    let validServiceIds: string[] | undefined = undefined
+    if (serviceIds !== undefined) {
+      if (Array.isArray(serviceIds) && serviceIds.length > 0) {
+        const validServices = await db.barbershopService.findMany({
+          where: {
+            id: { in: serviceIds },
+            barbershopId: barbershop.id,
+          },
+          select: { id: true },
+        })
+        validServiceIds = validServices.map((s) => s.id)
+      } else {
+        validServiceIds = []
+      }
+    }
+
     if (name || email) {
       await db.user.update({
         where: { id: barber.userId },
@@ -77,6 +104,9 @@ export async function PATCH(
         ...(instagram !== undefined && { instagram: instagram || null }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         ...(isActive !== undefined && { isActive }),
+        ...(validServiceIds !== undefined && {
+          services: { set: validServiceIds.map((id) => ({ id })) },
+        }),
       },
       include: {
         user: {
@@ -85,6 +115,12 @@ export async function PATCH(
             email: true,
             role: true,
             image: true,
+          },
+        },
+        services: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -98,7 +134,11 @@ export async function PATCH(
       resourceId: params.id,
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
-      metadata: { barbershopId: barbershop.id, isActive }
+      metadata: {
+        barbershopId: barbershop.id,
+        isActive,
+        serviceIds: validServiceIds,
+      },
     })
 
     return NextResponse.json(updatedBarber)
@@ -166,7 +206,7 @@ export async function DELETE(
       resourceId: params.id,
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
-      metadata: { name: barber.name, barbershopId: barbershop.id }
+      metadata: { name: barber.name, barbershopId: barbershop.id },
     })
 
     return NextResponse.json({ success: true })
