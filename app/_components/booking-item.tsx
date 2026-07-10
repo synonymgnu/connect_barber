@@ -129,7 +129,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={booking.service.barbershop.imageUrl} />
+                <AvatarImage src={booking.service.barbershop.images[0]} />
                 <AvatarFallback>
                   {booking.service.barbershop.name[0]}
                 </AvatarFallback>

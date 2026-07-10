@@ -5,6 +5,8 @@ import { db } from '@/app/_lib/prisma'
 import { hashEmail } from '@/app/_lib/encryption'
 import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 
+const MAX_SHOP_IMAGES = 3
+
 interface ServiceInput {
   name: string
   description: string
@@ -17,6 +19,9 @@ interface SocialMediaInput {
   instagram?: string
   facebook?: string
   googleMaps?: string
+  whatsapp?: string
+  tiktok?: string
+  website?: string
 }
 
 export async function POST(req: NextRequest) {
@@ -38,7 +43,7 @@ export async function POST(req: NextRequest) {
       address,
       latitude,
       longitude,
-      shopImageUrl,
+      images,
       description,
       phone,
       // Redes Sociais
@@ -55,7 +60,7 @@ export async function POST(req: NextRequest) {
       address: string
       latitude: number
       longitude: number
-      shopImageUrl: string
+      images: string[]
       description: string
       phone: string[]
       socialMedia?: SocialMediaInput
@@ -66,9 +71,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Validações básicas
-    if (!shopName || !address || !shopImageUrl || !description) {
+    if (!shopName || !address || !description) {
       return NextResponse.json(
         { error: 'Dados da barbearia incompletos' },
+        { status: 400 }
+      )
+    }
+
+    // Validação de imagens
+    const filteredImages = (images || []).filter(Boolean)
+    if (filteredImages.length === 0) {
+      return NextResponse.json(
+        { error: 'Adicione pelo menos uma imagem da barbearia' },
+        { status: 400 }
+      )
+    }
+    if (filteredImages.length > MAX_SHOP_IMAGES) {
+      return NextResponse.json(
+        { error: `Máximo de ${MAX_SHOP_IMAGES} imagens permitido` },
         { status: 400 }
       )
     }
@@ -167,13 +187,16 @@ export async function POST(req: NextRequest) {
           address,
           latitude,
           longitude,
-          imageUrl: shopImageUrl,
+          images: filteredImages,
           description,
           phone: phone?.length ? phone : [],
           // Redes Sociais
           instagram: socialMedia?.instagram || null,
           facebook: socialMedia?.facebook || null,
           googleMaps: socialMedia?.googleMaps || null,
+          whatsapp: socialMedia?.whatsapp || null,
+          tiktok: socialMedia?.tiktok || null,
+          website: socialMedia?.website || null,
           // Formas de Pagamento
           paymentMethods: paymentMethods || [],
           ownerId: owner.id,
@@ -219,7 +242,11 @@ export async function POST(req: NextRequest) {
       resourceId: result.barbershop.id,
       ipAddress: getClientInfo(req).ipAddress,
       userAgent: getClientInfo(req).userAgent,
-      metadata: { name: result.barbershop.name, ownerId: result.owner.id, createdBy: 'MASTER' }
+      metadata: {
+        name: result.barbershop.name,
+        ownerId: result.owner.id,
+        createdBy: 'MASTER',
+      },
     })
 
     return NextResponse.json(fullBarbershop, { status: 201 })

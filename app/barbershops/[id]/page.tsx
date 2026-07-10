@@ -271,7 +271,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
           <div className="relative h-[250px] w-full lg:h-[487px] overflow-hidden">
             <Image
               alt={barbershop.name}
-              src={barbershop?.imageUrl}
+              src={barbershop.images[0]}
               fill
               className="object-cover md:rounded-lg"
             />

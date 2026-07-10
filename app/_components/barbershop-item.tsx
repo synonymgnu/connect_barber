@@ -10,7 +10,7 @@ interface BarbershopItemProps {
     id: string
     name: string
     address: string
-    imageUrl: string
+    images: string
     averageRating: number
   }
   containerWidth?: 'carousel' | 'search' | 'detail'
@@ -39,7 +39,7 @@ const BarbershopItem = ({
             alt={barbershop.name}
             fill
             className="rounded-2xl object-cover"
-            src={barbershop.imageUrl}
+            src={barbershop.images[0]}
           />
           {barbershop.averageRating > 0 && (
             <Badge

@@ -48,7 +48,8 @@ import {
 import Image from 'next/image'
 
 const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/
-const urlRegex = /^(https?:\/\/.+|)$/
+
+const MAX_SHOP_IMAGES = 3
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -64,7 +65,10 @@ const formSchema = z.object({
   address: z.string().min(1, 'Endereço é obrigatório'),
   latitude: z.number(),
   longitude: z.number(),
-  shopImageUrl: z.string().min(1, 'Imagem é obrigatória'),
+  shopImages: z
+    .array(z.string().min(1, 'Imagem inválida'))
+    .min(1, 'Adicione pelo menos uma imagem')
+    .max(MAX_SHOP_IMAGES, `Máximo de ${MAX_SHOP_IMAGES} imagens`),
   description: z.string().min(1, 'Descrição é obrigatória'),
   phones: z.array(
     z.string().regex(phoneRegex, 'Formato inválido. Use (00) 00000-0000')
@@ -114,7 +118,7 @@ export default function NewBarbershopForm() {
       address: '',
       latitude: 0,
       longitude: 0,
-      shopImageUrl: '',
+      shopImages: [''],
       description: '',
       phones: [''],
       socialMedia: {
@@ -132,15 +136,7 @@ export default function NewBarbershopForm() {
   })
 
   const watchValues = form.watch()
-  const {
-    shopName,
-    address,
-    latitude,
-    longitude,
-    shopImageUrl,
-    description,
-    phones,
-  } = watchValues
+  const { shopName, address, shopImages, description, phones } = watchValues
 
   const addPhone = useCallback(() => {
     const currentPhones = form.getValues('phones')
@@ -160,6 +156,27 @@ export default function NewBarbershopForm() {
     },
     [form]
   )
+
+  const addShopImage = useCallback(() => {
+    const current = form.getValues('shopImages')
+    if (current.length >= MAX_SHOP_IMAGES) return
+    form.setValue('shopImages', [...current, ''], { shouldValidate: true })
+  }, [form])
+
+  const removeShopImage = useCallback(
+    (index: number) => {
+      const current = form.getValues('shopImages')
+      if (current.length > 1) {
+        form.setValue(
+          'shopImages',
+          current.filter((_, i) => i !== index),
+          { shouldValidate: true }
+        )
+      }
+    },
+    [form]
+  )
+
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '').slice(0, 11)
 
@@ -208,7 +225,8 @@ export default function NewBarbershopForm() {
   )
 
   const previewImage = useMemo(() => {
-    if (!shopImageUrl) {
+    const cover = shopImages?.[0]
+    if (!cover) {
       return (
         <div className="absolute inset-0 bg-gradient-to-br from-[#2b2c2e] to-[#1f2022] flex items-center justify-center">
           <div className="text-center">
@@ -220,7 +238,7 @@ export default function NewBarbershopForm() {
     }
     return (
       <Image
-        src={shopImageUrl}
+        src={cover}
         alt={shopName || 'Barbearia'}
         fill
         className="object-cover"
@@ -229,7 +247,7 @@ export default function NewBarbershopForm() {
         quality={85}
       />
     )
-  }, [shopImageUrl, shopName])
+  }, [shopImages, shopName])
 
   async function onSubmit(values: FormValues) {
     setServerError(null)
@@ -280,7 +298,7 @@ export default function NewBarbershopForm() {
           address: values.address,
           latitude: values.latitude,
           longitude: values.longitude,
-          shopImageUrl: values.shopImageUrl,
+          images: values.shopImages.filter(Boolean),
           description: values.description,
           phone: values.phones.filter(Boolean),
           socialMedia: {
@@ -342,7 +360,21 @@ export default function NewBarbershopForm() {
           {/* Preview Card */}
           <div className="lg:col-span-1">
             <Card className="border border-[#1f2022] bg-[#1a1b1d] rounded-2xl overflow-hidden sticky top-8">
-              <div className="relative h-[280px] w-full">{previewImage}</div>
+              <div className="relative h-[280px] w-full">
+                {previewImage}
+                {shopImages?.filter(Boolean).length > 1 && (
+                  <div className="absolute bottom-3 right-3 flex gap-1">
+                    {shopImages.filter(Boolean).map((_, i) => (
+                      <span
+                        key={i}
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          i === 0 ? 'bg-violet-500' : 'bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <CardContent className="p-6 space-y-4">
                 <div>
@@ -444,23 +476,71 @@ export default function NewBarbershopForm() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Imagem */}
+                    {/* Imagens */}
                     <FormField
                       control={form.control}
-                      name="shopImageUrl"
-                      render={({ field }) => (
+                      name="shopImages"
+                      render={() => (
                         <FormItem>
-                          <FormLabel className="text-zinc-300 font-medium text-sm">
-                            Imagem da Barbearia
-                          </FormLabel>
-                          <FormControl>
-                            <ImageUpload
-                              value={field.value}
-                              onChange={field.onChange}
-                              className="h-48 rounded-xl border border-[#2b2c2e]"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-red-400 text-xs" />
+                          <div className="flex justify-between items-center mb-3">
+                            <FormLabel className="text-zinc-300 font-medium text-sm">
+                              Imagens da Barbearia (
+                              {form.watch('shopImages').length}/
+                              {MAX_SHOP_IMAGES})
+                            </FormLabel>
+                            {form.watch('shopImages').length <
+                              MAX_SHOP_IMAGES && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addShopImage}
+                                className="border-violet-500 text-violet-500 hover:bg-violet-500 hover:text-white transition-colors"
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Adicionar
+                              </Button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {form.watch('shopImages').map((_, index) => (
+                              <div key={index} className="relative">
+                                <FormField
+                                  control={form.control}
+                                  name={`shopImages.${index}`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <ImageUpload
+                                          value={field.value}
+                                          onChange={field.onChange}
+                                          className="h-32 rounded-xl border border-[#2b2c2e]"
+                                        />
+                                      </FormControl>
+                                      <FormMessage className="text-red-400 text-xs" />
+                                    </FormItem>
+                                  )}
+                                />
+                                {form.watch('shopImages').length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeShopImage(index)}
+                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#1a1b1d] border border-[#2b2c2e] text-zinc-400 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                {index === 0 && (
+                                  <span className="absolute bottom-1 left-1 text-[10px] bg-violet-500 text-white px-1.5 py-0.5 rounded">
+                                    Capa
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </FormItem>
                       )}
                     />
