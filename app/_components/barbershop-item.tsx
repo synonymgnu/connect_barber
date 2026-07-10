@@ -10,7 +10,7 @@ interface BarbershopItemProps {
     id: string
     name: string
     address: string
-    images: string
+    images: string[]
     averageRating: number
   }
   containerWidth?: 'carousel' | 'search' | 'detail'
