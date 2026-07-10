@@ -29,6 +29,7 @@ import {
 import MapButtonSheet from '@/app/_components/map-button-sheet'
 import BarbersSection from '@/app/_components/barbers-section'
 import OpeningHoursMobile from '@/app/_components/opening-hours-mobile'
+import BarbershopImageCarousel from '@/app/_components/barbershop-image-carousel'
 
 interface BarbershopPageProps {
   params: {
@@ -269,17 +270,16 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
         <div className="lg:w-3/4">
           {/* IMAGEM */}
           <div className="relative h-[250px] w-full lg:h-[487px] overflow-hidden">
-            <Image
+            <BarbershopImageCarousel
+              images={barbershop.images}
               alt={barbershop.name}
-              src={barbershop.images[0]}
-              fill
-              className="object-cover md:rounded-lg"
+              className="h-full w-full md:rounded-lg"
             />
 
             <Button
               size="icon"
               variant="secondary"
-              className="absolute left-4 top-4 md:hidden"
+              className="absolute left-4 top-4 md:hidden z-20"
               asChild
             >
               <Link href="/">
@@ -292,7 +292,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 <Button
                   size="icon"
                   variant="outline"
-                  className="absolute right-4 top-4 md:hidden"
+                  className="absolute right-4 top-4 md:hidden z-20"
                   asChild
                 >
                   <div>
