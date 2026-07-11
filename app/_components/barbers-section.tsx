@@ -210,7 +210,7 @@ export default function BarbersSection({ barbers }: Props) {
           ) : barbers.length === 3 ? (
             <>
               {/* DESKTOP: cabe tudo numa linha só, sem scroll */}
-              <div className="hidden lg:grid lg:grid-cols-3 lg:gap-5 max-w-2xl mx-auto">
+              <div className="hidden lg:grid lg:grid-cols-3 lg:gap-5  mx-auto">
                 {barbers.map((barber) => (
                   <BarberCard
                     key={barber.id}

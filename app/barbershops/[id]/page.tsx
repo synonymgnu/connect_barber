@@ -30,6 +30,7 @@ import MapButtonSheet from '@/app/_components/map-button-sheet'
 import BarbersSection from '@/app/_components/barbers-section'
 import OpeningHoursMobile from '@/app/_components/opening-hours-mobile'
 import BarbershopImageCarousel from '@/app/_components/barbershop-image-carousel'
+import ShareBarbershopButton from '@/app/_components/share-barbershop-button'
 
 interface BarbershopPageProps {
   params: {
@@ -303,12 +304,20 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </Sheet>
           </div>
           {/* NOME, ENDEREÇO E AVALIAÇÃO */}
+
           <div className="p-5 border-b lg:flex lg:items-center lg:justify-between lg:p-0 lg:mt-5 lg:border-b-0 lg:gap-5">
             {/* BLOCO ESQUERDA */}
             <div className="lg:flex-1 lg:min-w-0">
-              <h1 className="text-xl font-bold mb-3 lg:text-3xl">
-                {barbershop.name}
-              </h1>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h1 className="text-xl font-bold lg:text-3xl">
+                  {barbershop.name}
+                </h1>
+                <ShareBarbershopButton
+                  name={barbershop.name}
+                  description={barbershop.description}
+                  className="shrink-0"
+                />
+              </div>
               <div className="flex items-center gap-2 lg:mb-0">
                 <MapPinIcon className="text-primary flex-shrink-0" size={18} />
                 <p className="text-sm lg:text-base text-zinc-300 break-words">
