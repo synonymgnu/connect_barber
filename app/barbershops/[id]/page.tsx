@@ -315,7 +315,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 <ShareBarbershopButton
                   name={barbershop.name}
                   description={barbershop.description}
-                  className="shrink-0"
+                  className="shrink-0 lg:hidden"
                 />
               </div>
               <div className="flex items-center gap-2 lg:mb-0">

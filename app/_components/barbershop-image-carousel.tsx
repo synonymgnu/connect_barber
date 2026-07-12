@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from './ui/button'
 
 interface BarbershopImageCarouselProps {
   images: string[]
@@ -115,7 +116,7 @@ export default function BarbershopImageCarousel({
 
       {hasMultiple && (
         <>
-          <button
+          <Button
             type="button"
             onPointerDown={stopDragPropagation}
             onClick={(e) => {
@@ -126,8 +127,8 @@ export default function BarbershopImageCarousel({
             className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
           >
             <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onPointerDown={stopDragPropagation}
             onClick={(e) => {
@@ -138,7 +139,7 @@ export default function BarbershopImageCarousel({
             className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
           >
             <ChevronRight className="h-5 w-5" />
-          </button>
+          </Button>
 
           <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
             {images.map((_, index) => (
