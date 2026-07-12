@@ -11,6 +11,9 @@ export const useDashboardMetrics = () => {
       return res.json()
     },
     staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 30 * 1000,
   })
 }
 

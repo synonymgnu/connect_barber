@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { format, setHours, setMinutes } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { CalendarIcon, Check, MoreHorizontal, Pencil, Trash2, X } from "lucide-react"
+import { CalendarIcon, Check, Loader2, MoreHorizontal, Pencil, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import {
   DropdownMenu,
@@ -23,7 +23,7 @@ interface AppointmentModalProps {
   appointment: any
   open: boolean
   onClose: () => void
-  onSave: (data: any) => void
+  onSave: (data: any) => Promise<boolean>
   onDelete: (id: string) => void
   barbershopServices: any[]
   barbers: any[]
@@ -35,67 +35,60 @@ const sourceConfig = {
   ONLINE: { label: 'Online', color: 'text-orange-500' }
 }
 
-export function AppointmentModal({ 
-  appointment, 
-  open, 
-  onClose, 
-  onSave, 
-  onDelete, 
-  barbershopServices, 
+function buildFormData(appointment: any) {
+  const dateToParse = appointment?.dateIso || appointment?.date
+  const dateObj = dateToParse
+    ? (typeof dateToParse === 'string' ? new Date(dateToParse) : dateToParse)
+    : new Date()
+  return {
+    date: isNaN(dateObj.getTime()) ? new Date() : dateObj,
+    serviceId: appointment?.serviceId || '',
+    barberId: appointment?.employeeId || '',
+    status: appointment?.status?.toUpperCase() || 'CONFIRMED',
+  }
+}
+
+export function AppointmentModal({
+  appointment,
+  open,
+  onClose,
+  onSave,
+  onDelete,
+  barbershopServices,
   barbers,
   mode = 'view'
 }: AppointmentModalProps) {
   const [isEditing, setIsEditing] = useState(mode === 'edit')
   const [hasChanges, setHasChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [formData, setFormData] = useState({
-    date: new Date(),
-    serviceId: '',
-    barberId: '',
-    status: 'CONFIRMED'
-  })
+  const [formData, setFormData] = useState(buildFormData(appointment))
 
   useEffect(() => {
     if (open) {
       setIsEditing(mode === 'edit')
       setHasChanges(false)
+      setFormData(buildFormData(appointment))
     }
-  }, [open, mode])
-
-  useEffect(() => {
-  const dateToParse = appointment?.dateIso || appointment?.date;
-  
-  if (dateToParse) {
-    const dateObj = typeof dateToParse === 'string' 
-      ? new Date(dateToParse) 
-      : dateToParse
-    
-    if (!isNaN(dateObj.getTime())) {
-      setFormData({
-        date: dateObj,
-        serviceId: appointment.serviceId || '',
-        barberId: appointment.employeeId || '',
-        status: appointment.status?.toUpperCase() || 'CONFIRMED'
-      })
-    }
-  }
-}, [appointment])
+  }, [open, mode, appointment])
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setHasChanges(true)
   }
 
-  const handleSave = () => {
-    const dataToSave = {
+  const handleSave = async () => {
+    setIsSaving(true)
+    const success = await onSave({
       ...formData,
       id: appointment.id,
-      date: formData.date?.toISOString() || new Date().toISOString()
+      date: formData.date?.toISOString() || new Date().toISOString(),
+    })
+    setIsSaving(false)
+    if (success) {
+      setIsEditing(false)
+      setHasChanges(false)
     }
-    
-    onSave(dataToSave)
-    setIsEditing(false)
-    setHasChanges(false)
   }
 
   const handleClose = () => {
@@ -122,20 +115,7 @@ export function AppointmentModal({
   }
 
   const handleUndoChanges = () => {
-    if (appointment?.date) {
-      const dateObj = typeof appointment.date === 'string' 
-        ? new Date(appointment.date)
-        : appointment.date instanceof Date
-        ? appointment.date
-        : new Date(appointment.date)
-      
-      setFormData({
-        date: dateObj,
-        serviceId: appointment.serviceId || '',
-        barberId: appointment.employeeId || '',
-        status: appointment.status?.toUpperCase() || 'CONFIRMED'
-      })
-    }
+    setFormData(buildFormData(appointment))
     setHasChanges(false)
   }
 
@@ -149,8 +129,8 @@ export function AppointmentModal({
             <DialogTitle className="text-xl">Agendamento</DialogTitle>
             <div className="flex items-center gap-2">
               {isEditing ? (
-                <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700 h-9 w-9 p-0">
-                  <Check className="h-4 w-4" />
+                <Button size="sm" onClick={handleSave} disabled={isSaving} className="bg-green-600 hover:bg-green-700 h-9 w-9 p-0">
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 </Button>
               ) : (
                 <Button size="sm" onClick={() => setIsEditing(true)} className="bg-[#8161FF] hover:bg-[#8161FF]/80 h-9 w-9 p-0">
@@ -189,8 +169,8 @@ export function AppointmentModal({
                     className="w-full justify-start text-left font-normal bg-[#0f0f0f] border-slate-700 text-white"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date && !isNaN(formData.date.getTime()) 
-                      ? format(formData.date, "PPP 'às' HH:mm", { locale: ptBR }) 
+                    {formData.date && !isNaN(formData.date.getTime())
+                      ? format(formData.date, "PPP 'às' HH:mm", { locale: ptBR })
                       : "Selecione uma data"}
                   </Button>
                 </PopoverTrigger>
@@ -198,9 +178,7 @@ export function AppointmentModal({
                   <Calendar
                     mode="single"
                     selected={formData.date}
-                    onSelect={(date) => {
-                      if (date) handleChange('date', date)
-                    }}
+                    onSelect={(date) => { if (date) handleChange('date', date) }}
                     disabled={!isEditing}
                     initialFocus
                   />
@@ -239,8 +217,8 @@ export function AppointmentModal({
             {/* Serviço */}
             <div className="space-y-2">
               <Label>Tipo de Corte</Label>
-              <Select 
-                value={formData.serviceId} 
+              <Select
+                value={formData.serviceId}
                 onValueChange={(val) => handleChange('serviceId', val)}
                 disabled={!isEditing}
               >
@@ -260,8 +238,8 @@ export function AppointmentModal({
             {/* Barbeiro */}
             <div className="space-y-2">
               <Label>Barbeiro</Label>
-              <Select 
-                value={formData.barberId || ''} 
+              <Select
+                value={formData.barberId || ''}
                 onValueChange={(val) => handleChange('barberId', val)}
                 disabled={!isEditing}
               >
@@ -281,8 +259,8 @@ export function AppointmentModal({
             {/* Status */}
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select 
-                value={formData.status} 
+              <Select
+                value={formData.status}
                 onValueChange={(val) => handleChange('status', val)}
                 disabled={!isEditing}
               >

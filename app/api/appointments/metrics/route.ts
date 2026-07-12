@@ -94,7 +94,7 @@ export async function GET() {
     // Cancelados últimos 30 dias (para comparação)
     const last30DaysCancelled = await db.booking.count({
       where: {
-        date: {
+        updatedAt: {
           gte: thirtyDaysAgo
         },
         status: 'CANCELLED',
@@ -106,7 +106,7 @@ export async function GET() {
 
     const previousCancelledBookings = await db.booking.count({
       where: {
-        date: {
+        updatedAt: {
           gte: sixtyDaysAgo,
           lt: thirtyDaysAgo
         },
@@ -159,9 +159,9 @@ export async function GET() {
       distinct: ['userId']
     })
 
-    const calculatePercentage = (current: number, previous: number): number => {
+    const calculatePercentage = (current: number, previous: number): number | null => {
       if (previous === 0 && current === 0) return 0
-      if (previous === 0) return 100
+      if (previous === 0) return null // sem período anterior para comparar
       return Number((((current - previous) / previous) * 100).toFixed(1))
     }
 
@@ -169,6 +169,8 @@ export async function GET() {
     const completedChange = calculatePercentage(completedBookings, previousCompletedBookings)
     const customersChange = calculatePercentage(totalCustomers.length, previousCustomers.length)
     const cancelledChange = calculatePercentage(last30DaysCancelled, previousCancelledBookings)
+
+    const roundChange = (v: number | null) => v === null ? null : Math.round(v)
 
     // Percentual do gráfico circular: proporção do período atual em relação ao total acumulado
     const totalBookings = await db.booking.count({ where: { service: { barbershopId } } })
@@ -182,27 +184,27 @@ export async function GET() {
       metrics: {
         upcoming: {
           value: upcomingBookings.toString(),
-          change: Math.round(upcomingChange),
+          change: roundChange(upcomingChange),
           percentage: pct(upcomingBookings, totalBookings),
-          trend: upcomingChange >= 0 ? "up" : "down"
+          trend: (upcomingChange ?? 0) >= 0 ? 'up' : 'down'
         },
         completed: {
           value: completedBookings.toString(),
-          change: Math.round(completedChange),
+          change: roundChange(completedChange),
           percentage: pct(completedBookings, totalCompleted || 1),
-          trend: completedChange >= 0 ? "up" : "down"
+          trend: (completedChange ?? 0) >= 0 ? 'up' : 'down'
         },
         cancelled: {
           value: cancelledBookings.toString(),
-          change: Math.round(cancelledChange),
-          percentage: pct(last30DaysCancelled, totalCancelled || 1),
-          trend: cancelledChange >= 0 ? "up" : "down"
+          change: roundChange(cancelledChange),
+          percentage: pct(cancelledBookings, totalBookings),
+          trend: (cancelledChange ?? 0) >= 0 ? 'up' : 'down'
         },
         customers: {
           value: totalCustomers.length.toString(),
-          change: Math.round(customersChange),
+          change: roundChange(customersChange),
           percentage: pct(previousCustomers.length > 0 ? totalCustomers.length - previousCustomers.length : totalCustomers.length, totalCustomers.length || 1),
-          trend: customersChange >= 0 ? "up" : "down"
+          trend: (customersChange ?? 0) >= 0 ? 'up' : 'down'
         }
       },
       totalAppointments: completedBookings + upcomingBookings

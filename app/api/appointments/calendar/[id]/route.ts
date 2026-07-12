@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
 import { notifyBookingConfirmed, notifyBookingUpdated } from "@/app/_lib/notifications/create-notification"
+import { validateBookingTime } from "@/app/_lib/booking-validation"
 
 export async function PUT(
   req: NextRequest,
@@ -57,22 +58,21 @@ export async function PUT(
       })
     }
 
-    // Verificar conflito de horário se a data ou barbeiro mudou
+    // Validar horário se data, serviço ou barbeiro mudou
     const newDate = data.date ? new Date(data.date) : existingBooking.date
-    const newBarberId = data.barberId || existingBooking.barberId
-    
-    if (data.date || data.barberId) {
-      const conflictBooking = await db.booking.findFirst({
-        where: {
-          barberId: newBarberId,
-          date: newDate,
-          status: { not: "CANCELLED" },
-          id: { not: bookingId }
-        },
-      })
+    const newBarberId = data.barberId !== undefined ? data.barberId : existingBooking.barberId
+    const newServiceId = data.serviceId || existingBooking.serviceId
 
-      if (conflictBooking) {
-        return NextResponse.json({ error: "Horário indisponível" }, { status: 409 })
+    if (data.date || data.barberId !== undefined || data.serviceId) {
+      try {
+        await validateBookingTime({
+          date: newDate,
+          serviceId: newServiceId,
+          barberId: newBarberId,
+          excludeBookingId: bookingId,
+        })
+      } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 422 })
       }
     }
 

@@ -28,6 +28,7 @@ import { Skeleton } from "../ui/skeleton";
 import { AppointmentModal } from "./appointment-modal";
 import DeleteConfirmationDialog from "./delete-confirmation-dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface AppointmentProps {
   id: string;
@@ -149,7 +150,7 @@ const AppointmentActivitySection = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
-      
+
       if (response.ok) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['appointments', 'activity'] }),
@@ -157,12 +158,16 @@ const AppointmentActivitySection = () => {
         ])
         setModalOpen(false)
         clearSelection()
+        toast.success('Agendamento atualizado com sucesso!')
+        return true
       } else {
-        throw new Error('Erro ao salvar agendamento')
+        const body = await response.json().catch(() => ({}))
+        throw new Error(body.error || 'Erro ao salvar agendamento')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving appointment:', error)
-      alert('Erro ao salvar agendamento')
+      toast.error(error.message || 'Erro ao salvar agendamento')
+      return false
     }
   }
 
@@ -172,18 +177,19 @@ const AppointmentActivitySection = () => {
       const response = await fetch(`/api/appointments/${id}`, {
         method: 'DELETE'
       })
-      
+
       if (response.ok) {
         await queryClient.invalidateQueries({ queryKey: ['appointments', 'activity'] })
         clearSelection()
         setDeleteDialogOpen(false)
         setAppointmentToDelete(null)
+        toast.success('Agendamento excluído com sucesso!')
       } else {
         throw new Error('Erro ao excluir agendamento')
       }
     } catch (error) {
       console.error('Error deleting appointment:', error)
-      alert('Erro ao excluir agendamento')
+      toast.error('Erro ao excluir agendamento')
     }
   }
 

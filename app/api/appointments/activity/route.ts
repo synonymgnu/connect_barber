@@ -112,10 +112,12 @@ export async function GET(request: Request) {
       date: new Date(booking.date).toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: 'short',
-        year: 'numeric'
+        year: 'numeric',
+        timeZone: 'America/Sao_Paulo'
       }) + ' - ' + new Date(booking.date).toLocaleTimeString('pt-BR', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'America/Sao_Paulo'
       }),
       dateIso: booking.date.toISOString(),
       source: booking.source,
