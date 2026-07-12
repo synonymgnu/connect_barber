@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import { Card, CardContent } from './ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import PhoneItem from './phone-item'
 import { Badge } from './ui/badge'
 import {
@@ -18,8 +17,9 @@ import {
 import { Button } from './ui/button'
 import { BookingItemProps } from './booking-item'
 import { isFuture } from 'date-fns'
-import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import BookingSummary from './booking-summary'
 import RatingDialog from './rating-dialog'
 import { FeedbackDialog } from './feedback-dialog'
@@ -32,14 +32,20 @@ interface BookingInfoProps extends BookingItemProps {
 const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
   const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
+  const router = useRouter()
+  const queryClient = useQueryClient()
 
   const {
     service: { barbershop },
   } = booking
-  const isConfirmed = isFuture(booking.date)
+  const isConfirmed = isFuture(booking.date) && booking.status !== 'CANCELLED'
   const handleCancelBooking = async () => {
     try {
-      await deleteBooking(booking.id)
+      const res = await fetch(`/api/bookings/${booking.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      router.refresh()
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-stats'] })
       setSuccessDialogIsOpen(true)
     } catch (error) {
       console.error(error)
@@ -142,11 +148,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
                 <Button
                   variant="destructive"
                   className="w-full"
-                  onClick={async () => {
-                    await handleCancelBooking()
-                    // fecha o dialogo manualmente se quiser
-                    setSuccessDialogIsOpen(true)
-                  }}
+                  onClick={handleCancelBooking}
                 >
                   Confirmar
                 </Button>

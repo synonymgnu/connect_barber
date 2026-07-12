@@ -27,11 +27,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog'
-import { deleteBooking } from '../_actions/delete-booking'
 import { useState } from 'react'
 import BookingSummary from './booking-summary'
 import RatingDialog from './rating-dialog'
 import { Clock2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 
 export interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -51,16 +52,23 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
   const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
+  const router = useRouter()
+  const queryClient = useQueryClient()
 
   const {
     service: { barbershop },
   } = booking
-  const isConfirmed = isFuture(booking.date)
+  const isConfirmed = isFuture(booking.date) && booking.status !== 'CANCELLED'
+  const isCancelled = booking.status === 'CANCELLED'
   const handleCancelBooking = async () => {
     try {
-      await deleteBooking(booking.id)
+      const res = await fetch(`/api/bookings/${booking.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
       setIsSheetOpen(false)
       setSuccessDialogIsOpen(true)
+      router.refresh()
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'recent-stats'] })
     } catch (error) {
       console.error('Erro ao cancelar reserva:', error)
       setErrorDialogIsOpen(true)
@@ -116,9 +124,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             <div className="flex gap-2">
               <Badge
                 className="w-fit"
-                variant={isConfirmed ? 'default' : 'secondary'}
+                variant={isCancelled ? 'destructive' : isConfirmed ? 'default' : 'secondary'}
               >
-                {isConfirmed ? 'Confirmado' : 'Finalizado'}
+                {isCancelled ? 'Cancelado' : isConfirmed ? 'Confirmado' : 'Finalizado'}
               </Badge>
               <p className="flex items-center gap-[2px] text-xs text-gray-400">
                 <Clock2 width={18} height={18} />
@@ -210,9 +218,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               <div className="flex gap-2">
                 <Badge
                   className="w-fit"
-                  variant={isConfirmed ? 'default' : 'secondary'}
+                  variant={isCancelled ? 'destructive' : isConfirmed ? 'default' : 'secondary'}
                 >
-                  {isConfirmed ? 'Confirmado' : 'Finalizado'}
+                  {isCancelled ? 'Cancelado' : isConfirmed ? 'Confirmado' : 'Finalizado'}
                 </Badge>
                 <p className="flex items-center gap-[2px] text-xs text-gray-400">
                   <Clock2 width={18} height={18} />
@@ -243,7 +251,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                   </Button>
                 </SheetClose>
 
-                {isConfirmed ? (
+                {isConfirmed && !isCancelled ? (
                   <Dialog>
                     <DialogTrigger className="w-full">
                       <Button variant="destructive" className="w-full">

@@ -151,7 +151,10 @@ export default function UnifiedCalendar({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!response.ok) throw new Error('Erro ao atualizar agendamento')
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}))
+        throw new Error(body.error || 'Erro ao atualizar agendamento')
+      }
       return response.json()
     },
     onSuccess: () => { invalidateCalendar(); toast.success('Agendamento atualizado com sucesso!'); closeAndReset() },

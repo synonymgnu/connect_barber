@@ -86,6 +86,14 @@ export default function BarberSchedulePage() {
   }, [fetchBookings, fetchStats, fetchReviews])
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      fetchBookings()
+      fetchStats()
+    }, 30 * 1000)
+    return () => clearInterval(interval)
+  }, [fetchBookings, fetchStats])
+
+  useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL
     if (!wsUrl) {
       console.warn("WebSocket URL not configured")
