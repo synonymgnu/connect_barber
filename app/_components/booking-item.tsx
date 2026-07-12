@@ -42,6 +42,7 @@ export interface BookingItemProps {
         }
       }
       barber: true
+      ratings: true
     }
   }>
 }
@@ -56,6 +57,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     service: { barbershop },
   } = booking
   const isConfirmed = isFuture(booking.date)
+  const hasRating = booking.ratings.length > 0
   const handleCancelBooking = async () => {
     try {
       await deleteBooking(booking.id)
@@ -141,7 +143,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 <AvatarImage
                   src={
                     booking.barber?.imageUrl ||
-                    `https://ui-avatars.com/api/?name=${booking.barber?.name}&background=bc130d&color=fff`
+                    `https://ui-avatars.com/api/?name=${booking.barber?.name}&background=8161ff&color=fff`
                   }
                 />
                 <AvatarFallback>{booking.barber?.name?.[0]}</AvatarFallback>
@@ -191,19 +193,6 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                   className="rounded-xl object-cover"
                 />
               )}
-
-              {/* <Card className="z-50 mx-5 mb-3 w-full rounded-xl">
-                <CardContent className="flex px-5 py-3 items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={barbershop.imageUrl} />
-                    <AvatarFallback>{barbershop.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-bold">{barbershop.name}</h3>
-                    <p className="text-xs">{barbershop.address}</p>
-                  </div>
-                </CardContent>
-              </Card>*/}
             </div>
 
             <div className="mt-6">
@@ -278,6 +267,10 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+                ) : hasRating ? (
+                  <Button variant="secondary" className="w-full" disabled>
+                    Avaliado
+                  </Button>
                 ) : (
                   <RatingDialog
                     bookingId={booking.id}

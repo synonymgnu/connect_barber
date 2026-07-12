@@ -14,10 +14,14 @@ export async function createRating(
 
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
-    include: { service: { include: { barbershop: true } } },
+    include: { service: { include: { barbershop: true } }, ratings: true },
   })
 
   if (!booking) throw new Error('Agendamento não encontrado')
+
+  if (booking.ratings.length > 0) {
+    throw new Error('Este agendamento já foi avaliado')
+  }
 
   await db.rating.create({
     data: {

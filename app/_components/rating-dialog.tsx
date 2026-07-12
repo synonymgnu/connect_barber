@@ -15,6 +15,7 @@ import { Button } from './ui/button'
 import { createRating } from '../_actions/create-rating'
 import { StarIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 interface RatingDialogProps {
   bookingId: string
@@ -25,6 +26,7 @@ export default function RatingDialog({
   bookingId,
   barbershopName,
 }: RatingDialogProps) {
+  const router = useRouter()
   const [rating, setRating] = useState(0)
 
   const [open, setOpen] = useState(false)
@@ -38,6 +40,7 @@ export default function RatingDialog({
       await createRating(bookingId, rating, '')
       setOpen(false)
       setSuccessDialogIsOpen(true)
+      router.refresh()
     } catch (error) {
       console.error('Erro ao enviar avaliação:', error)
       setErrorDialogIsOpen(true)
@@ -117,7 +120,7 @@ export default function RatingDialog({
             <Button
               className="w-full"
               onClick={handleSubmit}
-              disabled={rating === 0}
+              disabled={rating === 0 || isSubmitting}
             >
               {isSubmitting ? 'Enviando...' : 'Enviar avaliação'}
             </Button>

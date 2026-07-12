@@ -195,7 +195,7 @@ model Rating {
   barbershopId String?
   comment      String?
   createdAt    DateTime    @default(now())
-  bookingId    String
+  bookingId    String      @unique 
   value        Int
   barberId     String?
   Barber       Barber?     @relation(fields: [barberId], references: [id], onDelete: Cascade)

@@ -21,7 +21,8 @@ export const getConcludedBookings = async () => {
           barbershop: true,
         },
       },
-      barber: true, // 👈 OBRIGATÓRIO!
+      barber: true,
+      ratings: true,
     },
     orderBy: {
       date: 'desc',

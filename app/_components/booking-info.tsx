@@ -37,6 +37,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
     service: { barbershop },
   } = booking
   const isConfirmed = isFuture(booking.date)
+  const hasRating = booking.ratings.length > 0
   const handleCancelBooking = async () => {
     try {
       await deleteBooking(booking.id)
@@ -68,19 +69,6 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
               className="rounded-xl object-cover"
             />
           )}
-
-          {/*<Card className="z-50 mx-5 mb-3 w-full rounded-xl">
-            <CardContent className="flex px-5 py-3 items-center gap-3">
-              <Avatar>
-                <AvatarImage src={barbershop.imageUrl} />
-                <AvatarFallback>{barbershop.name[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-bold">{barbershop.name}</h3>
-                <p className="text-xs">{barbershop.address}</p>
-              </div>
-            </CardContent>
-          </Card> */}
         </div>
 
         <h2 className="font-bold uppercase text-sm mb-2.5 mt-5">Sobre nós</h2>
@@ -153,6 +141,10 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        ) : hasRating ? (
+          <Button variant="secondary" className="w-full" disabled>
+            Avaliado
+          </Button>
         ) : (
           <RatingDialog
             bookingId={booking.id}
