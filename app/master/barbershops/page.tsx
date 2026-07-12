@@ -27,7 +27,7 @@ interface Barbershop {
   id: string
   name: string
   address: string
-  imageUrl: string
+  images: string
   description: string
   phone: string[]
   isActive: boolean
@@ -189,9 +189,9 @@ export default function BarbershopsListPage() {
               >
                 {/* Imagem */}
                 <div className="relative h-48 w-full overflow-hidden bg-[#1f2022]">
-                  {barbershop.imageUrl ? (
+                  {barbershop.images[0] ? (
                     <Image
-                      src={barbershop.imageUrl}
+                      src={barbershop.images[0]}
                       alt={barbershop.name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform"

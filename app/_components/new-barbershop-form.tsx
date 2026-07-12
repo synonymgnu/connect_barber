@@ -41,11 +41,15 @@ import {
   Banknote,
   QrCode,
   WalletCards,
+  Globe,
+  MessageCircle,
+  Music2,
 } from 'lucide-react'
 import Image from 'next/image'
 
 const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/
-const urlRegex = /^(https?:\/\/.+|)$/
+
+const MAX_SHOP_IMAGES = 3
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -59,7 +63,12 @@ const formSchema = z.object({
   // Dados da barbearia
   shopName: z.string().min(1, 'Nome é obrigatório'),
   address: z.string().min(1, 'Endereço é obrigatório'),
-  shopImageUrl: z.string().min(1, 'Imagem é obrigatória'),
+  latitude: z.number(),
+  longitude: z.number(),
+  shopImages: z
+    .array(z.string().min(1, 'Imagem inválida'))
+    .min(1, 'Adicione pelo menos uma imagem')
+    .max(MAX_SHOP_IMAGES, `Máximo de ${MAX_SHOP_IMAGES} imagens`),
   description: z.string().min(1, 'Descrição é obrigatória'),
   phones: z.array(
     z.string().regex(phoneRegex, 'Formato inválido. Use (00) 00000-0000')
@@ -69,6 +78,12 @@ const formSchema = z.object({
     instagram: z.string().url('URL inválida').or(z.literal('')),
     facebook: z.string().url('URL inválida').or(z.literal('')),
     googleMaps: z.string(),
+    whatsapp: z
+      .string()
+      .regex(phoneRegex, 'Formato inválido. Use (00) 00000-0000')
+      .or(z.literal('')),
+    tiktok: z.string().url('URL inválida').or(z.literal('')),
+    website: z.string().url('URL inválida').or(z.literal('')),
   }),
   // Formas de Pagamento
   paymentMethods: z
@@ -101,13 +116,18 @@ export default function NewBarbershopForm() {
     defaultValues: {
       shopName: '',
       address: '',
-      shopImageUrl: '',
+      latitude: 0,
+      longitude: 0,
+      shopImages: [''],
       description: '',
       phones: [''],
       socialMedia: {
         instagram: '',
         facebook: '',
         googleMaps: '',
+        whatsapp: '',
+        tiktok: '',
+        website: '',
       },
       paymentMethods: [],
       ownerName: '',
@@ -116,7 +136,7 @@ export default function NewBarbershopForm() {
   })
 
   const watchValues = form.watch()
-  const { shopName, address, shopImageUrl, description, phones } = watchValues
+  const { shopName, address, shopImages, description, phones } = watchValues
 
   const addPhone = useCallback(() => {
     const currentPhones = form.getValues('phones')
@@ -136,6 +156,27 @@ export default function NewBarbershopForm() {
     },
     [form]
   )
+
+  const addShopImage = useCallback(() => {
+    const current = form.getValues('shopImages')
+    if (current.length >= MAX_SHOP_IMAGES) return
+    form.setValue('shopImages', [...current, ''], { shouldValidate: true })
+  }, [form])
+
+  const removeShopImage = useCallback(
+    (index: number) => {
+      const current = form.getValues('shopImages')
+      if (current.length > 1) {
+        form.setValue(
+          'shopImages',
+          current.filter((_, i) => i !== index),
+          { shouldValidate: true }
+        )
+      }
+    },
+    [form]
+  )
+
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '').slice(0, 11)
 
@@ -184,7 +225,8 @@ export default function NewBarbershopForm() {
   )
 
   const previewImage = useMemo(() => {
-    if (!shopImageUrl) {
+    const cover = shopImages?.[0]
+    if (!cover) {
       return (
         <div className="absolute inset-0 bg-gradient-to-br from-[#2b2c2e] to-[#1f2022] flex items-center justify-center">
           <div className="text-center">
@@ -196,7 +238,7 @@ export default function NewBarbershopForm() {
     }
     return (
       <Image
-        src={shopImageUrl}
+        src={cover}
         alt={shopName || 'Barbearia'}
         fill
         className="object-cover"
@@ -205,7 +247,7 @@ export default function NewBarbershopForm() {
         quality={85}
       />
     )
-  }, [shopImageUrl, shopName])
+  }, [shopImages, shopName])
 
   async function onSubmit(values: FormValues) {
     setServerError(null)
@@ -254,13 +296,18 @@ export default function NewBarbershopForm() {
         body: JSON.stringify({
           shopName: values.shopName,
           address: values.address,
-          shopImageUrl: values.shopImageUrl,
+          latitude: values.latitude,
+          longitude: values.longitude,
+          images: values.shopImages.filter(Boolean),
           description: values.description,
           phone: values.phones.filter(Boolean),
           socialMedia: {
             instagram: values.socialMedia.instagram || null,
             facebook: values.socialMedia.facebook || null,
             googleMaps: googleMaps || null,
+            whatsapp: values.socialMedia.whatsapp || null,
+            tiktok: values.socialMedia.tiktok || null,
+            website: values.socialMedia.website || null,
           },
           paymentMethods: values.paymentMethods,
           ownerName: values.ownerName,
@@ -313,7 +360,21 @@ export default function NewBarbershopForm() {
           {/* Preview Card */}
           <div className="lg:col-span-1">
             <Card className="border border-[#1f2022] bg-[#1a1b1d] rounded-2xl overflow-hidden sticky top-8">
-              <div className="relative h-[280px] w-full">{previewImage}</div>
+              <div className="relative h-[280px] w-full">
+                {previewImage}
+                {shopImages?.filter(Boolean).length > 1 && (
+                  <div className="absolute bottom-3 right-3 flex gap-1">
+                    {shopImages.filter(Boolean).map((_, i) => (
+                      <span
+                        key={i}
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          i === 0 ? 'bg-violet-500' : 'bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <CardContent className="p-6 space-y-4">
                 <div>
@@ -415,23 +476,71 @@ export default function NewBarbershopForm() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Imagem */}
+                    {/* Imagens */}
                     <FormField
                       control={form.control}
-                      name="shopImageUrl"
-                      render={({ field }) => (
+                      name="shopImages"
+                      render={() => (
                         <FormItem>
-                          <FormLabel className="text-zinc-300 font-medium text-sm">
-                            Imagem da Barbearia
-                          </FormLabel>
-                          <FormControl>
-                            <ImageUpload
-                              value={field.value}
-                              onChange={field.onChange}
-                              className="h-48 rounded-xl border border-[#2b2c2e]"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-red-400 text-xs" />
+                          <div className="flex justify-between items-center mb-3">
+                            <FormLabel className="text-zinc-300 font-medium text-sm">
+                              Imagens da Barbearia (
+                              {form.watch('shopImages').length}/
+                              {MAX_SHOP_IMAGES})
+                            </FormLabel>
+                            {form.watch('shopImages').length <
+                              MAX_SHOP_IMAGES && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addShopImage}
+                                className="border-violet-500 text-violet-500 hover:bg-violet-500 hover:text-white transition-colors"
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Adicionar
+                              </Button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {form.watch('shopImages').map((_, index) => (
+                              <div key={index} className="relative">
+                                <FormField
+                                  control={form.control}
+                                  name={`shopImages.${index}`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <ImageUpload
+                                          value={field.value}
+                                          onChange={field.onChange}
+                                          className="h-32 rounded-xl border border-[#2b2c2e]"
+                                        />
+                                      </FormControl>
+                                      <FormMessage className="text-red-400 text-xs" />
+                                    </FormItem>
+                                  )}
+                                />
+                                {form.watch('shopImages').length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeShopImage(index)}
+                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#1a1b1d] border border-[#2b2c2e] text-zinc-400 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                {index === 0 && (
+                                  <span className="absolute bottom-1 left-1 text-[10px] bg-violet-500 text-white px-1.5 py-0.5 rounded">
+                                    Capa
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -475,6 +584,52 @@ export default function NewBarbershopForm() {
                               />
                             </FormControl>
                             <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="latitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Latitude</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="any"
+                                placeholder="-23.561684"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(e.target.valueAsNumber)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="longitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Longitude</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="any"
+                                placeholder="-46.655981"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(e.target.valueAsNumber)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -623,6 +778,75 @@ export default function NewBarbershopForm() {
                             <FormControl>
                               <Input
                                 placeholder="https://facebook.com/seu_perfil"
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* WhatsApp */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.whatsapp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <MessageCircle className="h-4 w-4 text-violet-500" />
+                              WhatsApp
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="(00) 00000-0000"
+                                value={field.value}
+                                onChange={(e) =>
+                                  field.onChange(formatPhone(e.target.value))
+                                }
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* TikTok */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.tiktok"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <Music2 className="h-4 w-4 text-violet-500" />
+                              TikTok
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://tiktok.com/@seu_perfil"
+                                {...field}
+                                className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Site */}
+                      <FormField
+                        control={form.control}
+                        name="socialMedia.website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-300 font-medium text-sm flex items-center gap-2">
+                              <Globe className="h-4 w-4 text-violet-500" />
+                              Site
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://seusite.com.br"
                                 {...field}
                                 className="bg-[#1f2022] border-[#2b2c2e] text-white focus:border-violet-500 focus:ring-0"
                               />

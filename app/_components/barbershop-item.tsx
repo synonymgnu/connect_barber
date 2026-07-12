@@ -10,14 +10,28 @@ interface BarbershopItemProps {
     id: string
     name: string
     address: string
-    imageUrl: string
+    images: string[]
     averageRating: number
   }
+  containerWidth?: 'carousel' | 'search' | 'detail'
 }
 
-const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
+const BarbershopItem = ({
+  barbershop,
+  containerWidth = 'search',
+}: BarbershopItemProps) => {
+  // carousel: w-[167px] (home padronizado)
+  // search: w-full mobile, min-w-[200px] desktop (grid responsivo)
+  // detail: min-w-[250px] (barbershop detail bem alargado)
+  const widthClass =
+    containerWidth === 'carousel'
+      ? 'w-[167px] shrink-0'
+      : containerWidth === 'search'
+        ? 'w-full md:w-auto md:min-w-[200px]'
+        : 'min-w-[250px]'
+
   return (
-    <Card className="w-[167px] shrink-0 rounded-2xl">
+    <Card className={`${widthClass} rounded-2xl`}>
       <CardContent className="p-0 px-1 pt-1">
         {/* IMAGEM */}
         <div className="relative h-[159px] w-full">
@@ -25,7 +39,7 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
             alt={barbershop.name}
             fill
             className="rounded-2xl object-cover"
-            src={barbershop.imageUrl}
+            src={barbershop.images[0]}
           />
           {barbershop.averageRating > 0 && (
             <Badge

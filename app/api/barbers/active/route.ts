@@ -25,6 +25,9 @@ export async function GET(request: Request) {
             },
           },
         },
+        services: {
+          select: { id: true },
+        },
       },
     })
 

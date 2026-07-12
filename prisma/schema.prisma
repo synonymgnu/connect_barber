@@ -70,7 +70,7 @@ model Barbershop {
   name        String
   address     String
   phone       String[]
-  imageUrl    String
+  images      String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   description String
@@ -79,7 +79,12 @@ model Barbershop {
   instagram String?
   facebook String?
   googleMaps String?
+  whatsapp  String?
+  tiktok    String?
+  website   String?
   paymentMethods String[] 
+  latitude Decimal? @db.Decimal(10, 8)
+  longitude Decimal? @db.Decimal(11, 8) 
 
   barbers  Barber[]
   owner    User?               @relation(fields: [ownerId], references: [id])
@@ -112,6 +117,7 @@ model BarbershopService {
   duration     Int
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   bookings     Booking[]
+  barbers      Barber[]   @relation("BarberServices")
 }
 
 model Barber {
@@ -135,6 +141,7 @@ model Barber {
   workSchedule BarberWorkSchedule[]
   bookings     Booking[]
   Rating       Rating[]
+  services     BarbershopService[]  @relation("BarberServices")
 }
 
 model BarberWorkSchedule {
@@ -188,7 +195,7 @@ model Rating {
   barbershopId String?
   comment      String?
   createdAt    DateTime    @default(now())
-  bookingId    String
+  bookingId    String      @unique 
   value        Int
   barberId     String?
   Barber       Barber?     @relation(fields: [barberId], references: [id], onDelete: Cascade)

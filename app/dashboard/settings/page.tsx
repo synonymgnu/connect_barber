@@ -1,48 +1,71 @@
-"use client"
+'use client'
 
-import { ImageUpload } from "@/app/_components/image-upload"
-import { Button } from "@/app/_components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/_components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/app/_components/ui/form"
-import { Input } from "@/app/_components/ui/input"
-import { Textarea } from "@/app/_components/ui/textarea"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Info, Loader2, MapPin, Phone, Plus, Store, X } from "lucide-react"
-import Image from "next/image"
-import { useEffect, useMemo, useCallback } from "react"
-import { useForm } from "react-hook-form"
-import z from "zod"
-import { useBarbershopSettings, useUpdateBarbershopSettings } from "@/app/_hooks/use-barbershop-settings"
+import { ImageUpload } from '@/app/_components/image-upload'
+import { Button } from '@/app/_components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/app/_components/ui/card'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/app/_components/ui/form'
+import { Input } from '@/app/_components/ui/input'
+import { Textarea } from '@/app/_components/ui/textarea'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Info, Loader2, MapPin, Phone, Plus, Store, X } from 'lucide-react'
+import Image from 'next/image'
+import { useEffect, useCallback, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
+import z from 'zod'
+import {
+  useBarbershopSettings,
+  useUpdateBarbershopSettings,
+} from '@/app/_hooks/use-barbershop-settings'
 
 const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/
+const MAX_IMAGES = 3
 
 const formSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  address: z.string().min(1, "Endereço é obrigatório"),
-  description: z.string().min(1, "Descrição é obrigatória"),
-  imageUrl: z.string().min(1, "Imagem é obrigatória"),
-  phones: z.array(z.string().regex(phoneRegex, "Formato inválido. Use (00) 00000-0000")),
+  name: z.string().min(1, 'Nome é obrigatório'),
+  address: z.string().min(1, 'Endereço é obrigatório'),
+  description: z.string().min(1, 'Descrição é obrigatória'),
+  images: z
+    .array(z.string())
+    .min(1, 'Pelo menos uma imagem é obrigatória')
+    .max(MAX_IMAGES, `Máximo de ${MAX_IMAGES} imagens`),
+  phones: z.array(
+    z.string().regex(phoneRegex, 'Formato inválido. Use (00) 00000-0000')
+  ),
 })
 
 type FormValues = z.infer<typeof formSchema>
 
 export default function SettingsPage() {
   const { data: barbershop, isLoading: loading } = useBarbershopSettings()
-  const { mutate: updateSettings, isPending: saving } = useUpdateBarbershopSettings()
+  const { mutate: updateSettings, isPending: saving } =
+    useUpdateBarbershopSettings()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      address: "",
-      description: "",
-      imageUrl: "",
-      phones: [""],
+      name: '',
+      address: '',
+      description: '',
+      images: [],
+      phones: [''],
     },
   })
 
   const watchValues = form.watch()
-  const { name, address, description, imageUrl, phones } = watchValues
+  const { name, address, description, images, phones } = watchValues
 
   useEffect(() => {
     if (barbershop) {
@@ -50,36 +73,71 @@ export default function SettingsPage() {
         name: barbershop.name,
         address: barbershop.address,
         description: barbershop.description,
-        imageUrl: barbershop.imageUrl,
-        phones: barbershop.phone.length > 0 ? barbershop.phone : [""],
+        images: barbershop.images?.length > 0 ? barbershop.images : [],
+        phones: barbershop.phone.length > 0 ? barbershop.phone : [''],
       })
     }
   }, [barbershop, form])
 
-  const onSubmit = useCallback((values: FormValues) => {
-    updateSettings({
-      name: values.name,
-      address: values.address,
-      description: values.description,
-      imageUrl: values.imageUrl,
-      phone: values.phones,
-    })
-  }, [updateSettings])
+  const onSubmit = useCallback(
+    (values: FormValues) => {
+      updateSettings({
+        name: values.name,
+        address: values.address,
+        description: values.description,
+        images: values.images,
+        phone: values.phones,
+      })
+    },
+    [updateSettings]
+  )
 
   const addPhone = useCallback(() => {
-    const phones = form.getValues("phones")
-    form.setValue("phones", [...phones, ""], { shouldValidate: true })
+    const phones = form.getValues('phones')
+    form.setValue('phones', [...phones, ''], { shouldValidate: true })
   }, [form])
 
-  const removePhone = useCallback((index: number) => {
-    const phones = form.getValues("phones")
-    if (phones.length > 1) {
-      form.setValue("phones", phones.filter((_, i) => i !== index), { shouldValidate: true })
-    }
-  }, [form])
+  const removePhone = useCallback(
+    (index: number) => {
+      const phones = form.getValues('phones')
+      if (phones.length > 1) {
+        form.setValue(
+          'phones',
+          phones.filter((_, i) => i !== index),
+          { shouldValidate: true }
+        )
+      }
+    },
+    [form]
+  )
+
+  // Adiciona/atualiza a imagem numa posição específica do array
+  const setImageAt = useCallback(
+    (index: number, url: string) => {
+      const current = form.getValues('images')
+      const next = [...current]
+      next[index] = url
+      form.setValue('images', next, { shouldValidate: true })
+    },
+    [form]
+  )
+
+  const removeImageAt = useCallback(
+    (index: number) => {
+      const current = form.getValues('images')
+      form.setValue(
+        'images',
+        current.filter((_, i) => i !== index),
+        { shouldValidate: true }
+      )
+    },
+    [form]
+  )
+
+  const coverImage = images?.[0]
 
   const previewImage = useMemo(() => {
-    if (!imageUrl) {
+    if (!coverImage) {
       return (
         <div className="absolute inset-0 bg-gradient-to-br from-[#2b2c2e] to-[#1f2022] flex items-center justify-center">
           <div className="text-center">
@@ -91,7 +149,7 @@ export default function SettingsPage() {
     }
     return (
       <Image
-        src={imageUrl}
+        src={coverImage}
         alt={name || 'Barbearia'}
         fill
         className="object-cover"
@@ -100,7 +158,7 @@ export default function SettingsPage() {
         quality={85}
       />
     )
-  }, [imageUrl, name])
+  }, [coverImage, name])
 
   if (loading) {
     return (
@@ -116,8 +174,6 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#151619] text-zinc-100">
       <div className="max-w-7xl mx-auto space-y-8 px-5 lg:px-16 pt-8 pb-20">
-        
-        {/* Header compacto e integrado */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-3 text-white">
@@ -131,7 +187,6 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Preview Card - Agora na esquerda */}
           <div className="lg:col-span-1">
             <Card className="border border-[#1f2022] bg-[#1a1b1d] rounded-2xl overflow-hidden sticky top-8">
               <div className="relative h-[280px] w-full">
@@ -156,12 +211,15 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                {phones?.some(p => p) && (
+                {phones?.some((p) => p) && (
                   <div className="flex items-start gap-2">
                     <Phone className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
                     <div className="flex flex-wrap gap-2">
                       {phones.filter(Boolean).map((phone, i) => (
-                        <span key={i} className="text-xs bg-[#2b2c2e] text-zinc-300 px-2 py-1 rounded-md">
+                        <span
+                          key={i}
+                          className="text-xs bg-[#2b2c2e] text-zinc-300 px-2 py-1 rounded-md"
+                        >
                           {phone}
                         </span>
                       ))}
@@ -177,7 +235,6 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {/* Stats no preview */}
                 <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[#1f2022]">
                   <div className="text-center">
                     <div className="text-white font-bold text-sm">4.8</div>
@@ -196,7 +253,6 @@ export default function SettingsPage() {
             </Card>
           </div>
 
-          {/* Form Section - Agora na direita */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="bg-[#1a1b1d] border border-[#1f2022] rounded-2xl">
               <CardHeader className="pb-4">
@@ -210,36 +266,71 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Logo Upload */}
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
+                    {/* Imagens da Barbearia (até 3) */}
                     <FormField
                       control={form.control}
-                      name="imageUrl"
-                      render={({ field }) => (
+                      name="images"
+                      render={() => (
                         <FormItem>
-                          <FormLabel className="text-zinc-300 font-medium text-sm">
-                            Imagem da Barbearia
-                          </FormLabel>
-                          <FormControl>
-                            <ImageUpload
-                              value={field.value}
-                              onChange={field.onChange}
-                              className="h-48 rounded-xl border border-[#2b2c2e]"
-                            />
-                          </FormControl>
+                          <div className="flex justify-between items-center mb-3">
+                            <FormLabel className="text-zinc-300 font-medium text-sm">
+                              Imagens da Barbearia ({images?.length ?? 0}/
+                              {MAX_IMAGES})
+                            </FormLabel>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {Array.from({ length: MAX_IMAGES }).map(
+                              (_, index) => {
+                                const currentUrl = images?.[index]
+                                const isNextEmptySlot =
+                                  !currentUrl && index === (images?.length ?? 0)
+
+                                // Só renderiza o slot se já tiver imagem OU for o próximo vazio
+                                if (!currentUrl && !isNextEmptySlot) return null
+
+                                return (
+                                  <div key={index} className="relative">
+                                    <ImageUpload
+                                      value={currentUrl ?? ''}
+                                      onChange={(url: string) =>
+                                        setImageAt(index, url)
+                                      }
+                                      className="h-32 rounded-xl border border-[#2b2c2e]"
+                                    />
+                                    {currentUrl && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => removeImageAt(index)}
+                                        className="absolute top-1 right-1 h-7 w-7 text-zinc-300 hover:text-red-400 hover:bg-red-900/30 bg-black/40"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                )
+                              }
+                            )}
+                          </div>
                           <FormMessage className="text-red-400 text-xs" />
                         </FormItem>
                       )}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Nome */}
                       <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-zinc-300 font-medium text-sm">Nome da Barbearia</FormLabel>
+                            <FormLabel className="text-zinc-300 font-medium text-sm">
+                              Nome da Barbearia
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Barbearia Premium"
@@ -252,13 +343,14 @@ export default function SettingsPage() {
                         )}
                       />
 
-                      {/* Endereço */}
                       <FormField
                         control={form.control}
                         name="address"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-zinc-300 font-medium text-sm">Endereço</FormLabel>
+                            <FormLabel className="text-zinc-300 font-medium text-sm">
+                              Endereço
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Rua Exemplo, 123 - Centro"
@@ -272,13 +364,14 @@ export default function SettingsPage() {
                       />
                     </div>
 
-                    {/* Descrição */}
                     <FormField
                       control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-zinc-300 font-medium text-sm">Descrição</FormLabel>
+                          <FormLabel className="text-zinc-300 font-medium text-sm">
+                            Descrição
+                          </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Descreva sua barbearia, ambiente, especialidades e diferenciais..."
@@ -292,14 +385,15 @@ export default function SettingsPage() {
                       )}
                     />
 
-                    {/* Telefones */}
                     <FormField
                       control={form.control}
                       name="phones"
                       render={() => (
                         <FormItem>
                           <div className="flex justify-between items-center mb-3">
-                            <FormLabel className="text-zinc-300 font-medium text-sm">Telefones de Contato</FormLabel>
+                            <FormLabel className="text-zinc-300 font-medium text-sm">
+                              Telefones de Contato
+                            </FormLabel>
                             <Button
                               type="button"
                               variant="outline"
@@ -312,8 +406,11 @@ export default function SettingsPage() {
                             </Button>
                           </div>
                           <div className="space-y-3">
-                            {form.watch("phones").map((_, index) => (
-                              <div key={index} className="flex gap-2 items-start">
+                            {form.watch('phones').map((_, index) => (
+                              <div
+                                key={index}
+                                className="flex gap-2 items-start"
+                              >
                                 <FormField
                                   control={form.control}
                                   name={`phones.${index}`}
@@ -330,7 +427,7 @@ export default function SettingsPage() {
                                     </FormItem>
                                   )}
                                 />
-                                {form.watch("phones").length > 1 && (
+                                {form.watch('phones').length > 1 && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -360,7 +457,7 @@ export default function SettingsPage() {
                             Salvando...
                           </>
                         ) : (
-                          "Salvar Alterações"
+                          'Salvar Alterações'
                         )}
                       </Button>
                     </div>

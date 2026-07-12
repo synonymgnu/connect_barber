@@ -5,19 +5,29 @@ import { Button } from '@/app/_components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/app/_components/ui/sheet'
 import { MapPinIcon } from 'lucide-react'
 import Image from 'next/image'
-
+import { Prisma } from '@prisma/client'
 interface MapButtonSheetProps {
   googleMapsUrl: string
   address: string
+  latitude: Prisma.Decimal | null
+  longitude: Prisma.Decimal | null
 }
 
 export default function MapButtonSheet({
   googleMapsUrl,
   address,
+  latitude,
+  longitude,
 }: MapButtonSheetProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const uberUrl = `https://www.uber.com/launch?dropoff_address=${encodeURIComponent(address)}`
+  const uberUrl =
+  latitude && longitude
+    ? `https://m.uber.com/ul/?action=setPickup` +
+      `&dropoff[latitude]=${latitude.toString()}` +
+      `&dropoff[longitude]=${longitude.toString()}` +
+      `&dropoff[nickname]=${encodeURIComponent(address)}`
+    : '#'
 
   const UberIcon = ({ className }: { className?: string }) => (
     <svg

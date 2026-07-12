@@ -5,7 +5,7 @@ interface BarbershopSettings {
   name: string
   address: string
   description: string
-  imageUrl: string
+  images: string[]
   phone: string[]
 }
 
@@ -28,19 +28,21 @@ export function useUpdateBarbershopSettings() {
     mutationFn: async (data: BarbershopSettings) => {
       const checkResponse = await fetch('/api/barbershop/settings')
       const method = checkResponse.status === 404 ? 'POST' : 'PATCH'
-      
+
       const response = await fetch('/api/barbershop/settings', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      
+
       if (!response.ok) throw new Error('Erro ao salvar')
       return { method }
     },
     onSuccess: ({ method }) => {
       queryClient.invalidateQueries({ queryKey: ['barbershop-settings'] })
-      toast.success(method === 'POST' ? 'Barbearia criada!' : 'Configurações salvas!')
+      toast.success(
+        method === 'POST' ? 'Barbearia criada!' : 'Configurações salvas!'
+      )
     },
     onError: () => {
       toast.error('Erro ao salvar configurações')
