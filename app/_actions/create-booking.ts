@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '../_lib/auth'
 import { notifyBookingCreated } from '../_lib/notifications/create-notification'
 import { createAuditLog } from '../_lib/audit'
+import { validateBookingTime } from '../_lib/booking-validation'
 
 interface CreateBookingParams {
   serviceId: string
@@ -18,6 +19,12 @@ export const createBooking = async (params: CreateBookingParams) => {
   if (!user) {
     throw new Error('Usuário não autenticado!')
   }
+
+  await validateBookingTime({
+    date: params.date,
+    serviceId: params.serviceId,
+    barberId: params.barberId,
+  })
   
   const booking = await db.booking.create({
     data: {
@@ -49,6 +56,6 @@ export const createBooking = async (params: CreateBookingParams) => {
     }
   })
   
-  revalidatePath('/barbershops/[id]')
+  revalidatePath('/barbershops', 'layout')
   revalidatePath('/bookings')
 }

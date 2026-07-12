@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
 import { notifyBookingCancelled, notifyBookingConfirmed, notifyBookingUpdated } from '@/app/_lib/notifications/create-notification'
 import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
+import { validateBookingTime } from '@/app/_lib/booking-validation'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -25,12 +26,34 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return new NextResponse('Not Found', { status: 404 })
     }
 
+    const newDate = new Date(data.date)
+    const newServiceId = data.serviceId || existingBooking.serviceId
+    const newBarberId = data.barberId || existingBooking.barberId
+
+    // Valida horário se data, serviço ou barbeiro mudou
+    if (
+      newDate.getTime() !== existingBooking.date.getTime() ||
+      newServiceId !== existingBooking.serviceId ||
+      newBarberId !== existingBooking.barberId
+    ) {
+      try {
+        await validateBookingTime({
+          date: newDate,
+          serviceId: newServiceId,
+          barberId: newBarberId,
+          excludeBookingId: params.id,
+        })
+      } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 422 })
+      }
+    }
+
     const updatedBooking = await db.booking.update({
       where: { id: params.id },
       data: {
-        date: new Date(data.date),
-        serviceId: data.serviceId,
-        barberId: data.barberId || null,
+        date: newDate,
+        serviceId: newServiceId,
+        barberId: newBarberId || null,
         status: data.status
       },
       include: {
