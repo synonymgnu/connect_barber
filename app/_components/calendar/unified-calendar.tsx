@@ -15,8 +15,24 @@ import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Calendar, Clock, Scissors, User, X, Save, Trash2, Globe, Store } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
+import {
+  Calendar,
+  Clock,
+  Scissors,
+  User,
+  X,
+  Save,
+  Trash2,
+  Globe,
+  Store,
+} from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Textarea } from '../ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -33,7 +49,7 @@ interface AppointmentModalData {
   serviceId: string
   barberId: string
   date: Date
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
   source: 'PRESENCIAL' | 'ONLINE'
   notes?: string
 }
@@ -52,6 +68,7 @@ const STATUS_LABELS: Record<AppointmentModalData['status'], string> = {
   CONFIRMED: 'Confirmado',
   COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
+  NO_SHOW: 'Não compareceu',
 }
 
 const STATUS_STYLES: Record<AppointmentModalData['status'], string> = {
@@ -59,6 +76,7 @@ const STATUS_STYLES: Record<AppointmentModalData['status'], string> = {
   CONFIRMED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   COMPLETED: 'bg-green-500/20 text-green-400 border-green-500/30',
   CANCELLED: 'bg-red-500/20 text-red-400 border-red-500/30',
+  NO_SHOW: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 }
 
 export default function UnifiedCalendar({
@@ -69,24 +87,33 @@ export default function UnifiedCalendar({
   const { data: session } = useSession()
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedAppointment, setSelectedAppointment] = useState<{ id: string } | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<{
+    id: string
+  } | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
-  const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() })
+  const [dateRange, setDateRange] = useState({
+    start: new Date(),
+    end: new Date(),
+  })
 
-  const defaultFormData = useCallback((): AppointmentModalData => ({
-    userId: '',
-    userName: '',
-    userEmail: '',
-    userPhone: '',
-    serviceId: '',
-    barberId: role === 'BARBER' ? session?.user?.barberId || '' : '',
-    date: date || new Date(),
-    status: 'PENDING',
-    source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
-    notes: '',
-  }), [role, session?.user?.barberId, date])
+  const defaultFormData = useCallback(
+    (): AppointmentModalData => ({
+      userId: '',
+      userName: '',
+      userEmail: '',
+      userPhone: '',
+      serviceId: '',
+      barberId: role === 'BARBER' ? session?.user?.barberId || '' : '',
+      date: date || new Date(),
+      status: 'PENDING',
+      source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
+      notes: '',
+    }),
+    [role, session?.user?.barberId, date]
+  )
 
-  const [formData, setFormData] = useState<AppointmentModalData>(defaultFormData)
+  const [formData, setFormData] =
+    useState<AppointmentModalData>(defaultFormData)
 
   const { data: calendarData } = useQuery({
     queryKey: ['calendar-appointments', dateRange],
@@ -140,8 +167,13 @@ export default function UnifiedCalendar({
       if (!response.ok) throw new Error('Erro ao criar agendamento')
       return response.json()
     },
-    onSuccess: () => { invalidateCalendar(); toast.success('Agendamento criado com sucesso!'); closeAndReset() },
-    onError: (error: Error) => toast.error(error.message || 'Erro ao criar agendamento'),
+    onSuccess: () => {
+      invalidateCalendar()
+      toast.success('Agendamento criado com sucesso!')
+      closeAndReset()
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || 'Erro ao criar agendamento'),
   })
 
   const updateMutation = useMutation({
@@ -157,17 +189,28 @@ export default function UnifiedCalendar({
       }
       return response.json()
     },
-    onSuccess: () => { invalidateCalendar(); toast.success('Agendamento atualizado com sucesso!'); closeAndReset() },
-    onError: (error: Error) => toast.error(error.message || 'Erro ao atualizar agendamento'),
+    onSuccess: () => {
+      invalidateCalendar()
+      toast.success('Agendamento atualizado com sucesso!')
+      closeAndReset()
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || 'Erro ao atualizar agendamento'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/appointments/calendar/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/appointments/calendar/${id}`, {
+        method: 'DELETE',
+      })
       if (!response.ok) throw new Error('Erro ao excluir agendamento')
     },
-    onSuccess: () => { invalidateCalendar(); toast.success('Agendamento excluído com sucesso!') },
-    onError: (error: Error) => toast.error(error.message || 'Erro ao excluir agendamento'),
+    onSuccess: () => {
+      invalidateCalendar()
+      toast.success('Agendamento excluído com sucesso!')
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || 'Erro ao excluir agendamento'),
   })
 
   const handleDateClick = (arg: { date: Date | string }) => {
@@ -205,7 +248,9 @@ export default function UnifiedCalendar({
     setModalOpen(true)
   }
 
-  const handleEventDrop = (dropInfo: { event: { extendedProps: any; start: Date | null } }) => {
+  const handleEventDrop = (dropInfo: {
+    event: { extendedProps: any; start: Date | null }
+  }) => {
     const { extendedProps: appointment, start: newDate } = dropInfo.event
     if (!appointment || !newDate) return
 
@@ -265,7 +310,11 @@ export default function UnifiedCalendar({
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
-            headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            }}
             events={calendarData?.events || []}
             locale={ptBrLocale}
             selectable
@@ -277,35 +326,98 @@ export default function UnifiedCalendar({
             slotMaxTime="20:00:00"
             height="100%"
             allDaySlot={false}
-            buttonText={{ today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia' }}
-            datesSet={(dateInfo) => setDateRange({ start: dateInfo.start, end: dateInfo.end })}
+            buttonText={{
+              today: 'Hoje',
+              month: 'Mês',
+              week: 'Semana',
+              day: 'Dia',
+            }}
+            datesSet={(dateInfo) =>
+              setDateRange({ start: dateInfo.start, end: dateInfo.end })
+            }
           />
         </div>
 
-        <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) closeAndReset(); else setModalOpen(true) }}>
+        <Dialog
+          open={modalOpen}
+          onOpenChange={(open) => {
+            if (!open) closeAndReset()
+            else setModalOpen(true)
+          }}
+        >
           <DialogContent className="sm:max-w-[600px] bg-[#0c0c0c] border-[#1f1f1f] text-white">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold">
-                {modalMode === 'edit' ? 'Editar Agendamento' : 'Novo Agendamento'}
+                {modalMode === 'edit'
+                  ? 'Editar Agendamento'
+                  : 'Novo Agendamento'}
               </DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label className="text-white flex items-center gap-2"><User className="w-4 h-4" />Cliente</Label>
-                <Input placeholder="Nome do cliente" value={formData.userName} onChange={(e) => setFormData({ ...formData, userName: e.target.value })} className="bg-[#0f0f0f] border-[#1f1f1f] text-white" required disabled={modalMode === 'edit'} />
-                <Input placeholder="Email (opcional)" type="email" value={formData.userEmail} onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })} className="bg-[#0f0f0f] border-[#1f1f1f] text-white" disabled={modalMode === 'edit'} />
-                <Input placeholder="Telefone (opcional)" value={formData.userPhone} onChange={(e) => setFormData({ ...formData, userPhone: e.target.value })} className="bg-[#0f0f0f] border-[#1f1f1f] text-white" disabled={modalMode === 'edit'} />
+                <Label className="text-white flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Cliente
+                </Label>
+                <Input
+                  placeholder="Nome do cliente"
+                  value={formData.userName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, userName: e.target.value })
+                  }
+                  className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                  required
+                  disabled={modalMode === 'edit'}
+                />
+                <Input
+                  placeholder="Email (opcional)"
+                  type="email"
+                  value={formData.userEmail}
+                  onChange={(e) =>
+                    setFormData({ ...formData, userEmail: e.target.value })
+                  }
+                  className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                  disabled={modalMode === 'edit'}
+                />
+                <Input
+                  placeholder="Telefone (opcional)"
+                  value={formData.userPhone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, userPhone: e.target.value })
+                  }
+                  className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                  disabled={modalMode === 'edit'}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-white flex items-center gap-2"><Scissors className="w-4 h-4" />Serviço</Label>
-                <Select value={formData.serviceId} onValueChange={(value) => setFormData({ ...formData, serviceId: value })} required>
-                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white"><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
+                <Label className="text-white flex items-center gap-2">
+                  <Scissors className="w-4 h-4" />
+                  Serviço
+                </Label>
+                <Select
+                  value={formData.serviceId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, serviceId: value })
+                  }
+                  required
+                >
+                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue placeholder="Selecione um serviço" />
+                  </SelectTrigger>
                   <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
-                    {services?.map((service: { id: string; name: string; price: number }) => (
-                      <SelectItem key={service.id} value={service.id}>{service.name} - R$ {Number(service.price).toFixed(2)}</SelectItem>
-                    ))}
+                    {services?.map(
+                      (service: {
+                        id: string
+                        name: string
+                        price: number
+                      }) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name} - R$ {Number(service.price).toFixed(2)}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -313,11 +425,21 @@ export default function UnifiedCalendar({
               {role === 'ADMIN' && (
                 <div className="space-y-2">
                   <Label className="text-white">Barbeiro</Label>
-                  <Select value={formData.barberId} onValueChange={(value) => setFormData({ ...formData, barberId: value })} required>
-                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white"><SelectValue placeholder="Selecione um barbeiro" /></SelectTrigger>
+                  <Select
+                    value={formData.barberId}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, barberId: value })
+                    }
+                    required
+                  >
+                    <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                      <SelectValue placeholder="Selecione um barbeiro" />
+                    </SelectTrigger>
                     <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
                       {barbers?.map((barber: { id: string; name: string }) => (
-                        <SelectItem key={barber.id} value={barber.id}>{barber.name}</SelectItem>
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -326,25 +448,51 @@ export default function UnifiedCalendar({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-white flex items-center gap-2"><Calendar className="w-4 h-4" />Data</Label>
+                  <Label className="text-white flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Data
+                  </Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full bg-[#0f0f0f] border-[#1f1f1f] text-white justify-start">
+                      <Button
+                        variant="outline"
+                        className="w-full bg-[#0f0f0f] border-[#1f1f1f] text-white justify-start"
+                      >
                         <Calendar className="mr-2 h-4 w-4" />
-                        {isValidDate(formData.date) ? format(formData.date, "dd 'de' MMM yyyy", { locale: ptBR }) : 'Selecione uma data'}
+                        {isValidDate(formData.date)
+                          ? format(formData.date, "dd 'de' MMM yyyy", {
+                              locale: ptBR,
+                            })
+                          : 'Selecione uma data'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 bg-[#0c0c0c] border-[#1f1f1f]">
-                      <CalendarComponent mode="single" selected={formData.date} onSelect={(d) => d && setFormData({ ...formData, date: d })} locale={ptBR} disabled={{ before: new Date() }} className="bg-[#0c0c0c] text-white" />
+                      <CalendarComponent
+                        mode="single"
+                        selected={formData.date}
+                        onSelect={(d) =>
+                          d && setFormData({ ...formData, date: d })
+                        }
+                        locale={ptBR}
+                        disabled={{ before: new Date() }}
+                        className="bg-[#0c0c0c] text-white"
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-white flex items-center gap-2"><Clock className="w-4 h-4" />Hora</Label>
+                  <Label className="text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Hora
+                  </Label>
                   <Input
                     type="time"
-                    value={isValidDate(formData.date) ? format(formData.date, 'HH:mm') : '09:00'}
+                    value={
+                      isValidDate(formData.date)
+                        ? format(formData.date, 'HH:mm')
+                        : '09:00'
+                    }
                     onChange={(e) => {
                       if (!isValidDate(formData.date)) return
                       const [hours, minutes] = e.target.value.split(':')
@@ -360,56 +508,130 @@ export default function UnifiedCalendar({
 
               <div className="space-y-2">
                 <Label className="text-white">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as AppointmentModalData['status'] })}>
-                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white"><SelectValue /></SelectTrigger>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      status: value as AppointmentModalData['status'],
+                    })
+                  }
+                >
+                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
-                    {(Object.keys(STATUS_LABELS) as AppointmentModalData['status'][]).map((s) => (
-                      <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+                    {(
+                      Object.keys(
+                        STATUS_LABELS
+                      ) as AppointmentModalData['status'][]
+                    ).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {STATUS_LABELS[s]}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-white flex items-center gap-2"><Globe className="w-4 h-4" />Origem do Agendamento</Label>
-                <Select value={formData.source} onValueChange={(value) => setFormData({ ...formData, source: value as AppointmentModalData['source'] })} disabled={role === 'BARBER'}>
-                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white"><SelectValue placeholder="Selecione a origem" /></SelectTrigger>
+                <Label className="text-white flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Origem do Agendamento
+                </Label>
+                <Select
+                  value={formData.source}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      source: value as AppointmentModalData['source'],
+                    })
+                  }
+                  disabled={role === 'BARBER'}
+                >
+                  <SelectTrigger className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
+                    <SelectValue placeholder="Selecione a origem" />
+                  </SelectTrigger>
                   <SelectContent className="bg-[#0f0f0f] border-[#1f1f1f] text-white">
-                    <SelectItem value="PRESENCIAL"><div className="flex items-center gap-2"><Store className="w-3 h-3" />Presencial</div></SelectItem>
-                    <SelectItem value="ONLINE"><div className="flex items-center gap-2"><Globe className="w-3 h-3" />Online</div></SelectItem>
+                    <SelectItem value="PRESENCIAL">
+                      <div className="flex items-center gap-2">
+                        <Store className="w-3 h-3" />
+                        Presencial
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ONLINE">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-3 h-3" />
+                        Online
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-                {role === 'BARBER' && <p className="text-xs text-slate-400">Os barbeiros só podem criar agendamentos presenciais</p>}
+                {role === 'BARBER' && (
+                  <p className="text-xs text-slate-400">
+                    Os barbeiros só podem criar agendamentos presenciais
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label className="text-white">Observações</Label>
-                <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="bg-[#0f0f0f] border-[#1f1f1f] text-white" rows={3} />
+                <Textarea
+                  value={formData.notes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
+                  className="bg-[#0f0f0f] border-[#1f1f1f] text-white"
+                  rows={3}
+                />
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-[#1f1f1f]">
                 <div className="flex items-center gap-2">
-                  <Badge className={cn('text-white', STATUS_STYLES[formData.status])}>
+                  <Badge
+                    className={cn('text-white', STATUS_STYLES[formData.status])}
+                  >
                     {STATUS_LABELS[formData.status]}
                   </Badge>
                   {formData.source && (
                     <Badge variant="outline" className="text-xs">
-                      {formData.source === 'PRESENCIAL' ? 'Presencial' : 'Online'}
+                      {formData.source === 'PRESENCIAL'
+                        ? 'Presencial'
+                        : 'Online'}
                     </Badge>
                   )}
                 </div>
 
                 <div className="flex gap-2">
                   {modalMode === 'edit' && (
-                    <Button type="button" variant="outline" onClick={handleDelete} className="text-red-400 border-red-500/30 hover:bg-red-500/20" disabled={deleteMutation.isPending}>
-                      <Trash2 className="w-4 h-4 mr-2" />Excluir
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleDelete}
+                      className="text-red-400 border-red-500/30 hover:bg-red-500/20"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Excluir
                     </Button>
                   )}
-                  <Button type="button" variant="outline" onClick={closeAndReset}>
-                    <X className="w-4 h-4 mr-2" />Cancelar
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeAndReset}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancelar
                   </Button>
-                  <Button type="submit" className="bg-[#8161FF] hover:bg-[#6a4dff]" disabled={createMutation.isPending || updateMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />{modalMode === 'edit' ? 'Salvar' : 'Criar'}
+                  <Button
+                    type="submit"
+                    className="bg-[#8161FF] hover:bg-[#6a4dff]"
+                    disabled={
+                      createMutation.isPending || updateMutation.isPending
+                    }
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {modalMode === 'edit' ? 'Salvar' : 'Criar'}
                   </Button>
                 </div>
               </div>

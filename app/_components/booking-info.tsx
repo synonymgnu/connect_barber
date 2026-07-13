@@ -16,7 +16,6 @@ import {
 } from './ui/dialog'
 import { Button } from './ui/button'
 import { BookingItemProps } from './booking-item'
-import { isFuture } from 'date-fns'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
@@ -24,6 +23,10 @@ import BookingSummary from './booking-summary'
 import RatingDialog from './rating-dialog'
 import { FeedbackDialog } from './feedback-dialog'
 import { Clock2 } from 'lucide-react'
+import {
+  BOOKING_STATUS_CONFIG,
+  CANCELABLE_STATUSES,
+} from '../_lib/booking-status'
 
 interface BookingInfoProps extends BookingItemProps {
   onBookingCanceled?: () => void
@@ -38,11 +41,17 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
   const {
     service: { barbershop },
   } = booking
-  const isConfirmed = isFuture(booking.date) && booking.status !== 'CANCELLED'
+
+  const statusInfo = BOOKING_STATUS_CONFIG[booking.status]
+  const canCancel = CANCELABLE_STATUSES.includes(booking.status)
+  const canRate = booking.status === 'COMPLETED'
   const hasRating = booking.ratings.length > 0
+
   const handleCancelBooking = async () => {
     try {
-      const res = await fetch(`/api/bookings/${booking.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: 'DELETE',
+      })
       if (!res.ok) throw new Error()
       router.refresh()
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] })
@@ -90,11 +99,8 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
 
         <div className="mt-6">
           <div className="flex gap-2">
-            <Badge
-              className="w-fit"
-              variant={isConfirmed ? 'default' : 'secondary'}
-            >
-              {isConfirmed ? 'Confirmado' : 'Finalizado'}
+            <Badge className="w-fit" variant={statusInfo.variant}>
+              {statusInfo.label}
             </Badge>
             <p className="flex items-center gap-[2px] text-xs text-gray-400">
               <Clock2 width={18} height={18} />
@@ -111,7 +117,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             />
           </div>
         </div>
-        {isConfirmed ? (
+        {canCancel ? (
           <Dialog>
             <DialogTrigger className="w-full">
               <Button variant="destructive" className="w-full">
@@ -143,16 +149,18 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        ) : hasRating ? (
-          <Button variant="secondary" className="w-full" disabled>
-            Avaliado
-          </Button>
-        ) : (
-          <RatingDialog
-            bookingId={booking.id}
-            barbershopName={booking.service.barbershop.name}
-          />
-        )}
+        ) : canRate ? (
+          hasRating ? (
+            <Button variant="secondary" className="w-full" disabled>
+              Avaliado
+            </Button>
+          ) : (
+            <RatingDialog
+              bookingId={booking.id}
+              barbershopName={booking.service.barbershop.name}
+            />
+          )
+        ) : null}
 
         {/* Sucesso */}
         <FeedbackDialog
@@ -160,7 +168,6 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
           onOpenChange={(open) => {
             setSuccessDialogIsOpen(open)
             if (!open) {
-              // quando o dialog fechar → avisa o parent
               onBookingCanceled?.()
             }
           }}

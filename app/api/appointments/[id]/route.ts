@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server'
 import { db } from '@/app/_lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/_lib/auth'
-import { notifyBookingCancelled, notifyBookingConfirmed, notifyBookingUpdated } from '@/app/_lib/notifications/create-notification'
+import {
+  notifyBookingCancelled,
+  notifyBookingConfirmed,
+  notifyBookingUpdated,
+} from '@/app/_lib/notifications/create-notification'
 import { createAuditLog, getClientInfo } from '@/app/_lib/audit'
 import { validateBookingTime } from '@/app/_lib/booking-validation'
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || session.user.role !== 'ADMIN') {
@@ -16,10 +23,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const data = await request.json()
 
     const existingBooking = await db.booking.findFirst({
-      where: { 
+      where: {
         id: params.id,
-        service: { barbershopId: session.user.barbershopId! }
-      }
+        service: { barbershopId: session.user.barbershopId! },
+      },
     })
 
     if (!existingBooking) {
@@ -54,13 +61,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         date: newDate,
         serviceId: newServiceId,
         barberId: newBarberId || null,
-        status: data.status
+        status: data.status,
       },
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         service: { select: { id: true, name: true, price: true } },
-        barber: { select: { id: true, name: true, userId: true } }
-      }
+        barber: { select: { id: true, name: true, userId: true } },
+      },
     })
 
     // Notificar cliente sobre mudanças
@@ -71,7 +78,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         updatedBooking.service.name
       )
     }
-    
+
     if (existingBooking.date.getTime() !== new Date(data.date).getTime()) {
       await notifyBookingUpdated(
         updatedBooking.id,
@@ -90,17 +97,23 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       resourceId: params.id,
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
-      metadata: { oldStatus: existingBooking.status, newStatus: data.status }
+      metadata: { oldStatus: existingBooking.status, newStatus: data.status },
     })
 
     return NextResponse.json(updatedBooking)
   } catch (error) {
     console.error('Error updating appointment:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || session.user.role !== 'ADMIN') {
@@ -108,9 +121,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     const existingBooking = await db.booking.findFirst({
-      where: { 
+      where: {
         id: params.id,
-        service: { barbershopId: session.user.barbershopId! }
+        service: { barbershopId: session.user.barbershopId! },
       },
       include: {
         user: true,
@@ -125,8 +138,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     await notifyBookingCancelled(existingBooking, 'ADMIN')
 
-    await db.booking.delete({
-      where: { id: params.id }
+    await db.booking.update({
+      where: { id: params.id },
+      data: { status: 'CANCELLED' },
     })
 
     const clientInfo = getClientInfo(request)
@@ -137,12 +151,18 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       resourceId: params.id,
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
-      metadata: { userId: existingBooking.userId, serviceId: existingBooking.serviceId }
+      metadata: {
+        userId: existingBooking.userId,
+        serviceId: existingBooking.serviceId,
+      },
     })
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     console.error('Error deleting appointment:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }

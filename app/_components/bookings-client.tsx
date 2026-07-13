@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { isFuture } from 'date-fns'
 import BookingItem from './booking-item'
 import BookingInfo from './booking-info'
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -14,13 +15,20 @@ import {
   DrawerClose,
 } from './ui/drawer'
 import { DateTimePicker } from './datetime-picker'
+import { BOOKING_STATUS_CONFIG } from '../_lib/booking-status'
 
 interface BookingsClientProps {
   confirmedBookings: any[]
   concludedBookings: any[]
 }
 
-type StatusFilter = 'CONFIRMED' | 'CONCLUDED' | 'ALL'
+type StatusFilter =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'NO_SHOW'
+  | 'ALL'
 
 const PAGE_SIZE = 10
 const LG_BREAKPOINT = 1024
@@ -47,26 +55,22 @@ export default function BookingsClient({
   const handleBookingCanceled = () => setSelectedBooking(null)
 
   const allBookings = useMemo(() => {
-    const confirmed = confirmedBookings.map((b) => ({
-      ...b,
-      _status: 'CONFIRMED',
-    }))
-    const concluded = concludedBookings.map((b) => ({
-      ...b,
-      _status: 'CONCLUDED',
-    }))
-    return [...confirmed, ...concluded].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    const withGroup = (bookings: any[]) =>
+      bookings.map((b) => ({
+        ...b,
+        _group: isFuture(b.date) ? 'UPCOMING' : 'PAST',
+      }))
+    return [
+      ...withGroup(confirmedBookings),
+      ...withGroup(concludedBookings),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }, [confirmedBookings, concludedBookings])
 
   const filtered = useMemo(() => {
     return allBookings.filter((booking) => {
-      if (statusFilter !== 'ALL' && booking._status !== statusFilter)
+      if (statusFilter !== 'ALL' && booking.status !== statusFilter)
         return false
-      const bookingDate = new Date(
-        booking.date instanceof Date ? booking.date : booking.date
-      )
+      const bookingDate = new Date(booking.date)
       if (dateFrom && bookingDate.getTime() < dateFrom.getTime()) return false
       if (dateTo && bookingDate.getTime() > dateTo.getTime()) return false
       return true
@@ -80,8 +84,8 @@ export default function BookingsClient({
     safePage * PAGE_SIZE
   )
 
-  const confirmedOnPage = paginated.filter((b) => b._status === 'CONFIRMED')
-  const concludedOnPage = paginated.filter((b) => b._status === 'CONCLUDED')
+  const upcomingOnPage = paginated.filter((b) => b._group === 'UPCOMING')
+  const pastOnPage = paginated.filter((b) => b._group === 'PAST')
 
   const hasActiveFilters = statusFilter !== 'ALL' || !!dateFrom || !!dateTo
 
@@ -99,13 +103,14 @@ export default function BookingsClient({
 
   const statusOptions: { value: StatusFilter; label: string }[] = [
     { value: 'ALL', label: 'Todos' },
-    { value: 'CONFIRMED', label: 'Confirmado' },
-    { value: 'CONCLUDED', label: 'Finalizado' },
+    ...(
+      Object.entries(BOOKING_STATUS_CONFIG) as [
+        StatusFilter,
+        { label: string },
+      ][]
+    ).map(([value, config]) => ({ value, label: config.label })),
   ]
 
-  // useInlinePicker=true no desktop: calendário expande inline (sem Popover),
-  // permitindo scroll normal no Dialog sem conflito de overflow.
-  // useInlinePicker=false no mobile: Popover normal dentro do Drawer.
   const FilterContent = ({
     useInlinePicker = false,
   }: {
@@ -115,7 +120,7 @@ export default function BookingsClient({
       {/* Status */}
       <div>
         <p className="text-xs font-bold uppercase text-gray-400 mb-3">Status</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {statusOptions.map((opt) => (
             <Button
               key={opt.value}
@@ -218,12 +223,12 @@ export default function BookingsClient({
           </p>
         ) : (
           <>
-            {confirmedOnPage.length > 0 && (
+            {upcomingOnPage.length > 0 && (
               <>
                 <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-                  Confirmados
+                  Próximos
                 </h2>
-                {confirmedOnPage.map((booking) => (
+                {upcomingOnPage.map((booking) => (
                   <div
                     key={booking.id}
                     onClick={() => setSelectedBooking(booking)}
@@ -234,12 +239,12 @@ export default function BookingsClient({
                 ))}
               </>
             )}
-            {concludedOnPage.length > 0 && (
+            {pastOnPage.length > 0 && (
               <>
                 <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-                  Finalizados
+                  Anteriores
                 </h2>
-                {concludedOnPage.map((booking) => (
+                {pastOnPage.map((booking) => (
                   <div
                     key={booking.id}
                     onClick={() => setSelectedBooking(booking)}
@@ -314,7 +319,6 @@ export default function BookingsClient({
       {/* Dialog (desktop) / Drawer (mobile) */}
       {isDesktop ? (
         <Dialog open={showFilters} onOpenChange={setShowFilters}>
-          {/* inline=true: calendário expande dentro do Dialog → scroll funciona normalmente */}
           <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh] overflow-y-auto">
             <DialogHeader className="shrink-0">
               <DialogTitle className="flex items-center gap-2">
@@ -326,7 +330,6 @@ export default function BookingsClient({
           </DialogContent>
         </Dialog>
       ) : (
-        /* Drawer (mobile) — Popover normal, sem scroll */
         <Drawer open={showFilters} onOpenChange={setShowFilters}>
           <DrawerContent>
             <DrawerHeader className="flex items-center justify-between">

@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
-import { format, isFuture } from 'date-fns'
+import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Sheet,
@@ -33,6 +33,10 @@ import RatingDialog from './rating-dialog'
 import { Clock2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
+import {
+  BOOKING_STATUS_CONFIG,
+  CANCELABLE_STATUSES,
+} from '../_lib/booking-status'
 
 export interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -59,12 +63,17 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   const {
     service: { barbershop },
   } = booking
-  const isConfirmed = isFuture(booking.date) && booking.status !== 'CANCELLED'
-  const isCancelled = booking.status === 'CANCELLED'
+
+  const statusInfo = BOOKING_STATUS_CONFIG[booking.status]
+  const canCancel = CANCELABLE_STATUSES.includes(booking.status)
+  const canRate = booking.status === 'COMPLETED'
   const hasRating = booking.ratings.length > 0
+
   const handleCancelBooking = async () => {
     try {
-      const res = await fetch(`/api/bookings/${booking.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: 'DELETE',
+      })
       if (!res.ok) throw new Error()
       setIsSheetOpen(false)
       setSuccessDialogIsOpen(true)
@@ -92,7 +101,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           const startY = parseFloat(e.currentTarget.dataset.downY || '0')
           const diffX = Math.abs(e.clientX - startX)
           const diffY = Math.abs(e.clientY - startY)
-          const moveThreshold = 10 // tolerância em pixels
+          const moveThreshold = 10
 
           if (diffX < moveThreshold && diffY < moveThreshold) {
             if (window.innerWidth < 1024 || window.location.pathname === '/') {
@@ -124,11 +133,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           {/* ESQUERDA */}
           <div className="flex flex-col gap-2 py-5 pl-5 items-start text-left flex-1">
             <div className="flex gap-2">
-              <Badge
-                className="w-fit"
-                variant={isCancelled ? 'destructive' : isConfirmed ? 'default' : 'secondary'}
-              >
-                {isCancelled ? 'Cancelado' : isConfirmed ? 'Confirmado' : 'Finalizado'}
+              <Badge className="w-fit" variant={statusInfo.variant}>
+                {statusInfo.label}
               </Badge>
               <p className="flex items-center gap-[2px] text-xs text-gray-400">
                 <Clock2 width={18} height={18} />
@@ -205,11 +211,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
             <div className="mt-6">
               <div className="flex gap-2">
-                <Badge
-                  className="w-fit"
-                  variant={isCancelled ? 'destructive' : isConfirmed ? 'default' : 'secondary'}
-                >
-                  {isCancelled ? 'Cancelado' : isConfirmed ? 'Confirmado' : 'Finalizado'}
+                <Badge className="w-fit" variant={statusInfo.variant}>
+                  {statusInfo.label}
                 </Badge>
                 <p className="flex items-center gap-[2px] text-xs text-gray-400">
                   <Clock2 width={18} height={18} />
@@ -240,7 +243,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                   </Button>
                 </SheetClose>
 
-                {isConfirmed && !isCancelled ? (
+                {canCancel ? (
                   <Dialog>
                     <DialogTrigger className="w-full">
                       <Button variant="destructive" className="w-full">
@@ -275,16 +278,18 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                ) : hasRating ? (
-                  <Button variant="secondary" className="w-full" disabled>
-                    Avaliado
-                  </Button>
-                ) : (
-                  <RatingDialog
-                    bookingId={booking.id}
-                    barbershopName={booking.service.barbershop.name}
-                  />
-                )}
+                ) : canRate ? (
+                  hasRating ? (
+                    <Button variant="secondary" className="w-full" disabled>
+                      Avaliado
+                    </Button>
+                  ) : (
+                    <RatingDialog
+                      bookingId={booking.id}
+                      barbershopName={booking.service.barbershop.name}
+                    />
+                  )
+                ) : null}
               </div>
             </SheetFooter>
           </SheetContent>
