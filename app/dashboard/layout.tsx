@@ -3,12 +3,20 @@
 import { AdminSidebar } from '@/app/_components/dashboard/admin-sidebar'
 import { SidebarProvider, SidebarTrigger } from '../_components/ui/sidebar'
 import AdminSidebarMobile from '../_components/dashboard/admin-sidebar-mobile'
+import { usePathname } from 'next/navigation'
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  const isCalendar = pathname === '/dashboard/calendar'
+
+  if (isCalendar) {
+    return <>{children}</>
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
