@@ -1,15 +1,20 @@
-import { Metadata } from 'next'
-import UnifiedCalendar from '@/app/_components/calendar/unified-calendar'
+'use client'
+
+import { useRouter } from 'next/navigation'
+import NotionCalendar from '@/app/_components/calendar/notion-calendar'
 import AuthCheck from '@/app/_components/auth-check'
 
-export const metadata: Metadata = {
-  title: 'Agenda - Connect Barber',
-}
-
 export default function AdminCalendarPage() {
+  const router = useRouter()
+
   return (
     <AuthCheck requiredRole="ADMIN">
-      <UnifiedCalendar role="ADMIN" />
+      <div className="fixed inset-0 bg-[#0a0a0a] flex flex-col">
+        <NotionCalendar
+          role="ADMIN"
+          onExit={() => router.push('/dashboard')}
+        />
+      </div>
     </AuthCheck>
   )
 }
