@@ -137,9 +137,11 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   const barbersWithRatings = barbers.map((barber) => {
     const directRatings = barber.Rating.map((r) => r.value)
 
-    const bookingRatings = barber.bookings.flatMap((b) =>
-      b.ratings.map((r) => r.value)
-    )
+    const bookingRatings = barber.bookings.flatMap((b) => {
+      if (!b.ratings) return []
+      const ratings = Array.isArray(b.ratings) ? b.ratings : [b.ratings]
+      return ratings.map((r: { value: number }) => r.value)
+    })
 
     const allRatings = directRatings.length > 0 ? directRatings : bookingRatings
 

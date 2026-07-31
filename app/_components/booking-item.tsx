@@ -67,7 +67,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   const statusInfo = BOOKING_STATUS_CONFIG[booking.status]
   const canCancel = CANCELABLE_STATUSES.includes(booking.status)
   const canRate = booking.status === 'COMPLETED'
-  const hasRating = booking.ratings.length > 0
+  const hasRating = !!booking.ratings
 
   const handleCancelBooking = async () => {
     try {

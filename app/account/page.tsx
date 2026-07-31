@@ -10,6 +10,7 @@ import SignOutDialog from '../_components/sign-out-dialog'
 import DeleteAccountDialog from '../_components/delete-account-dialog'
 import EditPhoneForm from '../_components/edit-phone-form'
 import AccountInfo from '../_components/account/account-info'
+import BarberProfileSection from '../_components/account/barber-profile-section'
 import { db } from '../_lib/prisma'
 
 export default async function AccountPage() {
@@ -101,11 +102,14 @@ export default async function AccountPage() {
           </Dialog>
         </div>
 
-        <AccountInfo
-          user={user}
-          bookings={bookings}
-          barberStatus={barberStatus}
-        />
+        <div className="flex flex-col gap-6 w-full">
+          <AccountInfo
+            user={user}
+            bookings={bookings}
+            barberStatus={barberStatus}
+          />
+          {user.role === 'BARBER' && <BarberProfileSection />}
+        </div>
 
         {/* ===== BOTÃO EXCLUIR ===== */}
         <Dialog>

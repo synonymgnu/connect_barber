@@ -38,9 +38,11 @@ export async function GET(request: Request) {
       const directRatings = Rating.map((r) => r.value)
 
       // Ratings via bookings do barbeiro (quando barberId na Rating é null)
-      const bookingRatings = bookings.flatMap((b) =>
-        b.ratings.map((r) => r.value)
-      )
+      const bookingRatings = bookings.flatMap((b) => {
+        if (!b.ratings) return []
+        const ratings = Array.isArray(b.ratings) ? b.ratings : [b.ratings]
+        return ratings.map((r: { value: number }) => r.value)
+      })
 
       // Prioriza diretas, se não, usa as dos bookings
       const allRatings =

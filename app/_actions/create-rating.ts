@@ -19,7 +19,7 @@ export async function createRating(
 
   if (!booking) throw new Error('Agendamento não encontrado')
 
-  if (booking.ratings.length > 0) {
+  if (booking.ratings) {
     throw new Error('Este agendamento já foi avaliado')
   }
 
