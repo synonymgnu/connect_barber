@@ -1,8 +1,8 @@
-"use client"
+'use client'
 
-import { useSession } from "next-auth/react"
-import { useRouter, usePathname } from "next/navigation"
-import { useEffect } from "react"
+import { useSession } from 'next-auth/react'
+import { useRouter, usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
 interface AuthCheckProps {
   children: React.ReactNode
@@ -14,23 +14,27 @@ export default function AuthCheck({ children, requiredRole }: AuthCheckProps) {
   const router = useRouter()
   const pathname = usePathname()
 
+  // Admin que também tem um Barber vinculado pode acessar áreas de BARBER
+  const hasBarberAccess = requiredRole === 'BARBER' && !!session?.user.barberId
+
+  const hasAccess =
+    !requiredRole || session?.user.role === requiredRole || hasBarberAccess
+
   useEffect(() => {
     if (status === 'loading') return
 
     if (!session) {
-      // Não autenticado, redirecionar para login com callback
       const callbackUrl = encodeURIComponent(pathname)
       router.push(`/auth/signin?callbackUrl=${callbackUrl}`)
       return
     }
 
-    if (requiredRole && session.user.role !== requiredRole) {
-      // Não tem a role necessária
+    if (requiredRole && !hasAccess) {
       console.log(`User role: ${session.user.role}, Required: ${requiredRole}`)
       router.push('/')
       return
     }
-  }, [session, status, requiredRole, router, pathname])
+  }, [session, status, requiredRole, hasAccess, router, pathname])
 
   if (status === 'loading') {
     return (
@@ -40,7 +44,7 @@ export default function AuthCheck({ children, requiredRole }: AuthCheckProps) {
     )
   }
 
-  if (!session || (requiredRole && session.user.role !== requiredRole)) {
+  if (!session || (requiredRole && !hasAccess)) {
     return null
   }
 

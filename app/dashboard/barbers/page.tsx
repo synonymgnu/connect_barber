@@ -34,8 +34,12 @@ import {
   Mail,
   Phone,
   InstagramIcon,
+  Sparkles,
+  ToggleRight,
+  ToggleLeft,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 
 type Service = {
@@ -55,19 +59,19 @@ type Barber = {
   isActive: boolean
   createdAt: string
   services?: Service[]
+  user?: { id: string; email: string; role: string; image?: string | null }
 }
 
 type BarberFormData = Pick<
   Barber,
   'name' | 'email' | 'phone' | 'speciality' | 'bio' | 'instagram'
-> & {
-  serviceIds?: string[]
-}
+> & { serviceIds?: string[] }
 
 const apiFetch = (url: string, options?: RequestInit) =>
   fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options })
 
 export default function BarbersPage() {
+  const { data: session, update } = useSession()
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,6 +80,7 @@ export default function BarbersPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Barber | null>(null)
   const [hasBarbershop, setHasBarbershop] = useState<boolean | null>(null)
+  const [selfJoining, setSelfJoining] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -148,6 +153,11 @@ export default function BarbersPage() {
             ? prev.map((b) => (b.id === saved.id ? saved : b))
             : [...prev, saved]
         )
+
+        if (saved.user?.id && saved.user.id === session?.user.id) {
+          await update()
+        }
+
         toast.success(
           editing
             ? 'Barbeiro atualizado com sucesso!'
@@ -164,6 +174,40 @@ export default function BarbersPage() {
       toast.error('Erro ao salvar barbeiro')
     }
   }
+
+  const addSelfAsBarber = async () => {
+    if (!session?.user) return
+    setSelfJoining(true)
+    try {
+      const res = await apiFetch('/api/barbers', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: session.user.name,
+          email: session.user.email,
+          serviceIds: [],
+        }),
+      })
+      if (res.ok) {
+        const saved: Barber = await res.json()
+        setBarbers((prev) => [...prev, saved])
+        await update()
+        toast.success('Você agora também é um barbeiro da equipe!')
+      } else {
+        const err = await res.json()
+        toast.error(err.error || 'Erro ao se adicionar como barbeiro')
+      }
+    } catch (error) {
+      console.error('Erro ao se adicionar como barbeiro:', error)
+      toast.error('Erro ao se adicionar como barbeiro')
+    } finally {
+      setSelfJoining(false)
+    }
+  }
+
+  const isSelfBarber = useMemo(
+    () => barbers.some((b) => b.user?.id === session?.user?.id),
+    [barbers, session?.user?.id]
+  )
 
   const toggleStatus = async (id: string, isActive: boolean) => {
     try {
@@ -261,9 +305,26 @@ export default function BarbersPage() {
             Gerencie sua equipe de barbeiros
           </p>
         </div>
-        <Button onClick={() => openModal()} size="lg">
-          <UserPlus className="mr-2 h-5 w-5" /> Adicionar Barbeiro
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          {!isSelfBarber && (
+            <Button
+              onClick={addSelfAsBarber}
+              disabled={selfJoining}
+              variant="outline"
+              size="lg"
+            >
+              {selfJoining ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-5 w-5" />
+              )}
+              Me adicionar como barbeiro
+            </Button>
+          )}
+          <Button onClick={() => openModal()} size="lg">
+            <UserPlus className="mr-2 h-5 w-5" /> Adicionar Barbeiro
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -365,6 +426,11 @@ export default function BarbersPage() {
                       <DropdownMenuItem
                         onClick={() => toggleStatus(b.id, b.isActive)}
                       >
+                        {b.isActive ? (
+                          <ToggleRight className="h-4 w-4 mr-2" />
+                        ) : (
+                          <ToggleLeft className="h-4 w-4 mr-2" />
+                        )}
                         {b.isActive ? 'Desativar' : 'Ativar'}
                       </DropdownMenuItem>
                       <DropdownMenuItem

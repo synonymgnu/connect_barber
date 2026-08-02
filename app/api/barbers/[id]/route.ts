@@ -83,7 +83,11 @@ export async function PATCH(
       }
     }
 
-    if (name || email) {
+    // Se o barbeiro editado é o próprio dono da barbearia, não sincroniza
+    // nome/email na conta de usuário — preserva a identidade da conta ADMIN
+    const isSelfOwner = barber.userId === session.user.id
+
+    if (!isSelfOwner && (name || email)) {
       await db.user.update({
         where: { id: barber.userId },
         data: {
@@ -189,14 +193,17 @@ export async function DELETE(
     }
 
     // Deletar o barbeiro e o usuário associado
-    await db.$transaction([
-      db.barber.delete({
-        where: { id: params.id },
-      }),
-      db.user.delete({
-        where: { id: barber.userId },
-      }),
-    ])
+    const isSelfOwner = barber.userId === session.user.id
+
+    if (isSelfOwner) {
+      // Só remove o vínculo de barbeiro, preserva a conta do dono/admin
+      await db.barber.delete({ where: { id: params.id } })
+    } else {
+      await db.$transaction([
+        db.barber.delete({ where: { id: params.id } }),
+        db.user.delete({ where: { id: barber.userId } }),
+      ])
+    }
 
     const clientInfo = getClientInfo(req)
     await createAuditLog({

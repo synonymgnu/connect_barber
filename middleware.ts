@@ -7,7 +7,11 @@ export default withAuth(
     const pathname = req.nextUrl.pathname
 
     if (pathname.startsWith('/barber')) {
-      if (token?.role !== 'BARBER') {
+      const isBarber = token?.role === 'BARBER'
+      const isOwnerWithBarberProfile =
+        token?.role === 'ADMIN' && !!token?.barberId
+
+      if (!isBarber && !isOwnerWithBarberProfile) {
         return NextResponse.redirect(new URL('/', req.url))
       }
     }
@@ -36,7 +40,7 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl
-        
+
         // Rotas públicas
         const publicPaths = [
           '/',
@@ -44,11 +48,11 @@ export default withAuth(
           '/auth',
           '/signin',
           '/api/barbershops',
-          '/barbershops'
+          '/barbershops',
         ]
-        
-        const isPublicPath = publicPaths.some(path => 
-          pathname === path || pathname.startsWith(`${path}/`)
+
+        const isPublicPath = publicPaths.some(
+          (path) => pathname === path || pathname.startsWith(`${path}/`)
         )
 
         if (isPublicPath) {

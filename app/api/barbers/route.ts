@@ -59,8 +59,14 @@ export async function POST(req: NextRequest) {
     let user
 
     if (existingUser) {
-      // Bloqueia se o email já pertence a um ADMIN, MASTER ou já é BARBER vinculado a outro lugar
-      if (existingUser.role === 'ADMIN' || existingUser.role === 'MASTER') {
+      const isSelfOwner = existingUser.id === session.user.id
+
+      // Bloqueia ADMIN/MASTER de OUTRA conta — mas permite o próprio dono
+      // desta barbearia virar barbeiro dela também
+      if (
+        (existingUser.role === 'ADMIN' || existingUser.role === 'MASTER') &&
+        !isSelfOwner
+      ) {
         return NextResponse.json(
           {
             error:
@@ -77,14 +83,20 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      // Promove o CLIENT existente para BARBER
-      user = await db.user.update({
-        where: { id: existingUser.id },
-        data: {
-          role: 'BARBER',
-          name: existingUser.name || name, // mantém o nome já existente, se houver
-        },
-      })
+      if (isSelfOwner) {
+        // É o próprio dono virando barbeiro da sua barbearia:
+        // mantém o role ADMIN intacto, só cria o vínculo em Barber
+        user = existingUser
+      } else {
+        // Promove o CLIENT existente para BARBER
+        user = await db.user.update({
+          where: { id: existingUser.id },
+          data: {
+            role: 'BARBER',
+            name: existingUser.name || name,
+          },
+        })
+      }
     } else {
       // Cria um novo usuário do zero
       user = await db.user.create({
