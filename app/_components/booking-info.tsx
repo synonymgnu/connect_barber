@@ -26,13 +26,19 @@ import { Clock2 } from 'lucide-react'
 import {
   BOOKING_STATUS_CONFIG,
   CANCELABLE_STATUSES,
+  getEffectiveStatus,
 } from '../_lib/booking-status'
 
 interface BookingInfoProps extends BookingItemProps {
   onBookingCanceled?: () => void
+  onBookingRated?: () => void
 }
 
-const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
+const BookingInfo = ({
+  booking,
+  onBookingCanceled,
+  onBookingRated,
+}: BookingInfoProps) => {
   const [successDialogIsOpen, setSuccessDialogIsOpen] = useState(false)
   const [errorDialogIsOpen, setErrorDialogIsOpen] = useState(false)
   const router = useRouter()
@@ -42,10 +48,11 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
     service: { barbershop },
   } = booking
 
-  const statusInfo = BOOKING_STATUS_CONFIG[booking.status]
-  const canCancel = CANCELABLE_STATUSES.includes(booking.status)
-  const canRate = booking.status === 'COMPLETED'
-  const hasRating = !!booking.ratings
+  const effectiveStatus = getEffectiveStatus(booking)
+  const statusInfo = BOOKING_STATUS_CONFIG[effectiveStatus]
+  const canCancel = CANCELABLE_STATUSES.includes(effectiveStatus)
+  const canRate = effectiveStatus === 'COMPLETED'
+  const hasRating = booking.ratings.length > 0
 
   const handleCancelBooking = async () => {
     try {
@@ -64,8 +71,8 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
   }
 
   return (
-    <Card className="hidden lg:block mt-[51px] self-start w-[380px]">
-      <CardContent>
+    <Card className="hidden lg:block mt-[26px] self-start w-[380px]">
+      <CardContent className="pt-6">
         <div className="relative flex h-[180px] w-full items-end mt-6">
           {barbershop.googleMaps ? (
             <iframe
@@ -158,6 +165,7 @@ const BookingInfo = ({ booking, onBookingCanceled }: BookingInfoProps) => {
             <RatingDialog
               bookingId={booking.id}
               barbershopName={booking.service.barbershop.name}
+              onRated={onBookingRated}
             />
           )
         ) : null}

@@ -178,7 +178,7 @@ model Booking {
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   barberId  String?
-  status    BookingStatus     @default(PENDING)
+  status    BookingStatus     @default(CONFIRMED)
   duration  Int?
   employee  String?
   source    BookingSource     @default(ONLINE)
@@ -271,8 +271,6 @@ enum BookingStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
-  PENDING
-  NO_SHOW
 }
 
 enum NotificationType {

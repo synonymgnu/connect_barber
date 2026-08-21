@@ -1,23 +1,46 @@
-"use client"
+'use client'
 
-import { Button } from "../ui/button"
-import { Calendar } from "../ui/calendar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { format, setHours, setMinutes } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { CalendarIcon, Check, Loader2, MoreHorizontal, Pencil, Trash2, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Button } from '../ui/button'
+import { Calendar } from '../ui/calendar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
+import { format, setHours, setMinutes } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import {
+  CalendarIcon,
+  Check,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  X,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog"
+} from '../ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog'
 
 interface AppointmentModalProps {
   appointment: any
@@ -32,13 +55,15 @@ interface AppointmentModalProps {
 
 const sourceConfig = {
   PRESENCIAL: { label: 'Presencial', color: 'text-[#8161FF]' },
-  ONLINE: { label: 'Online', color: 'text-orange-500' }
+  ONLINE: { label: 'Online', color: 'text-orange-500' },
 }
 
 function buildFormData(appointment: any) {
   const dateToParse = appointment?.dateIso || appointment?.date
   const dateObj = dateToParse
-    ? (typeof dateToParse === 'string' ? new Date(dateToParse) : dateToParse)
+    ? typeof dateToParse === 'string'
+      ? new Date(dateToParse)
+      : dateToParse
     : new Date()
   return {
     date: isNaN(dateObj.getTime()) ? new Date() : dateObj,
@@ -56,7 +81,7 @@ export function AppointmentModal({
   onDelete,
   barbershopServices,
   barbers,
-  mode = 'view'
+  mode = 'view',
 }: AppointmentModalProps) {
   const [isEditing, setIsEditing] = useState(mode === 'edit')
   const [hasChanges, setHasChanges] = useState(false)
@@ -73,7 +98,7 @@ export function AppointmentModal({
   }, [open, mode, appointment])
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
     setHasChanges(true)
   }
 
@@ -129,28 +154,53 @@ export function AppointmentModal({
             <DialogTitle className="text-xl">Agendamento</DialogTitle>
             <div className="flex items-center gap-2">
               {isEditing ? (
-                <Button size="sm" onClick={handleSave} disabled={isSaving} className="bg-green-600 hover:bg-green-700 h-9 w-9 p-0">
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-green-600 hover:bg-green-700 h-9 w-9 p-0"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
                 </Button>
               ) : (
-                <Button size="sm" onClick={() => setIsEditing(true)} className="bg-[#8161FF] hover:bg-[#8161FF]/80 h-9 w-9 p-0">
+                <Button
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="bg-[#8161FF] hover:bg-[#8161FF]/80 h-9 w-9 p-0"
+                >
                   <Pencil className="h-4 w-4" />
                 </Button>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white h-9 w-9 p-0">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-slate-400 hover:text-white h-9 w-9 p-0"
+                  >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-[#0f0f0f] border-slate-700">
                   {hasChanges && (
-                    <DropdownMenuItem onClick={handleUndoChanges} className="text-slate-300">
-                      <X className="mr-2 h-4 w-4" />Desfazer mudanças
+                    <DropdownMenuItem
+                      onClick={handleUndoChanges}
+                      className="text-slate-300"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Desfazer mudanças
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={handleDelete} className="text-red-400">
-                    <Trash2 className="mr-2 h-4 w-4" />Excluir agendamento
+                  <DropdownMenuItem
+                    onClick={handleDelete}
+                    className="text-red-400"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir agendamento
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -170,15 +220,19 @@ export function AppointmentModal({
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formData.date && !isNaN(formData.date.getTime())
-                      ? format(formData.date, "PPP 'às' HH:mm", { locale: ptBR })
-                      : "Selecione uma data"}
+                      ? format(formData.date, "PPP 'às' HH:mm", {
+                          locale: ptBR,
+                        })
+                      : 'Selecione uma data'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-[#0f0f0f] border-slate-700">
                   <Calendar
                     mode="single"
                     selected={formData.date}
-                    onSelect={(date) => { if (date) handleChange('date', date) }}
+                    onSelect={(date) => {
+                      if (date) handleChange('date', date)
+                    }}
                     disabled={!isEditing}
                     initialFocus
                   />
@@ -190,10 +244,20 @@ export function AppointmentModal({
                     type="number"
                     min="0"
                     max="23"
-                    value={formData.date ? formData.date.getHours().toString().padStart(2, '0') : '00'}
+                    value={
+                      formData.date
+                        ? formData.date.getHours().toString().padStart(2, '0')
+                        : '00'
+                    }
                     onChange={(e) => {
                       const hours = parseInt(e.target.value) || 0
-                      handleChange('date', setHours(formData.date, Math.min(23, Math.max(0, hours))))
+                      handleChange(
+                        'date',
+                        setHours(
+                          formData.date,
+                          Math.min(23, Math.max(0, hours))
+                        )
+                      )
                     }}
                     className="bg-[#0f0f0f] border-slate-700"
                     placeholder="Hora"
@@ -202,10 +266,20 @@ export function AppointmentModal({
                     type="number"
                     min="0"
                     max="59"
-                    value={formData.date ? formData.date.getMinutes().toString().padStart(2, '0') : '00'}
+                    value={
+                      formData.date
+                        ? formData.date.getMinutes().toString().padStart(2, '0')
+                        : '00'
+                    }
                     onChange={(e) => {
                       const minutes = parseInt(e.target.value) || 0
-                      handleChange('date', setMinutes(formData.date, Math.min(59, Math.max(0, minutes))))
+                      handleChange(
+                        'date',
+                        setMinutes(
+                          formData.date,
+                          Math.min(59, Math.max(0, minutes))
+                        )
+                      )
                     }}
                     className="bg-[#0f0f0f] border-slate-700"
                     placeholder="Minuto"
@@ -268,7 +342,6 @@ export function AppointmentModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0f0f0f] border-slate-700">
-                  <SelectItem value="PENDING">Pendente</SelectItem>
                   <SelectItem value="CONFIRMED">Confirmado</SelectItem>
                   <SelectItem value="COMPLETED">Concluído</SelectItem>
                   <SelectItem value="CANCELLED">Cancelado</SelectItem>
@@ -286,16 +359,30 @@ export function AppointmentModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Email:</span>
-                  <span className="text-white">{appointment.customerEmail}</span>
+                  <span className="text-white">
+                    {appointment.customerEmail}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Telefone:</span>
-                  <span className="text-white">{appointment.customerPhone}</span>
+                  <span className="text-white">
+                    {appointment.customerPhone}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Origem:</span>
-                  <span className={sourceConfig[appointment.source as keyof typeof sourceConfig]?.color}>
-                    {sourceConfig[appointment.source as keyof typeof sourceConfig]?.label}
+                  <span
+                    className={
+                      sourceConfig[
+                        appointment.source as keyof typeof sourceConfig
+                      ]?.color
+                    }
+                  >
+                    {
+                      sourceConfig[
+                        appointment.source as keyof typeof sourceConfig
+                      ]?.label
+                    }
                   </span>
                 </div>
               </div>
@@ -317,7 +404,10 @@ export function AppointmentModal({
             <AlertDialogCancel className="bg-[#0f0f0f] border-slate-700 text-white hover:bg-slate-800">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleConfirmClose}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Descartar
             </AlertDialogAction>
           </AlertDialogFooter>

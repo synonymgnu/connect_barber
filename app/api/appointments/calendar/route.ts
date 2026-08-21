@@ -7,8 +7,6 @@ import { hashEmail } from '@/app/_lib/encryption'
 
 function getEventColorByStatus(status: BookingStatus): string {
   switch (status) {
-    case BookingStatus.PENDING:
-      return '#f59e0b'
     case BookingStatus.CONFIRMED:
       return '#8161FF'
     case BookingStatus.COMPLETED:
@@ -246,7 +244,7 @@ export async function POST(req: NextRequest) {
             ? session.user.barberId || undefined
             : data.barberId,
         date: new Date(data.date),
-        status: data.status || 'PENDING',
+        status: data.status || 'CONFIRMED',
         source:
           session.user.role === 'BARBER'
             ? 'PRESENCIAL'

@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { isFuture } from 'date-fns'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import BookingItem from './booking-item'
 import BookingInfo from './booking-info'
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -15,35 +14,42 @@ import {
   DrawerClose,
 } from './ui/drawer'
 import { DateTimePicker } from './datetime-picker'
-import { BOOKING_STATUS_CONFIG } from '../_lib/booking-status'
+import {
+  BOOKING_STATUS_CONFIG,
+  getEffectiveStatus,
+} from '../_lib/booking-status'
+import { BookingStatus } from '@prisma/client'
 
 interface BookingsClientProps {
   confirmedBookings: any[]
   concludedBookings: any[]
 }
 
-type StatusFilter =
-  | 'PENDING'
-  | 'CONFIRMED'
-  | 'COMPLETED'
-  | 'CANCELLED'
-  | 'NO_SHOW'
-  | 'ALL'
+type StatusFilter = BookingStatus | 'ALL'
 
 const PAGE_SIZE = 10
 const LG_BREAKPOINT = 1024
+
+const GROUP_ORDER: { status: BookingStatus; heading: string }[] = [
+  { status: 'CONFIRMED', heading: 'Confirmados' },
+  { status: 'COMPLETED', heading: 'Finalizados' },
+  { status: 'CANCELLED', heading: 'Cancelados' },
+]
 
 export default function BookingsClient({
   confirmedBookings,
   concludedBookings,
 }: BookingsClientProps) {
-  const [selectedBooking, setSelectedBooking] = useState<any | null>(null)
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null
+  )
   const [showFilters, setShowFilters] = useState(false)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined)
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const [isDesktop, setIsDesktop] = useState(false)
+  const pendingReselectId = useRef<string | null>(null)
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= LG_BREAKPOINT)
@@ -52,23 +58,43 @@ export default function BookingsClient({
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const handleBookingCanceled = () => setSelectedBooking(null)
-
   const allBookings = useMemo(() => {
-    const withGroup = (bookings: any[]) =>
-      bookings.map((b) => ({
-        ...b,
-        _group: isFuture(b.date) ? 'UPCOMING' : 'PAST',
-      }))
-    return [
-      ...withGroup(confirmedBookings),
-      ...withGroup(concludedBookings),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return [...confirmedBookings, ...concludedBookings]
+      .map((b) => ({ ...b, _effectiveStatus: getEffectiveStatus(b) }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }, [confirmedBookings, concludedBookings])
+
+  // Quando os dados são atualizados (ex: após router.refresh() de uma avaliação),
+  // reabre o painel com o booking já com os dados novos.
+  useEffect(() => {
+    if (pendingReselectId.current) {
+      const stillExists = allBookings.some(
+        (b) => b.id === pendingReselectId.current
+      )
+      if (stillExists) {
+        setSelectedBookingId(pendingReselectId.current)
+      }
+      pendingReselectId.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allBookings])
+
+  const selectedBooking = useMemo(
+    () => allBookings.find((b) => b.id === selectedBookingId) || null,
+    [allBookings, selectedBookingId]
+  )
+
+  const handleBookingCanceled = () => setSelectedBookingId(null)
+
+  const handleBookingRated = () => {
+    if (!selectedBookingId) return
+    pendingReselectId.current = selectedBookingId
+    setSelectedBookingId(null)
+  }
 
   const filtered = useMemo(() => {
     return allBookings.filter((booking) => {
-      if (statusFilter !== 'ALL' && booking.status !== statusFilter)
+      if (statusFilter !== 'ALL' && booking._effectiveStatus !== statusFilter)
         return false
       const bookingDate = new Date(booking.date)
       if (dateFrom && bookingDate.getTime() < dateFrom.getTime()) return false
@@ -84,8 +110,10 @@ export default function BookingsClient({
     safePage * PAGE_SIZE
   )
 
-  const upcomingOnPage = paginated.filter((b) => b._group === 'UPCOMING')
-  const pastOnPage = paginated.filter((b) => b._group === 'PAST')
+  const groupedOnPage = GROUP_ORDER.map((group) => ({
+    ...group,
+    bookings: paginated.filter((b) => b._effectiveStatus === group.status),
+  }))
 
   const hasActiveFilters = statusFilter !== 'ALL' || !!dateFrom || !!dateTo
 
@@ -105,7 +133,7 @@ export default function BookingsClient({
     { value: 'ALL', label: 'Todos' },
     ...(
       Object.entries(BOOKING_STATUS_CONFIG) as [
-        StatusFilter,
+        BookingStatus,
         { label: string },
       ][]
     ).map(([value, config]) => ({ value, label: config.label })),
@@ -222,40 +250,25 @@ export default function BookingsClient({
             Nenhum agendamento encontrado.
           </p>
         ) : (
-          <>
-            {upcomingOnPage.length > 0 && (
-              <>
-                <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-                  Próximos
-                </h2>
-                {upcomingOnPage.map((booking) => (
-                  <div
-                    key={booking.id}
-                    onClick={() => setSelectedBooking(booking)}
-                    className="cursor-pointer"
-                  >
-                    <BookingItem booking={booking} />
-                  </div>
-                ))}
-              </>
-            )}
-            {pastOnPage.length > 0 && (
-              <>
-                <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-                  Anteriores
-                </h2>
-                {pastOnPage.map((booking) => (
-                  <div
-                    key={booking.id}
-                    onClick={() => setSelectedBooking(booking)}
-                    className="cursor-pointer"
-                  >
-                    <BookingItem booking={booking} />
-                  </div>
-                ))}
-              </>
-            )}
-          </>
+          groupedOnPage.map(
+            (group) =>
+              group.bookings.length > 0 && (
+                <div key={group.status} className="space-y-3">
+                  <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
+                    {group.heading}
+                  </h2>
+                  {group.bookings.map((booking) => (
+                    <div
+                      key={booking.id}
+                      onClick={() => setSelectedBookingId(booking.id)}
+                      className="cursor-pointer"
+                    >
+                      <BookingItem booking={booking} />
+                    </div>
+                  ))}
+                </div>
+              )
+          )
         )}
 
         {/* Pagination */}
@@ -306,8 +319,10 @@ export default function BookingsClient({
       <div className="hidden md:block md:w-[400px]">
         {selectedBooking ? (
           <BookingInfo
+            key={selectedBooking.id}
             booking={selectedBooking}
             onBookingCanceled={handleBookingCanceled}
+            onBookingRated={handleBookingRated}
           />
         ) : (
           <p className="text-gray-400 mt-10">

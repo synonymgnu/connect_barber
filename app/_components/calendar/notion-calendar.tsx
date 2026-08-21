@@ -59,7 +59,10 @@ import { Textarea } from '../ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Calendar as CalendarComponent } from '../ui/calendar'
 import { cn } from '@/app/_lib/utils'
-import { useShopSchedule, useBarberSchedule } from '@/app/_hooks/use-work-schedule'
+import {
+  useShopSchedule,
+  useBarberSchedule,
+} from '@/app/_hooks/use-work-schedule'
 import './notion-calendar.css'
 
 // ─── Types ───
@@ -74,7 +77,7 @@ interface Appointment {
   barberId: string
   barberName: string
   date: string
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
+  status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
   source: 'PRESENCIAL' | 'ONLINE'
   notes?: string
   price: number
@@ -116,19 +119,30 @@ const BARBER_COLORS = [
 ]
 
 const STATUS_LABELS: Record<Appointment['status'], string> = {
-  PENDING: 'Pendente',
   CONFIRMED: 'Confirmado',
   COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
-  NO_SHOW: 'Não compareceu',
 }
 
-const STATUS_CONFIG: Record<Appointment['status'], { label: string; colorClass: string; dotColor: string }> = {
-  PENDING: { label: 'Pendente', colorClass: 'notion-event-color-pending', dotColor: '#f59e0b' },
-  CONFIRMED: { label: 'Confirmado', colorClass: 'notion-event-color-confirmed', dotColor: '#8161FF' },
-  COMPLETED: { label: 'Concluído', colorClass: 'notion-event-color-completed', dotColor: '#10b981' },
-  CANCELLED: { label: 'Cancelado', colorClass: 'notion-event-color-cancelled', dotColor: '#ef4444' },
-  NO_SHOW: { label: 'Não compareceu', colorClass: 'notion-event-color-no_show', dotColor: '#6b7280' },
+const STATUS_CONFIG: Record<
+  Appointment['status'],
+  { label: string; colorClass: string; dotColor: string }
+> = {
+  CONFIRMED: {
+    label: 'Confirmado',
+    colorClass: 'notion-event-color-confirmed',
+    dotColor: '#8161FF',
+  },
+  COMPLETED: {
+    label: 'Concluído',
+    colorClass: 'notion-event-color-completed',
+    dotColor: '#10b981',
+  },
+  CANCELLED: {
+    label: 'Cancelado',
+    colorClass: 'notion-event-color-cancelled',
+    dotColor: '#ef4444',
+  },
 }
 
 const isValidDate = (date: unknown): date is Date =>
@@ -228,13 +242,15 @@ function StatusFilters({
   onStatusChange: (s: Appointment['status'] | 'all') => void
   eventCounts: Record<string, number>
 }) {
-  const filters: { value: Appointment['status'] | 'all'; label: string; color: string }[] = [
+  const filters: {
+    value: Appointment['status'] | 'all'
+    label: string
+    color: string
+  }[] = [
     { value: 'all', label: 'Todos', color: '#888' },
-    { value: 'PENDING', label: 'Pendente', color: '#f59e0b' },
     { value: 'CONFIRMED', label: 'Confirmado', color: '#8161FF' },
     { value: 'COMPLETED', label: 'Concluído', color: '#10b981' },
     { value: 'CANCELLED', label: 'Cancelado', color: '#ef4444' },
-    { value: 'NO_SHOW', label: 'Faltou', color: '#6b7280' },
   ]
 
   return (
@@ -244,7 +260,10 @@ function StatusFilters({
         {filters.map((f) => (
           <button
             key={f.value}
-            className={cn('notion-filter-btn', statusFilter === f.value && 'active')}
+            className={cn(
+              'notion-filter-btn',
+              statusFilter === f.value && 'active'
+            )}
             onClick={() => onStatusChange(f.value)}
           >
             <span
@@ -253,7 +272,9 @@ function StatusFilters({
             />
             {f.label}
             {eventCounts[f.value] !== undefined && (
-              <span className="notion-filter-count">{eventCounts[f.value]}</span>
+              <span className="notion-filter-count">
+                {eventCounts[f.value]}
+              </span>
             )}
           </button>
         ))}
@@ -307,7 +328,9 @@ function TimeGridEvent({
 }) {
   const time = format(new Date(event.date), 'HH:mm')
   const config = STATUS_CONFIG[event.status]
-  const colorClass = barberColor ? 'notion-event-barber' : (config?.colorClass || 'notion-event-color-default')
+  const colorClass = barberColor
+    ? 'notion-event-barber'
+    : config?.colorClass || 'notion-event-color-default'
   const barberStyle = barberColor
     ? { ...style, background: barberColor.bg + '22' }
     : style
@@ -390,7 +413,9 @@ function EventDetailsPanel({
             {event.userName}
           </p>
           {event.userPhone && (
-            <p className="text-xs text-gray-500 mt-0.5 ml-6">{event.userPhone}</p>
+            <p className="text-xs text-gray-500 mt-0.5 ml-6">
+              {event.userPhone}
+            </p>
           )}
         </div>
 
@@ -502,27 +527,37 @@ export default function NotionCalendar({
 
   // ─── Work Schedule ───
   const { data: shopSchedule } = useShopSchedule()
-  const barberIdForSchedule = role === 'BARBER' ? (session?.user?.barberId || barberId || null) : null
+  const barberIdForSchedule =
+    role === 'BARBER' ? session?.user?.barberId || barberId || null : null
   const { data: barberSchedule } = useBarberSchedule(barberIdForSchedule)
 
   // Active days of week (0=Sun … 6=Sat) that have work
   const workingDays = useMemo<Set<number>>(() => {
-    const schedule = role === 'BARBER' ? (barberSchedule ?? shopSchedule) : shopSchedule
-    if (!schedule) return new Set([0,1,2,3,4,5,6])
+    const schedule =
+      role === 'BARBER' ? (barberSchedule ?? shopSchedule) : shopSchedule
+    if (!schedule) return new Set([0, 1, 2, 3, 4, 5, 6])
     return new Set(schedule.filter((s) => s.isActive).map((s) => s.dayOfWeek))
   }, [role, shopSchedule, barberSchedule])
 
-  const isOffDay = useCallback((date: Date) => !workingDays.has(date.getDay()), [workingDays])
+  const isOffDay = useCallback(
+    (date: Date) => !workingDays.has(date.getDay()),
+    [workingDays]
+  )
 
   // State
   const [currentDate, setCurrentDate] = useState(date || new Date())
   const [selectedDate, setSelectedDate] = useState(date || new Date())
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
-  const [statusFilter, setStatusFilter] = useState<Appointment['status'] | 'all'>('all')
+  const [statusFilter, setStatusFilter] = useState<
+    Appointment['status'] | 'all'
+  >('all')
   const [selectedEvent, setSelectedEvent] = useState<Appointment | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
-  const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() })
+  const [dateRange, setDateRange] = useState({
+    start: new Date(),
+    end: new Date(),
+  })
   const [selectedBarberId, setSelectedBarberId] = useState<string>('all')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const monthScrollRef = useRef<HTMLDivElement>(null)
@@ -541,16 +576,20 @@ export default function NotionCalendar({
       userEmail: '',
       userPhone: '',
       serviceId: '',
-      barberId: role === 'BARBER' ? session?.user?.barberId || barberId || '' : barberId || '',
+      barberId:
+        role === 'BARBER'
+          ? session?.user?.barberId || barberId || ''
+          : barberId || '',
       date: selectedDate,
-      status: 'PENDING',
+      status: 'CONFIRMED',
       source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
       notes: '',
     }),
     [role, session?.user?.barberId, barberId, selectedDate]
   )
 
-  const [formData, setFormData] = useState<AppointmentModalData>(defaultFormData)
+  const [formData, setFormData] =
+    useState<AppointmentModalData>(defaultFormData)
 
   // Update date range based on view (month view uses a fixed wide range, not monthOffsets)
   useEffect(() => {
@@ -591,7 +630,9 @@ export default function NotionCalendar({
     enabled: !!session,
   })
 
-  const { data: services } = useQuery<{ id: string; name: string; price: number }[]>({
+  const { data: services } = useQuery<
+    { id: string; name: string; price: number }[]
+  >({
     queryKey: ['barbershop-services'],
     queryFn: async () => {
       const response = await fetch('/api/barbershop/services')
@@ -621,11 +662,15 @@ export default function NotionCalendar({
       userEmail: String(e.user?.email || ''),
       userPhone: String(e.user?.phone || ''),
       serviceId: String(e.service?.id || e.serviceId || ''),
-      serviceName: String(e.service?.name || e.title?.split(' - ')[1] || 'Serviço'),
+      serviceName: String(
+        e.service?.name || e.title?.split(' - ')[1] || 'Serviço'
+      ),
       barberId: String(e.barber?.id || e.barberId || ''),
       barberName: String(e.barber?.name || ''),
       date: String(typeof e.date === 'string' ? e.date : e.start || e.date),
-      status: (String(e.status || 'PENDING').toUpperCase()) as Appointment['status'],
+      status: String(
+        e.status || 'CONFIRMED'
+      ).toUpperCase() as Appointment['status'],
       source: String(e.source || 'PRESENCIAL') as 'PRESENCIAL' | 'ONLINE',
       notes: String(e.notes || ''),
       price: Number(e.service?.price || e.price || 0),
@@ -651,7 +696,10 @@ export default function NotionCalendar({
   )
 
   const filteredEvents = useMemo(() => {
-    let events = statusFilter === 'all' ? allEvents : allEvents.filter((e) => e.status === statusFilter)
+    let events =
+      statusFilter === 'all'
+        ? allEvents
+        : allEvents.filter((e) => e.status === statusFilter)
     if (role === 'ADMIN' && selectedBarberId !== 'all') {
       events = events.filter((e) => e.barberId === selectedBarberId)
     }
@@ -751,11 +799,14 @@ export default function NotionCalendar({
   }
 
   const handleNavigate = (direction: 'prev' | 'next') => {
-    const fn = viewMode === 'day'
-      ? (d: Date) => direction === 'prev' ? subDays(d, 1) : addDays(d, 1)
-      : viewMode === 'week'
-      ? (d: Date) => direction === 'prev' ? subWeeks(d, 1) : addWeeks(d, 1)
-      : (d: Date) => direction === 'prev' ? subMonths(d, 1) : addMonths(d, 1)
+    const fn =
+      viewMode === 'day'
+        ? (d: Date) => (direction === 'prev' ? subDays(d, 1) : addDays(d, 1))
+        : viewMode === 'week'
+          ? (d: Date) =>
+              direction === 'prev' ? subWeeks(d, 1) : addWeeks(d, 1)
+          : (d: Date) =>
+              direction === 'prev' ? subMonths(d, 1) : addMonths(d, 1)
     const newDate = fn(selectedDate)
     setSelectedDate(newDate)
     setCurrentDate(newDate)
@@ -828,7 +879,11 @@ export default function NotionCalendar({
   // Get week number
   const getWeekNumber = (date: Date) => {
     const weekStart = startOfWeek(date, { weekStartsOn: 0 })
-    const weekNum = Math.ceil((weekStart.getTime() - new Date(weekStart.getFullYear(), 0, 1).getTime()) / 604800000)
+    const weekNum = Math.ceil(
+      (weekStart.getTime() -
+        new Date(weekStart.getFullYear(), 0, 1).getTime()) /
+        604800000
+    )
     return `Week ${weekNum}`
   }
 
@@ -870,20 +925,29 @@ export default function NotionCalendar({
             const prevScrollHeight = root.scrollHeight
             const prevScrollTop = root.scrollTop
             setMonthOffsets((prev) => [
-              prev[0] - 3, prev[0] - 2, prev[0] - 1, ...prev,
+              prev[0] - 3,
+              prev[0] - 2,
+              prev[0] - 1,
+              ...prev,
             ])
             // Restore scroll position after DOM update
             requestAnimationFrame(() => {
-              root.scrollTop = prevScrollTop + (root.scrollHeight - prevScrollHeight)
+              root.scrollTop =
+                prevScrollTop + (root.scrollHeight - prevScrollHeight)
               isExpandingRef.current = false
             })
           } else if (offset === monthOffsets[monthOffsets.length - 1]) {
             // Near bottom — append 3 months
             isExpandingRef.current = true
             setMonthOffsets((prev) => [
-              ...prev, prev[prev.length - 1] + 1, prev[prev.length - 1] + 2, prev[prev.length - 1] + 3,
+              ...prev,
+              prev[prev.length - 1] + 1,
+              prev[prev.length - 1] + 2,
+              prev[prev.length - 1] + 3,
             ])
-            requestAnimationFrame(() => { isExpandingRef.current = false })
+            requestAnimationFrame(() => {
+              isExpandingRef.current = false
+            })
           }
         }
       },
@@ -909,7 +973,9 @@ export default function NotionCalendar({
     monthViewInitRef.current = true
 
     const scrollToOffset0 = () => {
-      const el = root.querySelector('[data-month-offset="0"]') as HTMLElement | null
+      const el = root.querySelector(
+        '[data-month-offset="0"]'
+      ) as HTMLElement | null
       if (el) {
         root.scrollTop = el.offsetTop
         return true
@@ -924,7 +990,7 @@ export default function NotionCalendar({
       })
       return () => cancelAnimationFrame(raf)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, monthOffsets])
 
   // ─── Month View (infinite scroll) ───
@@ -956,7 +1022,9 @@ export default function NotionCalendar({
               </div>
               <div className="notion-monthgrid">
                 {WEEKDAYS.map((d) => (
-                  <div key={d} className="notion-monthgrid-weekday">{d}</div>
+                  <div key={d} className="notion-monthgrid-weekday">
+                    {d}
+                  </div>
                 ))}
                 {days.map((day) => {
                   const dayEvents = eventsForDate(day)
@@ -970,7 +1038,10 @@ export default function NotionCalendar({
                         isToday(day) && 'today',
                         isOffDay(day) && !isToday(day) && 'off-day'
                       )}
-                      onClick={() => { setSelectedDate(day); setCurrentDate(day) }}
+                      onClick={() => {
+                        setSelectedDate(day)
+                        setCurrentDate(day)
+                      }}
                       onDoubleClick={() => handleSlotClick(day)}
                     >
                       <div className="notion-monthgrid-day-number">
@@ -981,7 +1052,11 @@ export default function NotionCalendar({
                           <MonthEvent
                             key={event.id}
                             event={event}
-                            barberColor={role === 'ADMIN' && selectedBarberId === 'all' ? getBarberColor(event.barberId) : undefined}
+                            barberColor={
+                              role === 'ADMIN' && selectedBarberId === 'all'
+                                ? getBarberColor(event.barberId)
+                                : undefined
+                            }
                             onClick={() => handleEventClick(event)}
                           />
                         ))}
@@ -1079,7 +1154,13 @@ export default function NotionCalendar({
               {days.map((day) => {
                 const dayEvents = eventsForDate(day)
                 return (
-                  <div key={day.toISOString()} className={cn('notion-timegrid-column', isOffDay(day) && 'off-day')}>
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      'notion-timegrid-column',
+                      isOffDay(day) && 'off-day'
+                    )}
+                  >
                     {HOURS.map((hour) => (
                       <div
                         key={`${day.toISOString()}-${hour}`}
@@ -1097,13 +1178,18 @@ export default function NotionCalendar({
                       const slotIndex = HOURS.indexOf(hour)
                       if (slotIndex === -1) return null
 
-                      const top = slotIndex * SLOT_HEIGHT + (minutes / 60) * SLOT_HEIGHT
+                      const top =
+                        slotIndex * SLOT_HEIGHT + (minutes / 60) * SLOT_HEIGHT
                       const height = 28 // compact height
                       return (
                         <TimeGridEvent
                           key={event.id}
                           event={event}
-                          barberColor={role === 'ADMIN' && selectedBarberId === 'all' ? getBarberColor(event.barberId) : undefined}
+                          barberColor={
+                            role === 'ADMIN' && selectedBarberId === 'all'
+                              ? getBarberColor(event.barberId)
+                              : undefined
+                          }
                           style={{
                             top: `${top}px`,
                             height: `${height}px`,
@@ -1170,9 +1256,7 @@ export default function NotionCalendar({
                 <span className="day-name">
                   {format(selectedDate, 'EEEE', { locale: ptBR })}
                 </span>
-                <span className="day-number">
-                  {format(selectedDate, 'd')}
-                </span>
+                <span className="day-number">{format(selectedDate, 'd')}</span>
               </div>
             </div>
           </div>
@@ -1206,7 +1290,10 @@ export default function NotionCalendar({
                     key={`${selectedDate.toISOString()}-${hour}`}
                     className="notion-timegrid-slot"
                     onClick={() => {
-                      const slotDate = setHours(setMinutes(selectedDate, 0), hour)
+                      const slotDate = setHours(
+                        setMinutes(selectedDate, 0),
+                        hour
+                      )
                       handleSlotClick(slotDate)
                     }}
                   />
@@ -1218,12 +1305,17 @@ export default function NotionCalendar({
                   const slotIndex = HOURS.indexOf(hour)
                   if (slotIndex === -1) return null
 
-                  const top = slotIndex * SLOT_HEIGHT + (minutes / 60) * SLOT_HEIGHT
+                  const top =
+                    slotIndex * SLOT_HEIGHT + (minutes / 60) * SLOT_HEIGHT
                   return (
                     <TimeGridEvent
                       key={event.id}
                       event={event}
-                      barberColor={role === 'ADMIN' && selectedBarberId === 'all' ? getBarberColor(event.barberId) : undefined}
+                      barberColor={
+                        role === 'ADMIN' && selectedBarberId === 'all'
+                          ? getBarberColor(event.barberId)
+                          : undefined
+                      }
                       style={{
                         top: `${top}px`,
                         height: `${Math.max(28, 28)}px`,
@@ -1257,7 +1349,8 @@ export default function NotionCalendar({
   }
 
   // Get month and year for toolbar
-  const displayDate = viewMode === 'month' && visibleMonth ? visibleMonth : selectedDate
+  const displayDate =
+    viewMode === 'month' && visibleMonth ? visibleMonth : selectedDate
   const monthName = format(displayDate, 'MMMM', { locale: ptBR })
   const yearName = format(displayDate, 'yyyy')
   const weekLabel = viewMode === 'week' ? getWeekNumber(selectedDate) : ''
@@ -1268,11 +1361,7 @@ export default function NotionCalendar({
       <div className="notion-toolbar">
         <div className="notion-toolbar-left">
           {onExit && (
-            <button
-              className="notion-nav-btn"
-              onClick={onExit}
-              title="Voltar"
-            >
+            <button className="notion-nav-btn" onClick={onExit} title="Voltar">
               <ChevronLeft size={18} />
             </button>
           )}
@@ -1287,7 +1376,9 @@ export default function NotionCalendar({
           <div className="notion-toolbar-title">
             <span className="notion-toolbar-month">{monthName}</span>
             <span className="notion-toolbar-year">{yearName}</span>
-            {weekLabel && <span className="notion-toolbar-week">{weekLabel}</span>}
+            {weekLabel && (
+              <span className="notion-toolbar-week">{weekLabel}</span>
+            )}
           </div>
         </div>
 
@@ -1306,7 +1397,10 @@ export default function NotionCalendar({
               Semana
             </button>
             <button
-              className={cn('notion-view-btn', viewMode === 'month' && 'active')}
+              className={cn(
+                'notion-view-btn',
+                viewMode === 'month' && 'active'
+              )}
               onClick={() => setViewMode('month')}
             >
               Mês
@@ -1317,10 +1411,16 @@ export default function NotionCalendar({
             Hoje
           </button>
 
-          <button className="notion-nav-btn" onClick={() => handleNavigate('prev')}>
+          <button
+            className="notion-nav-btn"
+            onClick={() => handleNavigate('prev')}
+          >
             <ChevronLeft size={18} />
           </button>
-          <button className="notion-nav-btn" onClick={() => handleNavigate('next')}>
+          <button
+            className="notion-nav-btn"
+            onClick={() => handleNavigate('next')}
+          >
             <ChevronRight size={18} />
           </button>
 
@@ -1352,23 +1452,39 @@ export default function NotionCalendar({
                 <div className="notion-filter-title">Barbeiro</div>
                 <div className="notion-filter-options">
                   <button
-                    className={cn('notion-filter-btn', selectedBarberId === 'all' && 'active')}
+                    className={cn(
+                      'notion-filter-btn',
+                      selectedBarberId === 'all' && 'active'
+                    )}
                     onClick={() => setSelectedBarberId('all')}
                   >
-                    <span className="notion-filter-dot" style={{ backgroundColor: '#888' }} />
+                    <span
+                      className="notion-filter-dot"
+                      style={{ backgroundColor: '#888' }}
+                    />
                     Todos
-                    <span className="notion-filter-count">{allEvents.length}</span>
+                    <span className="notion-filter-count">
+                      {allEvents.length}
+                    </span>
                   </button>
                   {barbers.map((barber) => {
                     const color = getBarberColor(barber.id)
-                    const count = allEvents.filter((e) => e.barberId === barber.id).length
+                    const count = allEvents.filter(
+                      (e) => e.barberId === barber.id
+                    ).length
                     return (
                       <button
                         key={barber.id}
-                        className={cn('notion-filter-btn', selectedBarberId === barber.id && 'active')}
+                        className={cn(
+                          'notion-filter-btn',
+                          selectedBarberId === barber.id && 'active'
+                        )}
                         onClick={() => setSelectedBarberId(barber.id)}
                       >
-                        <span className="notion-filter-dot" style={{ backgroundColor: color.border }} />
+                        <span
+                          className="notion-filter-dot"
+                          style={{ backgroundColor: color.border }}
+                        />
                         {barber.name}
                         <span className="notion-filter-count">{count}</span>
                       </button>
@@ -1675,24 +1791,20 @@ export default function NotionCalendar({
                 <Badge
                   className={cn(
                     'text-white',
-                    formData.status === 'PENDING'
-                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                      : formData.status === 'CONFIRMED'
+                    formData.status === 'CONFIRMED'
                       ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
                       : formData.status === 'COMPLETED'
-                      ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                      : formData.status === 'CANCELLED'
-                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                      : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                        ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                        : formData.status === 'CANCELLED'
+                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                          : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
                   )}
                 >
                   {STATUS_LABELS[formData.status]}
                 </Badge>
                 {formData.source && (
                   <Badge variant="outline" className="text-xs">
-                    {formData.source === 'PRESENCIAL'
-                      ? 'Presencial'
-                      : 'Online'}
+                    {formData.source === 'PRESENCIAL' ? 'Presencial' : 'Online'}
                   </Badge>
                 )}
               </div>
@@ -1720,11 +1832,7 @@ export default function NotionCalendar({
                     Excluir
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={closeAndReset}
-                >
+                <Button type="button" variant="outline" onClick={closeAndReset}>
                   <X className="w-4 h-4 mr-2" />
                   Cancelar
                 </Button>

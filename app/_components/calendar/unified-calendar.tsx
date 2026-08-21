@@ -49,7 +49,7 @@ interface AppointmentModalData {
   serviceId: string
   barberId: string
   date: Date
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
+  status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
   source: 'PRESENCIAL' | 'ONLINE'
   notes?: string
 }
@@ -64,19 +64,15 @@ const isValidDate = (date: unknown): date is Date =>
   date instanceof Date && !isNaN(date.getTime())
 
 const STATUS_LABELS: Record<AppointmentModalData['status'], string> = {
-  PENDING: 'Pendente',
   CONFIRMED: 'Confirmado',
   COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
-  NO_SHOW: 'Não compareceu',
 }
 
 const STATUS_STYLES: Record<AppointmentModalData['status'], string> = {
-  PENDING: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   CONFIRMED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   COMPLETED: 'bg-green-500/20 text-green-400 border-green-500/30',
   CANCELLED: 'bg-red-500/20 text-red-400 border-red-500/30',
-  NO_SHOW: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 }
 
 export default function UnifiedCalendar({
@@ -105,7 +101,7 @@ export default function UnifiedCalendar({
       serviceId: '',
       barberId: role === 'BARBER' ? session?.user?.barberId || '' : '',
       date: date || new Date(),
-      status: 'PENDING',
+      status: 'CONFIRMED',
       source: role === 'BARBER' ? 'PRESENCIAL' : 'ONLINE',
       notes: '',
     }),

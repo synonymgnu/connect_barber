@@ -20,11 +20,13 @@ import { useRouter } from 'next/navigation'
 interface RatingDialogProps {
   bookingId: string
   barbershopName: string
+  onRated?: () => void
 }
 
 export default function RatingDialog({
   bookingId,
   barbershopName,
+  onRated,
 }: RatingDialogProps) {
   const router = useRouter()
   const [rating, setRating] = useState(0)
@@ -41,6 +43,7 @@ export default function RatingDialog({
       setOpen(false)
       setSuccessDialogIsOpen(true)
       router.refresh()
+      onRated?.()
     } catch (error) {
       console.error('Erro ao enviar avaliação:', error)
       setErrorDialogIsOpen(true)

@@ -36,6 +36,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   BOOKING_STATUS_CONFIG,
   CANCELABLE_STATUSES,
+  getEffectiveStatus,
 } from '../_lib/booking-status'
 
 export interface BookingItemProps {
@@ -64,10 +65,11 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     service: { barbershop },
   } = booking
 
-  const statusInfo = BOOKING_STATUS_CONFIG[booking.status]
-  const canCancel = CANCELABLE_STATUSES.includes(booking.status)
-  const canRate = booking.status === 'COMPLETED'
-  const hasRating = !!booking.ratings
+  const effectiveStatus = getEffectiveStatus(booking)
+  const statusInfo = BOOKING_STATUS_CONFIG[effectiveStatus]
+  const canCancel = CANCELABLE_STATUSES.includes(effectiveStatus)
+  const canRate = effectiveStatus === 'COMPLETED'
+  const hasRating = booking.ratings.length > 0
 
   const handleCancelBooking = async () => {
     try {
@@ -287,6 +289,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                     <RatingDialog
                       bookingId={booking.id}
                       barbershopName={booking.service.barbershop.name}
+                      onRated={() => setIsSheetOpen(false)}
                     />
                   )
                 ) : null}

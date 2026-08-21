@@ -5,8 +5,19 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Badge } from '@/app/_components/ui/badge'
 import { Button } from '@/app/_components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/_components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/_components/ui/select'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/_components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/_components/ui/select'
 import { Input } from '@/app/_components/ui/input'
 import { ConfirmDialog } from '@/app/_components/confirm-dialog'
 import { toast } from 'sonner'
@@ -69,12 +80,16 @@ interface BarberDashboardProps {
   onRefresh: () => void
 }
 
-const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  CONFIRMED:  { label: 'Confirmado',  variant: 'default' },
-  COMPLETED:  { label: 'Concluído',   variant: 'secondary' },
-  CANCELLED:  { label: 'Cancelado',   variant: 'destructive' },
-  PENDING:    { label: 'Pendente',    variant: 'outline' },
-  NO_SHOW:    { label: 'Faltou',      variant: 'outline' },
+const STATUS_MAP: Record<
+  string,
+  {
+    label: string
+    variant: 'default' | 'secondary' | 'destructive'
+  }
+> = {
+  CONFIRMED: { label: 'Confirmado', variant: 'default' },
+  COMPLETED: { label: 'Concluído', variant: 'secondary' },
+  CANCELLED: { label: 'Cancelado', variant: 'destructive' },
 }
 
 export default function BarberDashboard({
@@ -87,7 +102,10 @@ export default function BarberDashboard({
 }: BarberDashboardProps) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [pendingAction, setPendingAction] = useState<{ bookingId: string; action: 'complete' | 'cancel' } | null>(null)
+  const [pendingAction, setPendingAction] = useState<{
+    bookingId: string
+    action: 'complete' | 'cancel'
+  } | null>(null)
 
   const filtered = useMemo(() => {
     return bookings.filter((b) => {
@@ -109,7 +127,9 @@ export default function BarberDashboard({
       body: JSON.stringify({ status }),
     })
     if (res.ok) {
-      toast.success(action === 'complete' ? 'Serviço concluído!' : 'Agendamento cancelado!')
+      toast.success(
+        action === 'complete' ? 'Serviço concluído!' : 'Agendamento cancelado!'
+      )
       onRefresh()
     } else {
       toast.error('Erro ao atualizar agendamento')
@@ -142,9 +162,8 @@ export default function BarberDashboard({
       .slice(0, 5)
   }, [bookings])
 
-  const completionRate = stats.total > 0
-    ? Math.round((stats.completed / stats.total) * 100)
-    : 0
+  const completionRate =
+    stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
 
   return (
     <div className="space-y-6">
@@ -153,7 +172,9 @@ export default function BarberDashboard({
         <div>
           <h2 className="text-xl font-bold">Visão Geral</h2>
           <p className="text-sm text-muted-foreground">
-            {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", {
+              locale: ptBR,
+            })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -170,7 +191,12 @@ export default function BarberDashboard({
               </Button>
             ))}
           </div>
-          <Button variant="outline" size="icon" onClick={onRefresh} title="Atualizar">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onRefresh}
+            title="Atualizar"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -179,17 +205,52 @@ export default function BarberDashboard({
       {/* ─── Stats Cards ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: 'Total', value: stats.total, icon: Calendar, color: 'text-[#8161FF]', border: 'border-l-[#8161FF]' },
-          { label: 'Concluídos', value: stats.completed, icon: CheckCircle, color: 'text-green-400', border: 'border-l-green-400' },
-          { label: 'Cancelados', value: stats.cancelled, icon: XCircle, color: 'text-red-400', border: 'border-l-red-400' },
-          { label: 'Avaliação', value: stats.avgRating?.toFixed(1) || '0.0', icon: Star, color: 'text-yellow-400', border: 'border-l-yellow-400' },
-          { label: 'Receita', value: `R$ ${stats.revenue?.toFixed(2) || '0.00'}`, icon: DollarSign, color: 'text-[#8161FF]', border: 'border-l-[#8161FF]' },
+          {
+            label: 'Total',
+            value: stats.total,
+            icon: Calendar,
+            color: 'text-[#8161FF]',
+            border: 'border-l-[#8161FF]',
+          },
+          {
+            label: 'Concluídos',
+            value: stats.completed,
+            icon: CheckCircle,
+            color: 'text-green-400',
+            border: 'border-l-green-400',
+          },
+          {
+            label: 'Cancelados',
+            value: stats.cancelled,
+            icon: XCircle,
+            color: 'text-red-400',
+            border: 'border-l-red-400',
+          },
+          {
+            label: 'Avaliação',
+            value: stats.avgRating?.toFixed(1) || '0.0',
+            icon: Star,
+            color: 'text-yellow-400',
+            border: 'border-l-yellow-400',
+          },
+          {
+            label: 'Receita',
+            value: `R$ ${stats.revenue?.toFixed(2) || '0.00'}`,
+            icon: DollarSign,
+            color: 'text-[#8161FF]',
+            border: 'border-l-[#8161FF]',
+          },
         ].map((card) => {
           const Icon = card.icon
           return (
-            <Card key={card.label} className={`border-l-4 ${card.border} hover:scale-[1.02] transition-transform`}>
+            <Card
+              key={card.label}
+              className={`border-l-4 ${card.border} hover:scale-[1.02] transition-transform`}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-1 p-3">
-                <CardTitle className="text-xs font-medium text-muted-foreground">{card.label}</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  {card.label}
+                </CardTitle>
                 <Icon className={`h-4 w-4 ${card.color}`} />
               </CardHeader>
               <CardContent className="p-3 pt-0">
@@ -213,13 +274,28 @@ export default function BarberDashboard({
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={weekdayData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="name" fontSize={12} className="fill-muted-foreground" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
+                <XAxis
+                  dataKey="name"
+                  fontSize={12}
+                  className="fill-muted-foreground"
+                />
                 <YAxis fontSize={12} className="fill-muted-foreground" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 8 }}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: 8,
+                  }}
                 />
-                <Bar dataKey="agendamentos" fill="#8161FF" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="agendamentos"
+                  fill="#8161FF"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -235,7 +311,9 @@ export default function BarberDashboard({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-400">{completionRate}%</div>
+              <div className="text-3xl font-bold text-green-400">
+                {completionRate}%
+              </div>
               <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full bg-green-400 rounded-full transition-all"
@@ -267,7 +345,9 @@ export default function BarberDashboard({
                   />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{reviews.length} avaliações</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {reviews.length} avaliações
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -285,11 +365,29 @@ export default function BarberDashboard({
           <CardContent>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={serviceRevenue} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis type="number" fontSize={11} className="fill-muted-foreground" tickFormatter={(v) => `R$${v}`} />
-                <YAxis type="category" dataKey="name" fontSize={11} width={100} className="fill-muted-foreground" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
+                <XAxis
+                  type="number"
+                  fontSize={11}
+                  className="fill-muted-foreground"
+                  tickFormatter={(v) => `R$${v}`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  fontSize={11}
+                  width={100}
+                  className="fill-muted-foreground"
+                />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 8 }}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: 8,
+                  }}
                   formatter={(v: number) => [`R$ ${v.toFixed(2)}`, 'Receita']}
                 />
                 <Bar dataKey="receita" fill="#10b981" radius={[0, 4, 4, 0]} />
@@ -306,7 +404,9 @@ export default function BarberDashboard({
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Clock className="h-4 w-4 text-[#8161FF]" />
               Agendamentos
-              <Badge variant="outline" className="text-xs">{filtered.length}</Badge>
+              <Badge variant="outline" className="text-xs">
+                {filtered.length}
+              </Badge>
             </CardTitle>
             <div className="flex gap-2">
               <div className="relative">
@@ -326,7 +426,9 @@ export default function BarberDashboard({
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   {Object.entries(STATUS_MAP).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                    <SelectItem key={k} value={k}>
+                      {v.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -338,43 +440,77 @@ export default function BarberDashboard({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40">
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Cliente</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Serviço</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Data/Hora</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Status</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Valor</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Ação</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                    Cliente
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                    Serviço
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                    Data/Hora
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                    Valor
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                    Ação
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-muted-foreground text-sm">
+                    <td
+                      colSpan={6}
+                      className="text-center py-10 text-muted-foreground text-sm"
+                    >
                       Nenhum agendamento encontrado
                     </td>
                   </tr>
                 )}
                 {filtered.map((b) => {
-                  const s = STATUS_MAP[b.status] || { label: b.status, variant: 'outline' as const }
+                  const s = STATUS_MAP[b.status] || {
+                    label: b.status,
+                    variant: 'outline' as const,
+                  }
                   return (
-                    <tr key={b.id} className="border-b hover:bg-muted/20 transition-colors">
+                    <tr
+                      key={b.id}
+                      className="border-b hover:bg-muted/20 transition-colors"
+                    >
                       <td className="px-4 py-3 font-medium">{b.clientName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{b.serviceName}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {b.serviceName}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                        {format(new Date(b.date), "dd/MM/yy HH:mm", { locale: ptBR })}
+                        {format(new Date(b.date), 'dd/MM/yy HH:mm', {
+                          locale: ptBR,
+                        })}
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
+                        <Badge variant={s.variant} className="text-xs">
+                          {s.label}
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3 font-medium">R$ {b.price.toFixed(2)}</td>
+                      <td className="px-4 py-3 font-medium">
+                        R$ {b.price.toFixed(2)}
+                      </td>
                       <td className="px-4 py-3">
-                        {b.status === 'CONFIRMED' || b.status === 'PENDING' ? (
+                        {b.status === 'CONFIRMED' ? (
                           <div className="flex gap-1">
                             <Button
                               size="sm"
                               variant="outline"
                               className="h-7 text-xs text-green-600 border-green-600/30 hover:bg-green-600/10"
-                              onClick={() => setPendingAction({ bookingId: b.id, action: 'complete' })}
+                              onClick={() =>
+                                setPendingAction({
+                                  bookingId: b.id,
+                                  action: 'complete',
+                                })
+                              }
                             >
                               <CheckCircle className="h-3 w-3 mr-1" /> Concluir
                             </Button>
@@ -382,13 +518,20 @@ export default function BarberDashboard({
                               size="sm"
                               variant="outline"
                               className="h-7 text-xs text-red-500 border-red-500/30 hover:bg-red-500/10"
-                              onClick={() => setPendingAction({ bookingId: b.id, action: 'cancel' })}
+                              onClick={() =>
+                                setPendingAction({
+                                  bookingId: b.id,
+                                  action: 'cancel',
+                                })
+                              }
                             >
                               <XCircle className="h-3 w-3 mr-1" /> Cancelar
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -412,11 +555,17 @@ export default function BarberDashboard({
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {reviews.slice(0, 6).map((r) => (
-                <div key={r.id} className="p-3 rounded-lg border bg-muted/20 space-y-1.5">
+                <div
+                  key={r.id}
+                  className="p-3 rounded-lg border bg-muted/20 space-y-1.5"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} className={`h-3.5 w-3.5 ${s <= r.value ? 'text-yellow-400 fill-yellow-400' : 'text-muted'}`} />
+                        <Star
+                          key={s}
+                          className={`h-3.5 w-3.5 ${s <= r.value ? 'text-yellow-400 fill-yellow-400' : 'text-muted'}`}
+                        />
                       ))}
                     </div>
                     <span className="text-xs text-muted-foreground">
@@ -424,7 +573,9 @@ export default function BarberDashboard({
                     </span>
                   </div>
                   <p className="text-sm font-medium">{r.clientName}</p>
-                  <Badge variant="outline" className="text-xs">{r.serviceName}</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {r.serviceName}
+                  </Badge>
                 </div>
               ))}
             </div>
@@ -435,7 +586,11 @@ export default function BarberDashboard({
       <ConfirmDialog
         open={!!pendingAction}
         onOpenChange={(open) => !open && setPendingAction(null)}
-        title={pendingAction?.action === 'complete' ? 'Concluir Serviço' : 'Cancelar Agendamento'}
+        title={
+          pendingAction?.action === 'complete'
+            ? 'Concluir Serviço'
+            : 'Cancelar Agendamento'
+        }
         description={
           pendingAction?.action === 'complete'
             ? 'Tem certeza que deseja marcar este serviço como concluído?'
