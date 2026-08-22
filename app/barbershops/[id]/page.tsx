@@ -31,6 +31,9 @@ import BarbersSection from '@/app/_components/barbers-section'
 import OpeningHoursMobile from '@/app/_components/opening-hours-mobile'
 import BarbershopImageCarousel from '@/app/_components/barbershop-image-carousel'
 import ShareBarbershopButton from '@/app/_components/share-barbershop-button'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/_lib/auth' // ajuste o caminho
+import FavoriteButton from '@/app/_components/favorite-button'
 
 interface BarbershopPageProps {
   params: {
@@ -60,31 +63,51 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
     return notFound()
   }
 
-  const barbers = await db.barber.findMany({
-    where: {
-      barbershopId: params.id,
-      isActive: true,
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-    include: {
-      Rating: {
-        select: {
-          value: true,
-        },
+  const session = await getServerSession(authOptions)
+  const userId = session?.user?.id
+
+  const [barbers, favoritedBarbershop, favoritedBarberIds] = await Promise.all([
+    db.barber.findMany({
+      where: {
+        barbershopId: params.id,
+        isActive: true,
       },
-      bookings: {
-        select: {
-          ratings: {
-            select: {
-              value: true,
+      orderBy: {
+        createdAt: 'asc',
+      },
+      include: {
+        Rating: {
+          select: {
+            value: true,
+          },
+        },
+        bookings: {
+          select: {
+            ratings: {
+              select: {
+                value: true,
+              },
             },
           },
         },
       },
-    },
-  })
+    }),
+    userId
+      ? db.favoriteBarbershop.findUnique({
+          where: { userId_barbershopId: { userId, barbershopId: params.id } },
+        })
+      : null,
+    userId
+      ? db.favoriteBarber.findMany({
+          where: { userId, barber: { barbershopId: params.id } },
+          select: { barberId: true },
+        })
+      : Promise.resolve([]),
+  ])
+
+  const favoritedBarberIdSet = new Set(
+    favoritedBarberIds.map((f) => f.barberId)
+  )
 
   // Build shop schedule: for each day of week, collect earliest start / latest end across all barbers
   const DAY_NAMES = [
@@ -147,6 +170,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
     return {
       ...barber,
+      isFavorited: favoritedBarberIdSet.has(barber.id),
       averageRating:
         allRatings.length > 0
           ? allRatings.reduce((sum, value) => sum + value, 0) /
@@ -314,11 +338,17 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 <h1 className="text-xl font-bold lg:text-3xl">
                   {barbershop.name}
                 </h1>
-                <ShareBarbershopButton
-                  name={barbershop.name}
-                  description={barbershop.description}
-                  className="shrink-0 lg:hidden"
-                />
+                <div className="flex items-center gap-2 shrink-0 lg:hidden">
+                  <FavoriteButton
+                    type="barbershop"
+                    id={barbershop.id}
+                    isFavorited={!!favoritedBarbershop}
+                  />
+                  <ShareBarbershopButton
+                    name={barbershop.name}
+                    description={barbershop.description}
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2 lg:mb-0">
                 <MapPinIcon className="text-primary flex-shrink-0" size={18} />
@@ -434,7 +464,14 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 )}
               </div>
 
-              <h2 className="font-bold uppercase text-sm mb-2.5">Sobre nós</h2>
+              <div className="flex items-center justify-between mb-2.5">
+                <h2 className="font-bold uppercase text-sm">Sobre nós</h2>
+                <FavoriteButton
+                  type="barbershop"
+                  id={barbershop.id}
+                  isFavorited={!!favoritedBarbershop}
+                />
+              </div>
               <p className="text-sm text-zinc-300 text-justify border-b pb-5">
                 {barbershop.description}
               </p>

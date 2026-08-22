@@ -20,6 +20,9 @@ import {
   UserCog,
   Bell,
   ReceiptText,
+  Heart,
+  CalendarDays,
+  LayoutDashboard,
 } from 'lucide-react'
 import { NotificationsDropdown } from './notifications-dropdown'
 import SignOutDialog from './sign-out-dialog'
@@ -70,17 +73,41 @@ const Header = ({ isHidden }: HeaderProps) => {
           {data?.user && <NotificationsDropdown />}
 
           {data?.user ? (
+            <Link href="/favorites">
+              <Button
+                variant="ghost"
+                className="hidden md:flex items-center gap-2"
+              >
+                <Heart width={16} height={16} />
+                <p>Favoritos</p>
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="hidden md:flex items-center gap-2"
+                  >
+                    <Heart width={16} height={16} />
+                    <p>Favoritos</p>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[30%]">
+                  <SignInDialog callbackUrl="/favorites" />
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+
+          {data?.user ? (
             <Link href="/bookings">
               <Button
                 variant="ghost"
                 className="hidden md:flex items-center gap-2"
               >
-                <Image
-                  src="/Calendar.svg"
-                  width={16}
-                  height={16}
-                  alt="Calendário"
-                />
+                <CalendarDays width={16} height={16} />
                 <p>Agendamentos</p>
               </Button>
             </Link>
@@ -92,12 +119,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                     variant="ghost"
                     className="hidden md:flex items-center gap-2"
                   >
-                    <Image
-                      src="/Calendar.svg"
-                      width={16}
-                      height={16}
-                      alt="Calendário"
-                    />
+                    <CalendarDays width={16} height={16} />
                     <p>Agendamentos</p>
                   </Button>
                 </DialogTrigger>
@@ -169,7 +191,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                             asChild
                           >
                             <Link href="/dashboard">
-                              <CalendarIcon size={18} />
+                              <LayoutDashboard size={18} />
                               Dashboard Admin
                             </Link>
                           </Button>
@@ -185,7 +207,7 @@ const Header = ({ isHidden }: HeaderProps) => {
                             asChild
                           >
                             <Link href="/master/barbershops">
-                              <CalendarIcon size={18} />
+                              <LayoutDashboard size={18} />
                               Dashboard Master
                             </Link>
                           </Button>

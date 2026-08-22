@@ -19,6 +19,8 @@ import {
   Bell,
   UserCog,
   ReceiptText,
+  LayoutDashboard,
+  Heart,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import Image from 'next/image'
@@ -97,26 +99,68 @@ const SidebarSheet = () => {
         </div>
 
         <div className="py-5 flex flex-col gap-2 border-b border-solid">
-          <SheetClose asChild>
-            <Button className="justify-start gap-2" variant="ghost" asChild>
-              <Link href="/">
-                <HomeIcon size={18} />
-                Início
-              </Link>
-            </Button>
-          </SheetClose>
           {data?.user ? (
             <>
               {data.user.role === 'MASTER' && (
-                <SheetClose asChild>
-                  <Button className="justify-start" variant="ghost" asChild>
-                    <Link href="/master/barbershops">
-                      <CalendarIcon size={18} />
-                      Dashboard Master
-                    </Link>
-                  </Button>
-                </SheetClose>
+                <div className="pb-5 border-b border-solid">
+                  <SheetClose asChild>
+                    <Button
+                      className="justify-start w-full"
+                      variant="ghost"
+                      asChild
+                    >
+                      <Link href="/master/barbershops">
+                        <LayoutDashboard size={18} />
+                        Dashboard Master
+                      </Link>
+                    </Button>
+                  </SheetClose>
+                </div>
               )}
+
+              {data.user.role === 'ADMIN' && (
+                <div className="pb-5 border-b border-solid">
+                  <SheetClose asChild>
+                    <Button
+                      className="justify-start gap-2 w-full"
+                      variant="ghost"
+                      asChild
+                    >
+                      <Link href="/dashboard">
+                        <LayoutDashboard size={18} />
+                        Dashboard Admin
+                      </Link>
+                    </Button>
+                  </SheetClose>
+                </div>
+              )}
+
+              {data.user.role === 'BARBER' && (
+                <div className="pb-5 border-b border-solid">
+                  <SheetClose asChild>
+                    <Button
+                      className="justify-start gap-2 w-full"
+                      variant="ghost"
+                      asChild
+                    >
+                      <Link href="/barber/schedule">
+                        <CalendarIcon size={18} />
+                        Minha Agenda
+                      </Link>
+                    </Button>
+                  </SheetClose>
+                </div>
+              )}
+
+              <SheetClose asChild>
+                <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Link href="/">
+                    <HomeIcon size={18} />
+                    Início
+                  </Link>
+                </Button>
+              </SheetClose>
+
               <Button className="justify-start" variant="ghost" asChild>
                 <Link href="/account">
                   <UserCog size={18} /> Minha conta
@@ -128,6 +172,14 @@ const SidebarSheet = () => {
                   <Link href="/bookings">
                     <CalendarIcon size={18} />
                     Agendamentos
+                  </Link>
+                </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Link href="/favorites">
+                    <Heart size={18} />
+                    Favoritos
                   </Link>
                 </Button>
               </SheetClose>
@@ -154,37 +206,17 @@ const SidebarSheet = () => {
                   </Link>
                 </Button>
               </SheetClose>
-              {data.user.role === 'BARBER' && (
-                <SheetClose asChild>
-                  <Button
-                    className="justify-start gap-2"
-                    variant="ghost"
-                    asChild
-                  >
-                    <Link href="/barber/schedule">
-                      <CalendarIcon size={18} />
-                      Minha Agenda
-                    </Link>
-                  </Button>
-                </SheetClose>
-              )}
-              {data.user.role === 'ADMIN' && (
-                <SheetClose asChild>
-                  <Button
-                    className="justify-start gap-2"
-                    variant="ghost"
-                    asChild
-                  >
-                    <Link href="/dashboard">
-                      <CalendarIcon size={18} />
-                      Dashboard Admin
-                    </Link>
-                  </Button>
-                </SheetClose>
-              )}
             </>
           ) : (
             <>
+              <SheetClose asChild>
+                <Button className="justify-start gap-2" variant="ghost" asChild>
+                  <Link href="/">
+                    <HomeIcon size={18} />
+                    Início
+                  </Link>
+                </Button>
+              </SheetClose>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button className="justify-start gap-2" variant="ghost">
@@ -194,6 +226,17 @@ const SidebarSheet = () => {
                 </DialogTrigger>
                 <DialogContent className="w-[90%] rounded-lg">
                   <SignInDialog callbackUrl="/bookings" />
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="justify-start gap-2" variant="ghost">
+                    <Heart size={18} />
+                    Favoritos
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90%] rounded-lg">
+                  <SignInDialog callbackUrl="/favorites" />
                 </DialogContent>
               </Dialog>
             </>

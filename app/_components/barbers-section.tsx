@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/app/_components/ui/card'
 
 import BarberInfoSheet from './barber-info-sheet'
 import { Button } from './ui/button'
+import FavoriteButton from './favorite-button'
 
 interface Barber {
   id: string
@@ -24,6 +25,7 @@ interface Barber {
   speciality?: string | null
   bio?: string | null
   averageRating: number | null
+  isFavorited?: boolean
 }
 
 interface Props {
@@ -52,8 +54,6 @@ function useDragScroll() {
     if (!isPointerDown.current || !scrollRef.current) return
     const delta = e.clientX - dragStartX.current
 
-    // Só entra em modo "arraste" (e captura o ponteiro) depois de um movimento real.
-    // Isso evita que um simples toque/clique seja interpretado como drag.
     if (!isDragging.current && Math.abs(delta) > 6) {
       isDragging.current = true
       draggedRef.current = true
@@ -109,6 +109,7 @@ export default function BarbersSection({ barbers }: Props) {
     <Card
       onClick={() => handleCardClick(barber, draggedRef)}
       className="
+        relative
         border-0
         cursor-pointer
         transition-all
@@ -119,6 +120,13 @@ export default function BarbersSection({ barbers }: Props) {
         active:scale-[0.98]
       "
     >
+      <FavoriteButton
+        type="barber"
+        id={barber.id}
+        isFavorited={!!barber.isFavorited}
+        className="absolute right-2 top-2 h-7 w-7 z-10"
+      />
+
       <CardContent className="flex flex-col items-center p-4">
         <Avatar className="h-14 w-14 lg:h-16 lg:w-16 mb-3">
           <AvatarImage src={barber.imageUrl || undefined} />
@@ -209,7 +217,6 @@ export default function BarbersSection({ barbers }: Props) {
             </div>
           ) : barbers.length === 3 ? (
             <>
-              {/* DESKTOP: cabe tudo numa linha só, sem scroll */}
               <div className="hidden lg:grid lg:grid-cols-3 lg:gap-5  mx-auto">
                 {barbers.map((barber) => (
                   <BarberCard
@@ -220,7 +227,6 @@ export default function BarbersSection({ barbers }: Props) {
                 ))}
               </div>
 
-              {/* MOBILE: só cabem 2 por vez, precisa de scroll + setas */}
               <div className="relative lg:hidden">
                 <div
                   ref={mobileDrag.scrollRef}
@@ -247,7 +253,6 @@ export default function BarbersSection({ barbers }: Props) {
               </div>
             </>
           ) : (
-            // MAIS DE 3: scroll + setas em mobile e desktop
             <div className="relative">
               <div
                 ref={desktopDrag.scrollRef}

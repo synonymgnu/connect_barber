@@ -8,25 +8,27 @@ datasource db {
 }
 
 model User {
-  id              String         @id @default(cuid())
-  email           String
-  emailHash       String?         @unique
-  name            String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  emailVerified   DateTime?
-  image           String?
-  role            UserRole       @default(CLIENT)
-  phone           String?
-  accounts        Account[]
-  auditLogs       AuditLog[]
-  barber          Barber?
-  ownedBarbershop Barbershop?
-  bookings        Booking[]
-  notifications   Notification[]
-  ratings         Rating[]
-  sessions        Session[]
-  consents        UserConsent[]
+  id                  String               @id @default(cuid())
+  email               String
+  emailHash           String?              @unique
+  name                String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  emailVerified       DateTime?
+  image               String?
+  role                UserRole             @default(CLIENT)
+  phone               String?
+  accounts            Account[]
+  auditLogs           AuditLog[]
+  barber              Barber?
+  ownedBarbershop     Barbershop?
+  bookings            Booking[]
+  notifications       Notification[]
+  ratings             Rating[]
+  sessions            Session[]
+  consents            UserConsent[]
+  favoriteBarbershops FavoriteBarbershop[]
+  favoriteBarbers     FavoriteBarber[]
 }
 
 model Account {
@@ -66,31 +68,32 @@ model VerificationToken {
 }
 
 model Barbershop {
-  id          String   @id @default(uuid())
-  name        String
-  address     String
-  phone       String[]
-  images      String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  description String
-  ownerId     String?  @unique
-  isActive    Boolean  @default(true)
-  instagram String?
-  facebook String?
-  googleMaps String?
-  whatsapp  String?
-  tiktok    String?
-  website   String?
-  paymentMethods String[] 
-  latitude Decimal? @db.Decimal(10, 8)
-  longitude Decimal? @db.Decimal(11, 8) 
+  id             String               @id @default(uuid())
+  name           String
+  address        String
+  phone          String[]
+  images         String[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  description    String
+  ownerId        String?              @unique
+  isActive       Boolean              @default(true)
+  instagram      String?
+  facebook       String?
+  googleMaps     String?
+  whatsapp       String?
+  tiktok         String?
+  website        String?
+  paymentMethods String[]
+  latitude       Decimal?             @db.Decimal(10, 8)
+  longitude      Decimal?             @db.Decimal(11, 8)
 
-  barbers  Barber[]
-  owner    User?               @relation(fields: [ownerId], references: [id])
-  services BarbershopService[]
-  ratings  Rating[]
-  hours    BarbershopHours[]
+  barbers    Barber[]
+  owner      User?                @relation(fields: [ownerId], references: [id])
+  services   BarbershopService[]
+  ratings    Rating[]
+  hours      BarbershopHours[]
+  favoritedBy FavoriteBarbershop[]
 }
 
 model BarbershopHours {
@@ -124,7 +127,7 @@ model Barber {
   id           String               @id @default(uuid())
   name         String
   email        String
-  emailHash    String?        @unique
+  emailHash    String?              @unique
   phone        String?
   imageUrl     String?
   userId       String               @unique
@@ -142,6 +145,7 @@ model Barber {
   bookings     Booking[]
   Rating       Rating[]
   services     BarbershopService[]  @relation("BarberServices")
+  favoritedBy  FavoriteBarber[]
 }
 
 model BarberWorkSchedule {
@@ -195,7 +199,7 @@ model Rating {
   barbershopId String?
   comment      String?
   createdAt    DateTime    @default(now())
-  bookingId    String      @unique 
+  bookingId    String      @unique
   value        Int
   barberId     String?
   Barber       Barber?     @relation(fields: [barberId], references: [id], onDelete: Cascade)
@@ -248,6 +252,30 @@ model AuditLog {
   @@index([userId])
   @@index([createdAt])
   @@index([action])
+}
+
+model FavoriteBarbershop {
+  id           String     @id @default(uuid())
+  userId       String
+  barbershopId String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, barbershopId])
+  @@index([userId])
+}
+
+model FavoriteBarber {
+  id        String   @id @default(uuid())
+  userId    String
+  barberId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barber    Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, barberId])
+  @@index([userId])
 }
 
 enum UserRole {
