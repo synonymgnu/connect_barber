@@ -35,9 +35,14 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 interface ServiceItemProps {
   service: BarbershopService
   barbershop: Pick<Barbershop, 'id' | 'name'>
+  preSelectedBarberId?: string
 }
 
-const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
+const ServiceItem = ({
+  service,
+  barbershop,
+  preSelectedBarberId,
+}: ServiceItemProps) => {
   const { data } = useSession()
   const router = useRouter()
 
@@ -54,6 +59,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
   const [barbers, setBarbers] = useState<any[]>([])
   const [availability, setAvailability] = useState<any>(null)
   const [timeSlots, setTimeSlots] = useState<string[]>([])
+  const [autoBarberUnavailable, setAutoBarberUnavailable] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,6 +97,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     setSelectedTime(undefined)
     setSelectedBarber(null)
     setTimeSlots([])
+    setAutoBarberUnavailable(false)
     setBookingSheetIsOpen(false)
   }
 
@@ -99,6 +106,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     setSelectedTime(undefined)
     setSelectedBarber(null)
     setTimeSlots([])
+    setAutoBarberUnavailable(false)
   }
 
   const toLocalDateStr = (d: Date) =>
@@ -162,6 +170,27 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
       return hasSchedule
     })
   }
+
+  // Quando o barbeiro já vem pré-selecionado (ex: card de favoritos), pula a
+  // etapa de escolha manual assim que o dia é selecionado.
+  useEffect(() => {
+    if (!preSelectedBarberId || !selectedDay) return
+    if (barbers.length === 0) return
+
+    const available = getAvailableBarbers()
+    const barber = available.find((b) => b.id === preSelectedBarberId)
+
+    if (barber) {
+      setSelectedBarber(barber)
+      setAutoBarberUnavailable(false)
+      fetchBarberSlots(barber, selectedDay)
+    } else {
+      setSelectedBarber(null)
+      setAutoBarberUnavailable(true)
+      setTimeSlots([])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDay, preSelectedBarberId, barbers, availability])
 
   const fetchBarberSlots = async (barber: any, day: Date) => {
     const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
@@ -295,8 +324,8 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                       />
                     </div>
 
-                    {/*  MOSTRAR BARBEIROS SÓ APÓS SELECIONAR O DIA */}
-                    {selectedDay && (
+                    {/* SELEÇÃO MANUAL DE BARBEIRO (só quando não veio pré-selecionado) */}
+                    {selectedDay && !preSelectedBarberId && (
                       <div className="border-b p-5 space-y-3 transition-all">
                         <p className="font-medium text-sm">
                           Selecione o barbeiro(a):
@@ -390,6 +419,39 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                         </div>
                       </div>
                     )}
+
+                    {/* BARBEIRO PRÉ-SELECIONADO (card de favoritos) */}
+                    {selectedDay && preSelectedBarberId && selectedBarber && (
+                      <div className="border-b p-5 flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage
+                            src={selectedBarber.imageUrl || undefined}
+                          />
+                          <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                            {selectedBarber.name[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {selectedBarber.name}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Barbeiro selecionado
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedDay &&
+                      preSelectedBarberId &&
+                      autoBarberUnavailable && (
+                        <div className="border-b p-5">
+                          <p className="text-sm text-gray-400">
+                            Este barbeiro(a) não atende nesta data. Escolha
+                            outro dia.
+                          </p>
+                        </div>
+                      )}
 
                     {selectedDay && selectedBarber && (
                       <div

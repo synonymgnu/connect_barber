@@ -2,18 +2,16 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { StarIcon, MapPinIcon } from 'lucide-react'
+import { MapPinIcon, StarIcon } from 'lucide-react'
 
-import { authOptions } from '@/app/_lib/auth' // ajuste o caminho
+import { authOptions } from '@/app/_lib/auth'
 import { db } from '@/app/_lib/prisma'
+import { decrypt } from '@/app/_lib/encryption'
 import Header from '@/app/_components/header'
 import { Card, CardContent } from '@/app/_components/ui/card'
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/app/_components/ui/avatar'
+import { Button } from '@/app/_components/ui/button'
 import FavoriteButton from '@/app/_components/favorite-button'
+import BarberFavoriteCard from '@/app/_components/barber-favorite-card'
 
 const FavoritesPage = async () => {
   const session = await getServerSession(authOptions)
@@ -39,18 +37,20 @@ const FavoritesPage = async () => {
       orderBy: { createdAt: 'desc' },
       include: {
         barber: {
-          include: { barbershop: true },
+          include: {
+            services: true,
+            barbershop: {
+              select: { id: true, name: true },
+            },
+          },
         },
       },
     }),
   ])
 
   return (
-    <div>
-      <div className="hidden md:block">
-        <Header isHidden="md:flex" />
-      </div>
-
+    <>
+      <Header isHidden="md:flex" />
       <div className="p-5 space-y-8 lg:ml-32 lg:mr-32 lg:mt-10">
         <h1 className="text-xl font-bold lg:text-2xl">Favoritos</h1>
 
@@ -73,6 +73,8 @@ const FavoritesPage = async () => {
                       totalRatings
                     : 0
 
+                const address = decrypt(barbershop.address)
+
                 return (
                   <Link
                     key={barbershop.id}
@@ -93,14 +95,16 @@ const FavoritesPage = async () => {
                           className="object-cover rounded-t-lg"
                         />
                       </div>
-                      <CardContent className="p-3 space-y-1">
+                      <CardContent className="p-3 space-y-2">
                         <h3 className="font-medium text-sm truncate">
                           {barbershop.name}
                         </h3>
+
                         <div className="flex items-center gap-1 text-xs text-zinc-400">
                           <MapPinIcon size={12} />
-                          <span className="truncate">{barbershop.address}</span>
+                          <span className="truncate">{address}</span>
                         </div>
+
                         {totalRatings > 0 && (
                           <div className="flex items-center gap-1">
                             <StarIcon
@@ -108,10 +112,15 @@ const FavoritesPage = async () => {
                               className="fill-primary text-primary"
                             />
                             <span className="text-xs">
-                              {averageRating.toFixed(1)}
+                              {averageRating.toFixed(1)} ({totalRatings}{' '}
+                              {totalRatings === 1 ? 'avaliação' : 'avaliações'})
                             </span>
                           </div>
                         )}
+
+                        <Button size="sm" className="w-full mt-1" tabIndex={-1}>
+                          Reservar
+                        </Button>
                       </CardContent>
                     </Card>
                   </Link>
@@ -132,40 +141,22 @@ const FavoritesPage = async () => {
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {favoriteBarbers.map(({ barber }) => (
-                <Link
-                  key={barber.id}
-                  href={`/barbershops/${barber.barbershopId}`}
-                >
-                  <Card className="border-0 relative hover:scale-[1.02] transition-transform">
-                    <FavoriteButton
-                      type="barber"
-                      id={barber.id}
-                      isFavorited
-                      className="absolute right-2 top-2 z-10 h-7 w-7"
-                    />
-                    <CardContent className="flex flex-col items-center p-4">
-                      <Avatar className="h-14 w-14 mb-3">
-                        <AvatarImage src={barber.imageUrl || undefined} />
-                        <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
-                          {barber.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <h3 className="text-sm font-medium text-center line-clamp-2">
-                        {barber.name}
-                      </h3>
-                      <p className="text-xs text-zinc-400 truncate">
-                        {barber.barbershop.name}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+              {favoriteBarbers.map(({ barber }) => {
+                const serializedBarber = JSON.parse(JSON.stringify(barber))
+
+                return (
+                  <BarberFavoriteCard
+                    key={serializedBarber.id}
+                    barber={serializedBarber}
+                    barbershop={serializedBarber.barbershop}
+                  />
+                )
+              })}
             </div>
           )}
         </section>
       </div>
-    </div>
+    </>
   )
 }
 
