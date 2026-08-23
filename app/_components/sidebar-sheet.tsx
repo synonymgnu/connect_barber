@@ -98,11 +98,11 @@ const SidebarSheet = () => {
           )}
         </div>
 
-        <div className="py-5 flex flex-col gap-2 border-b border-solid">
+        <div className="py-2 flex flex-col gap-2 border-b border-solid">
           {data?.user ? (
             <>
               {data.user.role === 'MASTER' && (
-                <div className="pb-5 border-b border-solid">
+                <div className="pb-2 border-b border-solid">
                   <SheetClose asChild>
                     <Button
                       className="justify-start w-full"
@@ -119,7 +119,7 @@ const SidebarSheet = () => {
               )}
 
               {data.user.role === 'ADMIN' && (
-                <div className="pb-5 border-b border-solid">
+                <div className="pb-2 border-b border-solid">
                   <SheetClose asChild>
                     <Button
                       className="justify-start gap-2 w-full"
@@ -136,7 +136,7 @@ const SidebarSheet = () => {
               )}
 
               {data.user.role === 'BARBER' && (
-                <div className="pb-5 border-b border-solid">
+                <div className="pb-2 border-b border-solid">
                   <SheetClose asChild>
                     <Button
                       className="justify-start gap-2 w-full"

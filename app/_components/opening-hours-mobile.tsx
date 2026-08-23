@@ -1,17 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Clock3 } from 'lucide-react'
 import { Button } from './ui/button'
 
 interface Props {
-  scheduleMap: Record<
-    number,
-    {
-      startTime: string
-      endTime: string
-    }
-  >
+  scheduleMap: Record<number, { startTime: string; endTime: string }>
 }
 
 const DAYS = [
@@ -24,22 +18,71 @@ const DAYS = [
   { short: 'Sáb', full: 'Sábado' },
 ]
 
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function getIsOpenNow(scheduleMap: Props['scheduleMap'], now: Date): boolean {
+  const today = now.getDay()
+  const todaySchedule = scheduleMap[today]
+
+  if (!todaySchedule) return false
+
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const startMinutes = timeToMinutes(todaySchedule.startTime)
+  const endMinutes = timeToMinutes(todaySchedule.endTime)
+
+  if (endMinutes <= startMinutes) {
+    return nowMinutes >= startMinutes || nowMinutes < endMinutes
+  }
+
+  return nowMinutes >= startMinutes && nowMinutes < endMinutes
+}
+
 export default function OpeningHoursMobile({ scheduleMap }: Props) {
   const initialDay = new Date().getDay()
 
   const [selectedDay, setSelectedDay] = useState(initialDay)
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   const schedule = scheduleMap[selectedDay]
 
   const hasAnySchedule = Object.keys(scheduleMap).length > 0
 
+  const isOpenNow = hasAnySchedule && getIsOpenNow(scheduleMap, now)
+
   return (
     <div className="p-5 border-b border-zinc-800 md:hidden">
-      <div className="mb-4 flex items-center gap-2">
-        <Clock3 className="h-4 w-4 text-primary" />
-        <span className="font-bold uppercase text-gray-400 text-xs  lg:text-sm">
-          Funcionamento
-        </span>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Clock3 className="h-4 w-4 text-primary" />
+          <span className="font-bold uppercase text-gray-400 text-xs lg:text-sm">
+            Funcionamento
+          </span>
+        </div>
+
+        {hasAnySchedule && (
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isOpenNow ? 'bg-primary' : 'bg-zinc-600'
+              }`}
+            />
+            <span
+              className={`text-xs font-semibold ${
+                isOpenNow ? 'text-primary' : 'text-zinc-500'
+              }`}
+            >
+              {isOpenNow ? 'Aberto agora' : 'Fechado agora'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center">
@@ -52,7 +95,7 @@ export default function OpeningHoursMobile({ scheduleMap }: Props) {
               key={day.short}
               onClick={() => setSelectedDay(index)}
               disabled={!opened}
-              className={`min-w-[40px]  rounded-full px-[9px] py-2 text-xs font-semibold transition-all duration-200 text-center justify-center
+              className={`min-w-[40px] rounded-full px-[9px] py-2 text-xs font-semibold transition-all duration-200 text-center justify-center
                     ${
                       opened
                         ? selected
@@ -80,9 +123,13 @@ export default function OpeningHoursMobile({ scheduleMap }: Props) {
               {schedule.startTime} às {schedule.endTime}
             </p>
           ) : (
-            <p className="mt-1 text-base font-semibold text-zinc-500">
-              Fechado
-            </p>
+            <div>
+              <p className="text-xs uppercase text-zinc-400">
+                {' '}
+                {DAYS[selectedDay].full}
+              </p>
+              <p className="mt-1 text-lg font-semibold text-primary">Fechado</p>
+            </div>
           )
         ) : (
           <p className="mt-1 text-base font-semibold text-zinc-500">
