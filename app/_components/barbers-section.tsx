@@ -42,6 +42,9 @@ function useDragScroll() {
   const draggedRef = useRef(false)
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    // Só ativa o drag manual para mouse. Em touch/pen, deixamos o
+    // navegador cuidar do scroll nativamente (mais leve, com inércia).
+    if (e.pointerType !== 'mouse') return
     if (!scrollRef.current) return
     isPointerDown.current = true
     draggedRef.current = false
@@ -234,7 +237,7 @@ export default function BarbersSection({ barbers }: Props) {
                   onPointerMove={mobileDrag.handlePointerMove}
                   onPointerUp={mobileDrag.handlePointerUp}
                   onPointerLeave={mobileDrag.handlePointerUp}
-                  style={{ touchAction: 'pan-y' }}
+                  style={{ touchAction: 'pan-x' }}
                   className="flex gap-4 overflow-x-auto scroll-smooth select-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
                   {barbers.map((barber) => (
@@ -260,7 +263,7 @@ export default function BarbersSection({ barbers }: Props) {
                 onPointerMove={desktopDrag.handlePointerMove}
                 onPointerUp={desktopDrag.handlePointerUp}
                 onPointerLeave={desktopDrag.handlePointerUp}
-                style={{ touchAction: 'pan-y' }}
+                style={{ touchAction: 'pan-x' }}
                 className="flex gap-4 lg:gap-5 overflow-x-auto scroll-smooth select-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
                 {barbers.map((barber) => (

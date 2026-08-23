@@ -328,6 +328,13 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 </Button>
               </SheetTrigger>
             </Sheet>
+
+            <FavoriteButton
+              type="barbershop"
+              id={barbershop.id}
+              isFavorited={!!favoritedBarbershop}
+              className="hidden md:flex absolute right-4 top-4 z-20"
+            />
           </div>
           {/* NOME, ENDEREÇO E AVALIAÇÃO */}
 
@@ -464,14 +471,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between mb-2.5">
-                <h2 className="font-bold uppercase text-sm">Sobre nós</h2>
-                <FavoriteButton
-                  type="barbershop"
-                  id={barbershop.id}
-                  isFavorited={!!favoritedBarbershop}
-                />
-              </div>
+              <h2 className="font-bold uppercase text-sm mb-2.5">Sobre nós</h2>
               <p className="text-sm text-zinc-300 text-justify border-b pb-5">
                 {barbershop.description}
               </p>
