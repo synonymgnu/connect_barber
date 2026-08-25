@@ -3,15 +3,32 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/_components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/_components/ui/card'
 import { Input } from '@/app/_components/ui/input'
 import { Label } from '@/app/_components/ui/label'
 import { Textarea } from '@/app/_components/ui/textarea'
 import { Button } from '@/app/_components/ui/button'
 import { Badge } from '@/app/_components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/app/_components/ui/avatar'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/app/_components/ui/avatar'
 import { Separator } from '@/app/_components/ui/separator'
-import { Save, Scissors, Instagram, Phone, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import {
+  Save,
+  Scissors,
+  Instagram,
+  Phone,
+  Loader2,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react'
 
 interface BarberProfile {
   id: string
@@ -97,7 +114,9 @@ export default function BarberProfileSection() {
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             <AvatarImage src={session?.user?.image || profile.imageUrl || ''} />
-            <AvatarFallback className="text-lg">{form.name?.[0]?.toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="text-lg">
+              {form.name?.[0]?.toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div>
             <p className="font-semibold text-base">{profile.name}</p>
@@ -107,9 +126,13 @@ export default function BarberProfileSection() {
               className={`mt-1 text-xs ${profile.isActive ? 'border-green-500 text-green-600' : 'border-red-500 text-red-500'}`}
             >
               {profile.isActive ? (
-                <><CheckCircle className="h-3 w-3 mr-1" /> Ativo</>
+                <>
+                  <CheckCircle className="h-3 w-3 mr-1" /> Ativo
+                </>
               ) : (
-                <><XCircle className="h-3 w-3 mr-1" /> Inativo</>
+                <>
+                  <XCircle className="h-3 w-3 mr-1" /> Inativo
+                </>
               )}
             </Badge>
           </div>
@@ -167,7 +190,9 @@ export default function BarberProfileSection() {
               <Input
                 id="barber-instagram"
                 value={form.instagram}
-                onChange={(e) => setForm({ ...form, instagram: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, instagram: e.target.value })
+                }
                 placeholder="usuario"
                 className="rounded-l-none"
               />
@@ -186,11 +211,19 @@ export default function BarberProfileSection() {
           />
         </div>
 
-        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full sm:w-auto"
+        >
           {saving ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando...</>
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando...
+            </>
           ) : (
-            <><Save className="h-4 w-4 mr-2" /> Salvar Perfil</>
+            <>
+              <Save className="h-4 w-4 mr-2" /> Salvar Perfil
+            </>
           )}
         </Button>
       </CardContent>

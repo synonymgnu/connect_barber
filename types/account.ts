@@ -13,12 +13,21 @@ export interface AccountBooking {
 export interface AccountInfoProps {
   user: {
     id: string
-    name?: string | null
-    email?: string | null
-    phone?: string | null
+    name: string | null
+    email: string
+    image: string | null
     role: UserRole
-    image?: string | null
   }
-  bookings: AccountBooking[]
-  barberStatus?: 'ACTIVE' | 'INACTIVE' | null
+  bookings: Array<{
+    id: string
+    date: Date
+    service: { name: string }
+  }>
+  barberStatus: 'ACTIVE' | 'INACTIVE' | null
+  barbershop: {
+    id: string
+    name: string
+    address: string
+    images: string[]
+  } | null
 }
