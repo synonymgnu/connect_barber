@@ -16,6 +16,7 @@ export interface AccountInfoProps {
     name: string | null
     email: string
     image: string | null
+    phone: string | null
     role: UserRole
   }
   bookings: Array<{
